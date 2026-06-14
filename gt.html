@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G/T Calculator — Antenna Figure of Merit &amp; System Noise Temperature</title>
+<meta name="description" content="Free G/T calculator for satellite ground stations. Build up system noise temperature from antenna temp, feed loss, LNA noise figure and receiver chain, and get the G/T figure of merit in dB/K.">
+<meta name="keywords" content="G/T calculator, figure of merit, system noise temperature, antenna G/T, LNA noise figure, ground station G/T, receiver noise temperature">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/gt.html">
+<link rel="stylesheet" href="styles.css">
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"G/T Figure of Merit Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html">Link Budget</a>
+  <a href="doppler.html">Doppler Shift</a>
+  <a href="pass-prediction.html">Pass Predictor</a>
+  <a href="antenna.html">Antenna Gain</a>
+  <a href="gt.html" class="active">G/T</a>
+  <a href="rain.html">Rain Fade</a>
+  <a href="bands.html">Frequency Bands</a>
+</nav>
+
+<header>
+  <h1>📐 G/T Figure-of-Merit Calculator</h1>
+  <p>Build system noise temperature from antenna, feed, LNA &amp; receiver → G/T in dB/K</p>
+</header>
+
+<div class="wrap">
+  <div class="preset-bar">
+    <button data-preset="s3m">3 m S-band, good LNA</button>
+    <button data-preset="ku">Ku VSAT 1.2 m</button>
+    <button data-preset="cubesat">CubeSat UHF Rx</button>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Antenna</h2>
+      <div class="row"><label>Antenna gain<span class="hint">dBi (see Antenna Gain tool)</span></label><input type="number" id="gain" value="34" step="any"></div>
+      <div class="row"><label>Antenna noise temp T_A<span class="hint">K — sky + ground pickup</span></label><input type="number" id="ta" value="50" step="any"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Feed / Line before LNA</h2>
+      <div class="row"><label>Feed loss<span class="hint">dB (waveguide/connectors before LNA)</span></label><input type="number" id="lfeed" value="0.5" step="any"></div>
+      <div class="row"><label>Physical temperature<span class="hint">K (ambient, typ. 290)</span></label><input type="number" id="tp" value="290" step="any"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>LNA &amp; Receiver</h2>
+      <div class="row"><label>LNA noise figure<span class="hint">dB</span></label><input type="number" id="nflna" value="0.8" step="any"></div>
+      <div class="row"><label>LNA gain<span class="hint">dB</span></label><input type="number" id="glna" value="35" step="any"></div>
+      <div class="row"><label>Post-LNA receiver NF<span class="hint">dB (rest of chain)</span></label><input type="number" id="nfrx" value="3" step="any"></div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Results</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">LNA noise temp</div><div class="v"><span id="r_tlna">–</span> <span class="u">K</span></div></div>
+        <div class="metric"><div class="k">Effective Rx noise temp</div><div class="v"><span id="r_te">–</span> <span class="u">K</span></div></div>
+        <div class="metric"><div class="k">System noise temp T_sys</div><div class="v"><span id="r_tsys">–</span> <span class="u">K</span></div></div>
+        <div class="metric"><div class="k">T_sys</div><div class="v"><span id="r_tsysdb">–</span> <span class="u">dBK</span></div></div>
+        <div class="metric"><div class="k">G/T figure of merit</div><div class="v"><span id="r_gt">–</span> <span class="u">dB/K</span></div></div>
+      </div>
+      <div class="note" id="gnote"></div>
+      <details>
+        <summary>Show noise temperature breakdown</summary>
+        <table id="bd"></table>
+      </details>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <div class="article">
+      <h2>What is G/T?</h2>
+      <p><strong>G/T</strong> (gain-to-noise-temperature ratio, the "figure of merit") summarises a receiving
+      system's sensitivity in a single number: the antenna gain divided by the total system noise temperature,
+      expressed in <strong>dB/K</strong>. Higher is better. It feeds directly into the carrier-to-noise
+      calculation: <code>C/N₀ = EIRP − path loss + G/T − k</code>.</p>
+      <h2>Formulas used</h2>
+      <p>Noise temperature from noise figure: <code>T = (10^(NF/10) − 1) · 290 K</code></p>
+      <p>System noise temp referred to the antenna aperture (Friis cascade):</p>
+      <p><code>T_sys = T_A + (L−1)·T_phys + L·T_LNA + L·T_rx / G_LNA</code></p>
+      <p>where L is the linear feed loss before the LNA. Because the loss sits ahead of the LNA, it both adds
+      its own noise and attenuates the signal — which is why <strong>keeping pre-LNA loss tiny</strong> matters
+      so much. Finally: <code>G/T = G_antenna(dBi) − 10·log₁₀(T_sys)</code>.</p>
+      <p>Plug the resulting G/T straight into the
+      <a href="index.html" style="color:var(--accent)">link budget calculator</a>.
+      All computation runs locally in your browser.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Free G/T figure-of-merit calculator · system noise temperature cascade · runs entirely in your browser.</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value)||0;
+const T0=290;
+const teFromNF=nf=>(Math.pow(10,nf/10)-1)*T0;
+
+function compute(){
+  const G=num('gain'), TA=num('ta');
+  const Lfeed=num('lfeed'), Tp=num('tp');
+  const L=Math.pow(10,Lfeed/10);
+  const Tlna=teFromNF(num('nflna'));
+  const Glna=Math.pow(10,num('glna')/10);
+  const Trx=teFromNF(num('nfrx'));
+  const feedContrib=(L-1)*Tp;
+  const lnaContrib=L*Tlna;
+  const rxContrib=L*Trx/Glna;
+  const Te=feedContrib+lnaContrib+rxContrib;
+  const Tsys=TA+Te;
+  const gt=G-10*Math.log10(Tsys);
+  const f2=x=>x.toFixed(2);
+  $('r_tlna').textContent=f2(Tlna);
+  $('r_te').textContent=f2(Te);
+  $('r_tsys').textContent=f2(Tsys);
+  $('r_tsysdb').textContent=f2(10*Math.log10(Tsys));
+  $('r_gt').textContent=f2(gt);
+  $('gnote').textContent='G/T = '+f2(gt)+' dB/K — paste this into the link budget calculator’s G/T (or Rx gain + system temp) inputs.';
+  const rows=[
+    ['Antenna noise temp T_A',TA.toFixed(2)+' K'],
+    ['Feed loss noise (L−1)·T_phys',feedContrib.toFixed(2)+' K'],
+    ['LNA noise (referred) L·T_LNA',lnaContrib.toFixed(2)+' K'],
+    ['Post-LNA noise L·T_rx/G_LNA',rxContrib.toFixed(2)+' K'],
+    ['= System noise temp T_sys',Tsys.toFixed(2)+' K'],
+    ['Antenna gain',G.toFixed(2)+' dBi'],
+    ['= G/T',gt.toFixed(2)+' dB/K'],
+  ];
+  $('bd').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('');
+}
+const presets={
+  s3m:{gain:34,ta:50,lfeed:0.4,tp:290,nflna:0.8,glna:35,nfrx:3},
+  ku:{gain:43,ta:60,lfeed:0.3,tp:290,nflna:1.0,glna:40,nfrx:4},
+  cubesat:{gain:15,ta:200,lfeed:1.0,tp:290,nflna:1.2,glna:25,nfrx:5},
+};
+document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
+  const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+compute();
+</script>
+</body>
+</html>

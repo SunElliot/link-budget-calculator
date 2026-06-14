@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rain Attenuation Calculator (ITU-R P.618 / P.838) — Free Online Tool</title>
+<meta name="description" content="Free satellite rain attenuation calculator using ITU-R P.838 and P.618 models. Compute specific attenuation and slant-path rain fade vs frequency, elevation, rain rate and link availability.">
+<meta name="keywords" content="rain attenuation calculator, ITU-R P.618, ITU-R P.838, rain fade, specific attenuation, slant path attenuation, Ku Ka rain margin, satellite rain loss">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/rain.html">
+<link rel="stylesheet" href="styles.css">
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Rain Attenuation Calculator (ITU-R P.618/P.838)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html">Link Budget</a>
+  <a href="doppler.html">Doppler Shift</a>
+  <a href="pass-prediction.html">Pass Predictor</a>
+  <a href="antenna.html">Antenna Gain</a>
+  <a href="gt.html">G/T</a>
+  <a href="rain.html" class="active">Rain Fade</a>
+  <a href="bands.html">Frequency Bands</a>
+</nav>
+
+<header>
+  <h1>🌧️ Rain Attenuation Calculator</h1>
+  <p>ITU-R P.838 specific attenuation + P.618 slant-path rain fade vs availability</p>
+</header>
+
+<div class="wrap">
+  <div class="preset-bar">
+    <button data-preset="ku">Ku 12 GHz</button>
+    <button data-preset="ka">Ka 20 GHz</button>
+    <button data-preset="x">X 8 GHz</button>
+    <button data-preset="c">C 4 GHz</button>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Link &amp; Site</h2>
+      <div class="row"><label>Frequency<span class="hint">GHz (1–55)</span></label><input type="number" id="freq" value="12" step="any"></div>
+      <div class="row"><label>Elevation angle<span class="hint">deg (≥5°)</span></label><input type="number" id="elev" value="30" step="any"></div>
+      <div class="row">
+        <label>Polarization</label>
+        <select id="pol" style="width:130px;text-align:left">
+          <option value="45">Circular</option>
+          <option value="0">Horizontal</option>
+          <option value="90">Vertical</option>
+        </select>
+      </div>
+      <div class="row"><label>Station latitude<span class="hint">deg (abs value used)</span></label><input type="number" id="lat" value="40" step="any"></div>
+      <div class="row"><label>Station height<span class="hint">km above sea level</span></label><input type="number" id="hs" value="0.1" step="any"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Rain</h2>
+      <div class="row"><label>Rain rate R₀.₀₁<span class="hint">mm/h exceeded 0.01% of year (ITU-R P.837)</span></label><input type="number" id="R" value="42" step="any"></div>
+      <div class="row"><label>Rain height h_R<span class="hint">km (≈ 0°C isotherm + 0.36)</span></label><input type="number" id="hR" value="3" step="any"></div>
+      <div class="row"><label>Target availability<span class="hint">% of year link must be up</span></label><input type="number" id="avail" value="99.99" step="any"></div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Results</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">Specific attenuation γ_R</div><div class="v"><span id="r_gamma">–</span> <span class="u">dB/km</span></div></div>
+        <div class="metric"><div class="k">Effective path length</div><div class="v"><span id="r_le">–</span> <span class="u">km</span></div></div>
+        <div class="metric"><div class="k">Attenuation A₀.₀₁</div><div class="v"><span id="r_a001">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Rain fade @ target</div><div class="v"><span id="r_ap">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Outage time / year</div><div class="v"><span id="r_out">–</span></div></div>
+      </div>
+      <div class="note" id="rnote"></div>
+      <details>
+        <summary>Rain fade vs link availability</summary>
+        <table id="avtab"><thead><tr><th>Availability</th><th>Outage % (p)</th><th class="num">Rain fade (dB)</th></tr></thead><tbody></tbody></table>
+      </details>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <div class="article">
+      <h2>About this rain attenuation model</h2>
+      <p>This tool implements the standard <strong>ITU-R P.838-3</strong> (specific rain attenuation
+      coefficients k and α) combined with the <strong>ITU-R P.618-13</strong> slant-path prediction method,
+      including the horizontal and vertical path-reduction factors and the availability scaling.</p>
+      <p><strong>Specific attenuation:</strong> <code>γ_R = k · R<sup>α</sup></code> (dB/km), where k and α depend on
+      frequency, polarization and elevation angle.</p>
+      <p>The attenuation exceeded 0.01% of the year, <code>A₀.₀₁ = γ_R · L_E</code>, is then scaled to your target
+      availability. Rain fade rises sharply with frequency — negligible at C-band, significant at Ku, and a
+      dominant design driver at Ka-band and above.</p>
+      <p>For accurate site numbers, use the local <code>R₀.₀₁</code> rain rate from ITU-R P.837 and rain height
+      from ITU-R P.839. Feed the resulting fade into the
+      <a href="index.html" style="color:var(--accent)">link budget calculator</a> as your rain-loss term.
+      All computation runs locally in your browser.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation &amp; slant-path fade · runs in your browser.</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value)||0;
+
+// ITU-R P.838-3 coefficient tables
+const kH={a:[-5.33980,-0.35351,-0.23789,-0.94158],b:[-0.10008,1.26970,0.86036,0.64552],c:[1.13098,0.45400,0.15354,0.16817],m:-0.18961,cc:0.71147};
+const kV={a:[-3.80595,-3.44965,-0.39902,0.50167],b:[0.56934,-0.22911,0.73042,1.07319],c:[0.81061,0.51059,0.11899,0.27195],m:-0.16398,cc:0.63297};
+const aH={a:[-0.14318,0.29591,0.32177,-5.37610,16.1721],b:[1.82442,0.77564,0.63773,-0.96230,-3.29980],c:[-0.55187,0.19822,0.13164,1.47828,3.43990],m:0.67849,cc:-1.95537};
+const aV={a:[-0.07771,0.56727,-0.20238,-48.2991,48.5833],b:[2.33840,0.95545,1.14520,0.791669,0.791459],c:[-0.76284,0.54039,0.26809,0.116226,0.116479],m:-0.053739,cc:0.83433};
+function tval(t,f){const lf=Math.log10(f);let s=0;for(let j=0;j<t.a.length;j++)s+=t.a[j]*Math.exp(-(((lf-t.b[j])/t.c[j])**2));return s+t.m*lf+t.cc;}
+
+// returns {gR, LE, A001} for ITU-R P.618
+function p618core(f,thDeg,R,latDeg,hs,hR,tauDeg){
+  const th=thDeg*Math.PI/180, lat=Math.abs(latDeg), tau=tauDeg*Math.PI/180;
+  const KH=10**tval(kH,f),KV=10**tval(kV,f),AH=tval(aH,f),AV=tval(aV,f);
+  const cos2=Math.cos(th)**2, c2t=Math.cos(2*tau);
+  const k=(KH+KV+(KH-KV)*cos2*c2t)/2;
+  const a=(KH*AH+KV*AV+(KH*AH-KV*AV)*cos2*c2t)/(2*k);
+  const gR=k*Math.pow(R,a);
+  const Ls=(hR-hs)/Math.sin(th), LG=Ls*Math.cos(th);
+  const r=1/(1+0.78*Math.sqrt(LG*gR/f)-0.38*(1-Math.exp(-2*LG)));
+  const zeta=Math.atan2((hR-hs),(LG*r));
+  const LR=zeta>th?LG*r/Math.cos(th):(hR-hs)/Math.sin(th);
+  const chi=lat<36?36-lat:0;
+  const v=1/(1+Math.sqrt(Math.sin(th))*(31*(1-Math.exp(-(thDeg/(1+chi))))*Math.sqrt(LR*gR)/(f*f)-0.45));
+  const LE=LR*v;
+  return {gR,LE,A001:gR*LE};
+}
+function scaleTo(A001,p,thDeg,latDeg){
+  const lat=Math.abs(latDeg), th=thDeg*Math.PI/180;
+  let beta; if(p>=1||lat>=36)beta=0; else if(thDeg>=25)beta=-0.005*(lat-36); else beta=-0.005*(lat-36)+1.8-4.25*Math.sin(th);
+  return A001*Math.pow(p/0.01,-(0.655+0.033*Math.log(p)-0.045*Math.log(A001)-beta*(1-p)*Math.sin(th)));
+}
+function outageStr(pPercent){
+  const secYear=365.25*24*3600, sec=secYear*pPercent/100;
+  if(sec>=3600)return (sec/3600).toFixed(1)+' h';
+  if(sec>=60)return (sec/60).toFixed(0)+' min';
+  return sec.toFixed(0)+' s';
+}
+
+function compute(){
+  const f=num('freq'), th=Math.max(num('elev'),5), R=num('R');
+  const lat=num('lat'), hs=num('hs'), hR=num('hR'), tau=parseFloat($('pol').value);
+  const avail=Math.min(Math.max(num('avail'),90),99.999);
+  const p=100-avail; // outage percentage
+  const core=p618core(f,th,R,lat,hs,hR,tau);
+  const Ap=scaleTo(core.A001,Math.min(Math.max(p,0.001),5),th,lat);
+  const f2=x=>x.toFixed(2);
+  $('r_gamma').textContent=f2(core.gR);
+  $('r_le').textContent=f2(core.LE);
+  $('r_a001').textContent=f2(core.A001);
+  $('r_ap').textContent=f2(Ap);
+  $('r_out').textContent=outageStr(p);
+  $('rnote').textContent='Add ~'+f2(Ap)+' dB of rain margin to your link budget for '+avail+'% availability at '+f+' GHz.';
+  const tb=$('avtab').querySelector('tbody'); tb.innerHTML='';
+  [[99,1],[99.9,0.1],[99.99,0.01],[99.999,0.001]].forEach(([av,pp])=>{
+    const a=scaleTo(core.A001,pp,th,lat);
+    tb.insertAdjacentHTML('beforeend',`<tr><td>${av}%</td><td>${pp}%</td><td class="num">${a.toFixed(2)}</td></tr>`);
+  });
+}
+const presets={
+  ku:{freq:12,elev:30,R:42,hR:3,lat:40,hs:0.1,avail:99.99},
+  ka:{freq:20,elev:30,R:42,hR:3,lat:40,hs:0.1,avail:99.9},
+  x:{freq:8,elev:20,R:42,hR:3,lat:40,hs:0.1,avail:99.99},
+  c:{freq:4,elev:20,R:60,hR:4,lat:25,hs:0.05,avail:99.99},
+};
+document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
+  const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+compute();
+</script>
+</body>
+</html>
