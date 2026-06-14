@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Pass Predictor (TLE) — Free Online Tool</title>
+<meta name="description" content="Free satellite pass predictor. Paste a TLE and your ground-station coordinates to compute upcoming visible passes: AOS, LOS, maximum elevation and duration. Runs in your browser.">
+<meta name="keywords" content="satellite pass predictor, TLE tracker, satellite tracking, AOS LOS, satellite visibility, ground station pass prediction, ISS pass">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/pass-prediction.html">
+<link rel="stylesheet" href="styles.css">
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Pass Predictor","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html">Link Budget</a>
+  <a href="doppler.html">Doppler Shift</a>
+  <a href="pass-prediction.html" class="active">Pass Predictor</a>
+  <a href="antenna.html">Antenna Gain</a>
+  <a href="bands.html">Frequency Bands</a>
+</nav>
+
+<header>
+  <h1>🛰️ Satellite Pass Predictor (TLE)</h1>
+  <p>Upcoming visible passes from a TLE &amp; your ground station — AOS, LOS, max elevation, duration</p>
+</header>
+
+<div class="wrap">
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Two-Line Element (TLE)</h2>
+      <p style="color:var(--muted);font-size:.8rem;margin:0 0 8px">
+        Paste the two TLE lines (get them from <a href="https://celestrak.org/NORAD/elements/" style="color:var(--accent)" target="_blank" rel="noopener">CelesTrak</a>).
+      </p>
+      <div class="row"><textarea id="tle" rows="3" spellcheck="false">1 25544U 98067A   24001.50000000  .00016717  00000-0  10270-3 0  9000
+2 25544  51.6400 208.0000 0006703 130.0000 325.0000 15.50000000    05</textarea></div>
+      <p style="color:var(--muted);font-size:.74rem;margin:2px 0 0">Example above is the ISS — replace with a current TLE for accurate results.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Ground Station</h2>
+      <div class="row"><label>Latitude<span class="hint">°N positive, °S negative</span></label><input type="number" id="lat" value="39.9" step="any"></div>
+      <div class="row"><label>Longitude<span class="hint">°E positive, °W negative</span></label><input type="number" id="lon" value="116.4" step="any"></div>
+      <div class="row"><label>Altitude<span class="hint">metres above sea level</span></label><input type="number" id="hgt" value="50" step="any"></div>
+      <div class="row"><label>Min elevation<span class="hint">deg — horizon mask</span></label><input type="number" id="minel" value="10" step="any"></div>
+      <div class="row"><label>Window<span class="hint">hours ahead</span></label><input type="number" id="hours" value="24" step="any"></div>
+      <div class="row">
+        <label></label>
+        <button id="go" style="width:130px;padding:9px;background:var(--accent);border:none;color:#fff;border-radius:7px;font-size:.9rem;cursor:pointer">Predict passes</button>
+      </div>
+      <div class="row" style="justify-content:flex-start;gap:8px">
+        <label style="flex:0">Use my location:</label>
+        <button id="geo" style="width:auto;padding:6px 12px;background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:7px;font-size:.83rem;cursor:pointer">📍 Detect</button>
+      </div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Upcoming Passes</h2>
+      <div id="status" style="color:var(--muted);font-size:.85rem">Loading orbit library…</div>
+      <table id="out" style="display:none">
+        <thead><tr><th>#</th><th>AOS (local)</th><th>Max elev (time)</th><th>LOS (local)</th><th>Duration</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <div class="article">
+      <h2>How satellite pass prediction works</h2>
+      <p>A <strong>TLE (Two-Line Element set)</strong> encodes a satellite's orbit at a reference epoch.
+      This tool runs the standard <strong>SGP4</strong> propagator (via the open-source satellite.js library)
+      to compute the satellite's position over time, then converts it to look angles (azimuth/elevation)
+      from your ground station. Whenever elevation rises above your horizon mask, a <strong>pass</strong> begins
+      (AOS — Acquisition of Signal) and ends when it drops below again (LOS — Loss of Signal).</p>
+      <p>For accurate predictions, always use a <strong>fresh TLE</strong> (less than a few days old) — orbital
+      elements decay quickly, especially for low CubeSats. Times are shown in your browser's local timezone.
+      Everything runs locally; your coordinates never leave your device.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/satellite.js@5/dist/satellite.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value)||0;
+const status=$('status');
+
+function libReady(){return typeof satellite!=='undefined'&&satellite.twoline2satrec;}
+if(libReady()) status.textContent='Ready — click "Predict passes".';
+else { status.textContent='Loading orbit library…';
+  let n=0,iv=setInterval(()=>{ if(libReady()){clearInterval(iv);status.textContent='Ready — click "Predict passes".';}
+    else if(++n>40){clearInterval(iv);status.innerHTML='<span style="color:var(--bad)">Could not load the orbit library (satellite.js). Check your internet connection and reload.</span>';}},250);}
+
+function fmtLocal(d){return d.toLocaleString(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function fmtTime(d){return d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+
+function predict(){
+  if(!libReady()){status.textContent='Orbit library not loaded yet — please wait a moment.';return;}
+  const lines=$('tle').value.trim().split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const l1=lines.find(l=>l.startsWith('1 '))||lines[lines.length-2];
+  const l2=lines.find(l=>l.startsWith('2 '))||lines[lines.length-1];
+  let rec;
+  try{ rec=satellite.twoline2satrec(l1,l2); }catch(e){ rec=null; }
+  if(!rec||rec.error){status.innerHTML='<span style="color:var(--bad)">Invalid TLE — please paste both lines (starting with "1 " and "2 ").</span>';return;}
+
+  const gs={longitude:satellite.degreesToRadians(num('lon')),latitude:satellite.degreesToRadians(num('lat')),height:num('hgt')/1000};
+  const minEl=num('minel'), hours=Math.min(Math.max(num('hours'),1),168);
+  const start=Date.now(), step=15000; // 15 s
+  const rows=[]; let inPass=false,aos=null,maxEl=-90,maxT=null,n=0;
+  for(let s=0;s<=hours*3600;s+=step/1000){
+    const t=new Date(start+s*1000);
+    const pv=satellite.propagate(rec,t); if(!pv.position) continue;
+    const la=satellite.ecfToLookAngles(gs,satellite.eciToEcf(pv.position,satellite.gstime(t)));
+    const el=satellite.radiansToDegrees(la.elevation);
+    if(el>=minEl){ if(!inPass){inPass=true;aos=t;maxEl=el;maxT=t;} else if(el>maxEl){maxEl=el;maxT=t;} }
+    else if(inPass){ inPass=false;n++;
+      const dur=Math.round((t-aos)/1000);
+      rows.push({n,aos,maxEl,maxT,los:t,dur});
+      if(n>=60)break; }
+  }
+  const tb=$('out').querySelector('tbody'); tb.innerHTML='';
+  if(!rows.length){ status.innerHTML='No passes above '+minEl+'° in the next '+hours+' h for this TLE / location.'; $('out').style.display='none'; return; }
+  rows.forEach(r=>{
+    const m=Math.floor(r.dur/60), ss=r.dur%60;
+    tb.insertAdjacentHTML('beforeend',
+      `<tr><td>${r.n}</td><td>${fmtLocal(r.aos)}</td><td class="num">${r.maxEl.toFixed(1)}° (${fmtTime(r.maxT)})</td><td>${fmtTime(r.los)}</td><td class="num">${m}m ${ss}s</td></tr>`);
+  });
+  status.textContent=rows.length+' pass(es) above '+minEl+'° in the next '+hours+' h (local time). TLE epoch age affects accuracy.';
+  $('out').style.display='';
+}
+
+$('go').addEventListener('click',predict);
+$('geo').addEventListener('click',()=>{
+  if(!navigator.geolocation){status.textContent='Geolocation not supported by this browser.';return;}
+  status.textContent='Requesting location…';
+  navigator.geolocation.getCurrentPosition(p=>{
+    $('lat').value=p.coords.latitude.toFixed(4);
+    $('lon').value=p.coords.longitude.toFixed(4);
+    if(p.coords.altitude!=null)$('hgt').value=Math.round(p.coords.altitude);
+    status.textContent='Location set — click "Predict passes".';
+  },()=>{status.textContent='Could not get location (permission denied).';});
+});
+</script>
+</body>
+</html>

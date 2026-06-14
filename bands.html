@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Frequency Band Reference (VHF to V-band) — Chart & Uses</title>
+<meta name="description" content="Quick reference table of satellite communication frequency bands: VHF, UHF, L, S, C, X, Ku, K, Ka, V band frequency ranges, IEEE designations and typical satellite uses.">
+<meta name="keywords" content="satellite frequency bands, IEEE radar bands, L band S band C band X band Ku band Ka band, frequency band chart, satellite communication frequencies">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/bands.html">
+<link rel="stylesheet" href="styles.css">
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Frequency Band Reference","applicationCategory":"ReferenceApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html">Link Budget</a>
+  <a href="doppler.html">Doppler Shift</a>
+  <a href="pass-prediction.html">Pass Predictor</a>
+  <a href="antenna.html">Antenna Gain</a>
+  <a href="bands.html" class="active">Frequency Bands</a>
+</nav>
+
+<header>
+  <h1>📻 Satellite Frequency Band Reference</h1>
+  <p>IEEE band designations, frequency ranges &amp; typical satellite uses</p>
+</header>
+
+<div class="wrap">
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card full">
+    <h2><span class="dot"></span>IEEE Radio &amp; Radar Band Designations</h2>
+    <table>
+      <thead><tr><th>Band</th><th>Frequency</th><th>Wavelength</th><th>Typical satellite use</th></tr></thead>
+      <tbody>
+        <tr><td><strong>VHF</strong></td><td class="num">30 – 300 MHz</td><td class="num">1 – 10 m</td><td>CubeSat TT&amp;C, APRS, weather sat (137 MHz APT), beacons</td></tr>
+        <tr><td><strong>UHF</strong></td><td class="num">300 MHz – 1 GHz</td><td class="num">30 cm – 1 m</td><td>CubeSat up/downlink (435–438 MHz amateur), TT&amp;C, IoT</td></tr>
+        <tr><td><strong>L</strong></td><td class="num">1 – 2 GHz</td><td class="num">15 – 30 cm</td><td>GNSS (GPS/Galileo), Iridium, Inmarsat, mobile sat phones</td></tr>
+        <tr><td><strong>S</strong></td><td class="num">2 – 4 GHz</td><td class="num">7.5 – 15 cm</td><td>LEO TT&amp;C &amp; downlink, ISS, weather, some payloads (2.0–2.3 GHz)</td></tr>
+        <tr><td><strong>C</strong></td><td class="num">4 – 8 GHz</td><td class="num">3.75 – 7.5 cm</td><td>GEO comms (rain-robust), VSAT, TV distribution</td></tr>
+        <tr><td><strong>X</strong></td><td class="num">8 – 12 GHz</td><td class="num">2.5 – 3.75 cm</td><td>EO payload downlink (8–8.4 GHz), military &amp; deep-space, radar</td></tr>
+        <tr><td><strong>Ku</strong></td><td class="num">12 – 18 GHz</td><td class="num">1.67 – 2.5 cm</td><td>DTH TV, VSAT, broadband (Starlink user 10.7–12.7 GHz)</td></tr>
+        <tr><td><strong>K</strong></td><td class="num">18 – 27 GHz</td><td class="num">1.11 – 1.67 cm</td><td>High-throughput sat (HTS), inter-satellite links</td></tr>
+        <tr><td><strong>Ka</strong></td><td class="num">27 – 40 GHz</td><td class="num">7.5 – 11 mm</td><td>HTS broadband, Starlink/OneWeb gateways, high data rate</td></tr>
+        <tr><td><strong>V</strong></td><td class="num">40 – 75 GHz</td><td class="num">4 – 7.5 mm</td><td>Next-gen HTS, inter-satellite links, feeder links</td></tr>
+        <tr><td><strong>W</strong></td><td class="num">75 – 110 GHz</td><td class="num">2.7 – 4 mm</td><td>Experimental, ISL, automotive radar (terrestrial)</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--muted);font-size:.78rem;margin-top:10px">
+      Band edges follow IEEE Std 521. ITU and waveguide letter bands differ slightly; satellite "uplink/downlink"
+      sub-bands are allocated by ITU Radio Regulations and vary by region and service.
+    </p>
+  </div>
+
+  <div class="card full">
+    <h2><span class="dot"></span>Common Satellite Up/Downlink Pairs</h2>
+    <table>
+      <thead><tr><th>Service</th><th>Uplink</th><th>Downlink</th></tr></thead>
+      <tbody>
+        <tr><td>C-band FSS</td><td class="num">5.925 – 6.425 GHz</td><td class="num">3.7 – 4.2 GHz</td></tr>
+        <tr><td>X-band (gov/EO)</td><td class="num">7.9 – 8.4 GHz</td><td class="num">7.25 – 7.75 GHz</td></tr>
+        <tr><td>Ku-band FSS</td><td class="num">14.0 – 14.5 GHz</td><td class="num">10.7 – 12.75 GHz</td></tr>
+        <tr><td>Ka-band</td><td class="num">27.5 – 31.0 GHz</td><td class="num">17.7 – 21.2 GHz</td></tr>
+        <tr><td>Amateur UHF/VHF</td><td class="num">435 – 438 MHz</td><td class="num">145.8 – 146 MHz</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <div class="article">
+      <h2>Choosing a satellite frequency band</h2>
+      <p>Lower bands (VHF/UHF/S) are easy to work with — cheap hardware, wide beams, forgiving pointing —
+      but offer limited bandwidth and are congested, so they suit telemetry and small CubeSats.
+      Higher bands (X/Ku/Ka) provide much more bandwidth for high data-rate payloads and broadband,
+      at the cost of tighter pointing, smaller beams, and greater rain attenuation (especially Ka and above).</p>
+      <p>C-band sits in a sweet spot for rain-robust GEO links, while Ku and Ka dominate modern broadband
+      constellations. As a rule, <strong>go as high in frequency as your rain margin, hardware and pointing
+      accuracy allow</strong> to maximise throughput.</p>
+      <p>Need numbers? Use the <a href="index.html" style="color:var(--accent)">link budget calculator</a>,
+      <a href="doppler.html" style="color:var(--accent)">Doppler calculator</a> and
+      <a href="antenna.html" style="color:var(--accent)">antenna gain calculator</a> on this site.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Satellite frequency band reference · VHF to W-band · IEEE designations &amp; typical uses.</footer>
+</body>
+</html>

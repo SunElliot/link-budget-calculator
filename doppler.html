@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEO Satellite Doppler Shift Calculator — Free Online Tool</title>
+<meta name="description" content="Free Doppler shift calculator for LEO satellites. Compute orbital velocity, maximum Doppler shift and Doppler rate from carrier frequency and orbit altitude, with a Doppler-vs-time pass curve.">
+<meta name="keywords" content="doppler shift calculator, satellite doppler, LEO doppler, doppler rate, orbital velocity, frequency offset, ground station tracking">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/doppler.html">
+<link rel="stylesheet" href="styles.css">
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"LEO Satellite Doppler Shift Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html">Link Budget</a>
+  <a href="doppler.html" class="active">Doppler Shift</a>
+  <a href="pass-prediction.html">Pass Predictor</a>
+  <a href="antenna.html">Antenna Gain</a>
+  <a href="bands.html">Frequency Bands</a>
+</nav>
+
+<header>
+  <h1>📡 LEO Satellite Doppler Shift Calculator</h1>
+  <p>Orbital velocity · max Doppler shift · Doppler rate · pass curve</p>
+</header>
+
+<div class="wrap">
+  <div class="preset-bar">
+    <button data-preset="uhf">CubeSat UHF 437 MHz</button>
+    <button data-preset="sband">S-band 2.2 GHz</button>
+    <button data-preset="xband">X-band 8.2 GHz</button>
+    <button data-preset="starlink">Ku 12 GHz @550 km</button>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Inputs</h2>
+      <div class="row">
+        <label>Carrier frequency</label>
+        <div class="ig">
+          <input type="number" id="freq" value="437" step="any">
+          <select id="freqUnit"><option value="MHz">MHz</option><option value="GHz">GHz</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <label>Orbit altitude<span class="hint">km (circular orbit)</span></label>
+        <input type="number" id="alt" value="550" step="any">
+      </div>
+      <div class="row">
+        <label>Elevation angle<span class="hint">deg — for instantaneous values</span></label>
+        <input type="number" id="elev" value="30" step="any">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Orbit</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">Orbital velocity</div><div class="v"><span id="r_v">–</span> <span class="u">km/s</span></div></div>
+        <div class="metric"><div class="k">Orbital period</div><div class="v"><span id="r_T">–</span> <span class="u">min</span></div></div>
+        <div class="metric"><div class="k">Max pass duration</div><div class="v"><span id="r_pass">–</span> <span class="u">min</span></div></div>
+      </div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Doppler Results</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">Max Doppler shift</div><div class="v">±<span id="r_maxdf">–</span> <span class="u">kHz</span></div></div>
+        <div class="metric"><div class="k">Peak Doppler rate (zenith)</div><div class="v"><span id="r_rate">–</span> <span class="u">Hz/s</span></div></div>
+        <div class="metric"><div class="k">Doppler @ elevation</div><div class="v"><span id="r_dfelev">–</span> <span class="u">kHz</span></div></div>
+        <div class="metric"><div class="k">Total Doppler span</div><div class="v"><span id="r_span">–</span> <span class="u">kHz</span></div></div>
+      </div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Doppler Shift vs Time (overhead pass)</h2>
+      <p style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
+        Signal arrives high (approaching, +Doppler), crosses zero at closest approach, then drops (receding, −Doppler).
+        The steepest slope at t=0 is the peak Doppler rate your receiver's tracking loop must follow.
+      </p>
+      <canvas id="chart" width="1000" height="380" style="width:100%;height:auto;display:block"></canvas>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <div class="article">
+      <h2>How Doppler shift works for satellites</h2>
+      <p>A LEO satellite moves fast (~7.5 km/s) relative to a ground station, so the received carrier
+      frequency is shifted by the radial (line-of-sight) component of that velocity. As the satellite
+      rises, it approaches you and the frequency is shifted <strong>up</strong>; at closest approach the
+      radial velocity is zero (no shift); as it sets it recedes and the frequency shifts <strong>down</strong>.</p>
+      <h2>Formulas used</h2>
+      <p>Orbital velocity: <code>v = √(μ / (Rₑ + h))</code>, μ = 398600.4418 km³/s²</p>
+      <p>Doppler shift: <code>Δf = −(ṙ / c) · f</code>, where ṙ is the range rate and c is the speed of light</p>
+      <p>This calculator models a worst-case overhead (zenith) pass, where Doppler shift and Doppler rate
+      are largest. The maximum Doppler scales linearly with carrier frequency — which is why X- and Ku-band
+      links need far wider acquisition ranges than UHF.</p>
+      <p>All computation runs locally in your browser.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Free LEO Doppler shift calculator · orbital velocity, max Doppler, Doppler rate, pass curve · nothing leaves your browser.</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value)||0;
+const c=299792.458, mu=398600.4418, RE=6371;
+const fHz=()=> num('freq')*($('freqUnit').value==='GHz'?1e9:1e6);
+
+function slant(Rs,phi){return Math.sqrt(RE*RE+Rs*Rs-2*RE*Rs*Math.cos(phi));}
+// elevation (deg) for central angle phi on overhead pass
+function elevOf(Rs,phi){const d=slant(Rs,phi);return Math.asin((Rs*Rs-RE*RE-d*d)/(2*RE*d))*180/Math.PI;}
+// central angle for a given elevation (deg) -> solve numerically
+function phiForElev(Rs,E){let lo=0,hi=Math.acos(RE/Rs);for(let i=0;i<60;i++){const m=(lo+hi)/2;(elevOf(Rs,m)>E)?lo=m:hi=m;}return (lo+hi)/2;}
+
+function compute(){
+  const h=num('alt'), Rs=RE+h, f=fHz();
+  const v=Math.sqrt(mu/Rs), w=v/Rs;
+  const T=2*Math.PI*Math.sqrt(Rs**3/mu);
+  const phiH=Math.acos(RE/Rs);                 // central angle at horizon
+  const d=phi=>slant(Rs,phi);
+  const rdot=phi=>(RE*Rs*Math.sin(phi)*w)/d(phi);
+  const df=phi=>-(rdot(phi)/c)*f;              // Hz
+
+  // max |Doppler| by sampling
+  let maxdf=0;
+  for(let p=-phiH;p<=phiH;p+=phiH/3000){const a=Math.abs(df(p));if(a>maxdf)maxdf=a;}
+  // peak Doppler rate at TCA (phi=0)
+  const dphi=1e-4, dt=dphi/w, rate0=Math.abs((df(dphi)-df(-dphi))/(2*dt));
+  // instantaneous Doppler at chosen elevation (approaching side, +)
+  const E=Math.min(Math.max(num('elev'),0),90);
+  const pE=phiForElev(Rs,E);
+  const dfE=Math.abs(df(pE));
+  // max pass duration = horizon-to-horizon time of overhead pass
+  const passMin=(2*phiH/w)/60;
+
+  const f2=x=>x.toFixed(2);
+  $('r_v').textContent=f2(v);
+  $('r_T').textContent=f2(T/60);
+  $('r_pass').textContent=f2(passMin);
+  $('r_maxdf').textContent=f2(maxdf/1e3);
+  $('r_rate').textContent=rate0>=1000?(rate0/1000).toFixed(2)+'k':rate0.toFixed(0);
+  $('r_dfelev').textContent='±'+f2(dfE/1e3);
+  $('r_span').textContent=f2(2*maxdf/1e3);
+  drawChart(Rs,w,phiH,df);
+}
+
+function drawChart(Rs,w,phiH,df){
+  const cv=$('chart'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const pl=60,pr=20,pt=16,pb=40,pw=W-pl-pr,ph=H-pt-pb;
+  ctx.clearRect(0,0,W,H);
+  const tMax=phiH/w;                            // seconds from TCA to horizon
+  const pts=[];
+  for(let i=-200;i<=200;i++){const phi=phiH*i/200;pts.push([phi/w, df(phi)/1e3]);}
+  const ys=pts.map(p=>p[1]); let ymin=Math.min(...ys),ymax=Math.max(...ys);
+  const pad=(ymax-ymin)*0.1||1; ymin-=pad; ymax+=pad;
+  const x=t=>pl+((t+tMax)/(2*tMax))*pw;
+  const y=v=>pt+(1-(v-ymin)/(ymax-ymin))*ph;
+  ctx.strokeStyle='#272e3a';ctx.fillStyle='#8b949e';ctx.font='12px sans-serif';
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let i=0;i<=6;i++){const val=ymin+(ymax-ymin)*i/6,yy=y(val);
+    ctx.beginPath();ctx.moveTo(pl,yy);ctx.lineTo(W-pr,yy);ctx.stroke();
+    ctx.fillText(val.toFixed(0),pl-8,yy);}
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let i=0;i<=6;i++){const t=-tMax+2*tMax*i/6,xx=x(t);
+    ctx.beginPath();ctx.moveTo(xx,pt);ctx.lineTo(xx,H-pb);ctx.stroke();
+    ctx.fillText((t/60).toFixed(1),xx,H-pb+8);}
+  ctx.fillText('Time from closest approach (min)',pl+pw/2,H-pb+22);
+  ctx.save();ctx.translate(14,pt+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('Doppler shift (kHz)',0,0);ctx.restore();
+  if(0>=ymin&&0<=ymax){ctx.strokeStyle='#ef4444';ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(pl,y(0));ctx.lineTo(W-pr,y(0));ctx.stroke();ctx.setLineDash([]);}
+  ctx.strokeStyle='#3b82f6';ctx.lineWidth=2.5;ctx.beginPath();
+  pts.forEach((p,i)=>{const xx=x(p[0]),yy=y(p[1]);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});
+  ctx.stroke();
+}
+
+const presets={
+  uhf:{freq:437,freqUnit:'MHz',alt:550,elev:30},
+  sband:{freq:2.2,freqUnit:'GHz',alt:550,elev:30},
+  xband:{freq:8.2,freqUnit:'GHz',alt:550,elev:30},
+  starlink:{freq:12,freqUnit:'GHz',alt:550,elev:40},
+};
+document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
+  const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+compute();
+</script>
+</body>
+</html>

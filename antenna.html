@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parabolic Antenna Gain & Beamwidth Calculator — Free Online Tool</title>
+<meta name="description" content="Free parabolic dish antenna calculator. Compute antenna gain (dBi), half-power beamwidth (HPBW), effective aperture and far-field distance from diameter, frequency and efficiency.">
+<meta name="keywords" content="antenna gain calculator, parabolic dish gain, beamwidth calculator, HPBW, effective aperture, far field distance, dish antenna dBi">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/antenna.html">
+<link rel="stylesheet" href="styles.css">
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Parabolic Antenna Gain & Beamwidth Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a href="index.html">Link Budget</a>
+  <a href="doppler.html">Doppler Shift</a>
+  <a href="pass-prediction.html">Pass Predictor</a>
+  <a href="antenna.html" class="active">Antenna Gain</a>
+  <a href="bands.html">Frequency Bands</a>
+</nav>
+
+<header>
+  <h1>📶 Parabolic Antenna Gain &amp; Beamwidth Calculator</h1>
+  <p>Gain (dBi) · half-power beamwidth · effective aperture · far-field distance</p>
+</header>
+
+<div class="wrap">
+  <div class="preset-bar">
+    <button data-preset="s3m">3 m S-band station</button>
+    <button data-preset="ku06">0.6 m Ku VSAT</button>
+    <button data-preset="x45">4.5 m X-band</button>
+    <button data-preset="ka12">1.2 m Ka-band</button>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Inputs</h2>
+      <div class="row">
+        <label>Dish diameter<span class="hint">metres</span></label>
+        <input type="number" id="dia" value="3" step="any">
+      </div>
+      <div class="row">
+        <label>Frequency</label>
+        <div class="ig">
+          <input type="number" id="freq" value="2.2" step="any">
+          <select id="freqUnit"><option value="GHz">GHz</option><option value="MHz">MHz</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <label>Aperture efficiency<span class="hint">0–1, typ. 0.55–0.65</span></label>
+        <input type="number" id="eff" value="0.55" step="any">
+      </div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Results</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">Antenna gain</div><div class="v"><span id="r_gain">–</span> <span class="u">dBi</span></div></div>
+        <div class="metric"><div class="k">Half-power beamwidth</div><div class="v"><span id="r_hpbw">–</span> <span class="u">deg</span></div></div>
+        <div class="metric"><div class="k">Wavelength</div><div class="v"><span id="r_lam">–</span> <span class="u">cm</span></div></div>
+        <div class="metric"><div class="k">Effective aperture</div><div class="v"><span id="r_aeff">–</span> <span class="u">m²</span></div></div>
+        <div class="metric"><div class="k">Far-field distance</div><div class="v"><span id="r_ff">–</span> <span class="u">m</span></div></div>
+        <div class="metric"><div class="k">First-null beamwidth</div><div class="v"><span id="r_fnbw">–</span> <span class="u">deg</span></div></div>
+      </div>
+      <div class="note" id="ptnote"></div>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <div class="article">
+      <h2>Parabolic antenna equations</h2>
+      <p><strong>Gain:</strong> <code>G = η · (π·D / λ)²</code> &nbsp;→&nbsp; G(dBi) = 10·log₁₀(G)</p>
+      <p><strong>Half-power beamwidth:</strong> <code>HPBW ≈ 70 · λ / D</code> degrees (uniform-ish illumination)</p>
+      <p><strong>First-null beamwidth:</strong> <code>FNBW ≈ 2.44 · 70 · λ / D ≈ 1.22·... </code> (≈ 2.34 × HPBW for a circular aperture)</p>
+      <p><strong>Effective aperture:</strong> <code>A_eff = η · π·(D/2)²</code></p>
+      <p><strong>Far-field (Fraunhofer) distance:</strong> <code>R = 2·D² / λ</code> — measure or point beyond this range</p>
+      <p>where λ = c/f is the wavelength. The narrower the beam, the higher the gain — but also the tighter
+      your pointing accuracy must be. A good rule of thumb is to keep pointing error below ~1/10 of the HPBW
+      to avoid significant pointing loss.</p>
+      <p>All computation runs locally in your browser.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Free parabolic antenna calculator · gain, beamwidth, aperture, far-field · nothing leaves your browser.</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value)||0;
+const C=299792458; // m/s
+
+function compute(){
+  const D=num('dia');
+  const f=num('freq')*($('freqUnit').value==='GHz'?1e9:1e6);
+  const eff=Math.min(Math.max(num('eff'),0.001),1);
+  const lam=f>0?C/f:0;
+  const G=(lam>0&&D>0)?eff*(Math.PI*D/lam)**2:0;
+  const gdbi=G>0?10*Math.log10(G):0;
+  const hpbw=(lam>0&&D>0)?70*lam/D:0;
+  const fnbw=2.34*hpbw;
+  const aeff=eff*Math.PI*(D/2)**2;
+  const ff=lam>0?2*D*D/lam:0;
+  const f2=x=>x.toFixed(2);
+  $('r_gain').textContent=f2(gdbi);
+  $('r_hpbw').textContent=f2(hpbw);
+  $('r_lam').textContent=f2(lam*100);
+  $('r_aeff').textContent=f2(aeff);
+  $('r_ff').textContent=ff>=1000?(ff/1000).toFixed(2)+'k':f2(ff);
+  $('r_fnbw').textContent=f2(fnbw);
+  $('ptnote').textContent='Keep pointing error below ~'+f2(hpbw/10)+'° (1/10 of HPBW) to limit pointing loss.';
+}
+const presets={
+  s3m:{dia:3,freq:2.2,freqUnit:'GHz',eff:0.55},
+  ku06:{dia:0.6,freq:12,freqUnit:'GHz',eff:0.6},
+  x45:{dia:4.5,freq:8.2,freqUnit:'GHz',eff:0.6},
+  ka12:{dia:1.2,freq:26,freqUnit:'GHz',eff:0.6},
+};
+document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
+  const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+compute();
+</script>
+</body>
+</html>

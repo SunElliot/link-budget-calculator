@@ -36,6 +36,11 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
        background:var(--bg);color:var(--txt);line-height:1.5}
+  .topnav{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;padding:10px;
+          background:#161b22;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+  .topnav a{color:var(--muted);text-decoration:none;padding:7px 14px;border-radius:7px;font-size:.88rem;white-space:nowrap}
+  .topnav a:hover{color:var(--txt);background:#21262d}
+  .topnav a.active{color:var(--accent);background:rgba(59,130,246,.12)}
   header{padding:28px 20px 12px;text-align:center;border-bottom:1px solid var(--line)}
   header h1{margin:0 0 6px;font-size:1.5rem}
   header p{margin:0;color:var(--muted);font-size:.92rem}
@@ -82,6 +87,13 @@
 </style>
 </head>
 <body>
+<nav class="topnav">
+  <a href="index.html" class="active">Link Budget</a>
+  <a href="doppler.html">Doppler Shift</a>
+  <a href="pass-prediction.html">Pass Predictor</a>
+  <a href="antenna.html">Antenna Gain</a>
+  <a href="bands.html">Frequency Bands</a>
+</nav>
 <header>
   <h1>🛰️ Satellite Link Budget Calculator</h1>
   <p>LEO / Smallsat &amp; ground-station link analysis — EIRP, FSPL, G/T, C/N₀, Eb/N₀ &amp; margin</p>
