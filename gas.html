@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atmospheric Gaseous Attenuation Calculator (ITU-R P.676) — Free Tool</title>
+<meta name="description" content="Free clear-air atmospheric gaseous attenuation calculator using ITU-R P.676. Compute oxygen and water-vapour specific attenuation, plus zenith and slant-path loss vs frequency, elevation and humidity.">
+<meta name="keywords" content="gaseous attenuation calculator, atmospheric attenuation, ITU-R P.676, oxygen attenuation, water vapour attenuation, clear air loss, zenith attenuation, slant path">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/gas.html">
+<link rel="stylesheet" href="styles.css">
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Atmospheric Gaseous Attenuation Calculator (ITU-R P.676)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html">🛰 SatTools</a>
+  <div class="pills">
+    <a href="link-budget.html">Link Budget</a>
+    <a href="doppler.html">Doppler</a>
+    <a href="pass-prediction.html">Pass</a>
+    <a href="antenna.html">Antenna</a>
+    <a href="gt.html">G/T</a>
+    <a href="rain.html">Rain</a>
+    <a href="gas.html" class="active">Gas</a>
+    <a href="bands.html">Bands</a>
+  </div>
+</nav>
+
+<header>
+  <h1>🌫️ Atmospheric Gaseous Attenuation</h1>
+  <p>ITU-R P.676 clear-air loss — oxygen + water vapour, specific / zenith / slant path</p>
+</header>
+
+<div class="wrap">
+  <div class="preset-bar">
+    <button data-preset="std">Standard (15°C, 7.5 g/m³)</button>
+    <button data-preset="tropical">Tropical humid</button>
+    <button data-preset="dry">Cold &amp; dry</button>
+    <button data-preset="alt">High-altitude site</button>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Link</h2>
+      <div class="row"><label>Frequency<span class="hint">GHz (1–54)</span></label><input type="number" id="freq" value="20" step="any"></div>
+      <div class="row"><label>Elevation angle<span class="hint">deg (≥5°)</span></label><input type="number" id="elev" value="30" step="any"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Surface Atmosphere</h2>
+      <div class="row"><label>Pressure<span class="hint">hPa (total, ≈1013 at sea level)</span></label><input type="number" id="p" value="1013.25" step="any"></div>
+      <div class="row"><label>Temperature<span class="hint">°C</span></label><input type="number" id="t" value="15" step="any"></div>
+      <div class="row"><label>Water-vapour density<span class="hint">g/m³ (ITU reference = 7.5)</span></label><input type="number" id="rho" value="7.5" step="any"></div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Results</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">Oxygen γ_o</div><div class="v"><span id="r_go">–</span> <span class="u">dB/km</span></div></div>
+        <div class="metric"><div class="k">Water-vapour γ_w</div><div class="v"><span id="r_gw">–</span> <span class="u">dB/km</span></div></div>
+        <div class="metric"><div class="k">Total specific γ</div><div class="v"><span id="r_gt">–</span> <span class="u">dB/km</span></div></div>
+        <div class="metric"><div class="k">Zenith attenuation</div><div class="v"><span id="r_zen">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Slant-path @ elevation</div><div class="v"><span id="r_slant">–</span> <span class="u">dB</span></div></div>
+      </div>
+      <div class="note" id="note"></div>
+      <details>
+        <summary>Equivalent heights &amp; breakdown</summary>
+        <table id="bd"></table>
+      </details>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <div class="article">
+      <h2>About gaseous (clear-air) attenuation</h2>
+      <p>Even with no rain or cloud, the atmosphere absorbs radio energy through two gases:
+      <strong>oxygen</strong> (with a strong absorption complex around 60 GHz and weaker effects below)
+      and <strong>water vapour</strong> (with a notable absorption line at <strong>22.235 GHz</strong>).
+      This calculator implements the <strong>ITU-R P.676</strong> Annex 2 method.</p>
+      <h2>What it computes</h2>
+      <p><strong>Specific attenuation</strong> γ = γ_o + γ_w (dB/km) at your surface conditions, then the
+      <strong>zenith</strong> attenuation via equivalent heights (A = γ_o·h_o + γ_w·h_w) and the
+      <strong>slant-path</strong> loss A / sin(θ) for elevation angle θ.</p>
+      <p>Gaseous loss is small compared with rain at Ku/Ka-band but is not negligible — especially near the
+      22 GHz water line and for low elevation angles or humid sites. Add it alongside the
+      <a href="rain.html" style="color:var(--accent)">rain-fade</a> term in your
+      <a href="link-budget.html" style="color:var(--accent)">link budget</a>. This implementation is valid
+      for 1–54 GHz (below the 60 GHz oxygen complex). All computation runs locally in your browser.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Free atmospheric gaseous attenuation calculator · ITU-R P.676 · oxygen + water vapour · runs in your browser.</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value)||0;
+function phi(rp,rt,a,b,c,d){return Math.pow(rp,a)*Math.pow(rt,b)*Math.exp(c*(1-rp)+d*(1-rt));}
+function gammaO(f,p,t){
+  const rp=p/1013, rt=288/(273+t);
+  const x1=phi(rp,rt,0.0717,-1.8132,0.0156,-1.6515);
+  const x2=phi(rp,rt,0.5146,-4.6368,-0.1921,-5.7416);
+  const x3=phi(rp,rt,0.3414,-6.5851,0.2130,-8.5854);
+  return (7.2*Math.pow(rt,2.8)/(f*f+0.34*rp*rp*Math.pow(rt,1.6))
+        + 0.62*x3/(Math.pow(54-f,1.16*x1)+0.83*x2))*f*f*rp*rp*1e-3;
+}
+function g(f,fi){return 1+Math.pow((f-fi)/(f+fi),2);}
+function gammaW(f,p,t,rho){
+  const rp=p/1013, rt=288/(273+t);
+  const n1=0.955*rp*Math.pow(rt,0.68)+0.006*rho;
+  const n2=0.735*rp*Math.pow(rt,0.5)+0.0353*Math.pow(rt,4)*rho;
+  const S=
+     3.98*n1*Math.exp(2.23*(1-rt))/(Math.pow(f-22.235,2)+9.42*n1*n1)*g(f,22)
+   +11.96*n1*Math.exp(0.70*(1-rt))/(Math.pow(f-183.31,2)+11.14*n1*n1)
+   +0.081*n1*Math.exp(6.44*(1-rt))/(Math.pow(f-321.226,2)+6.29*n1*n1)
+   +3.660*n1*Math.exp(1.60*(1-rt))/(Math.pow(f-325.153,2)+9.22*n1*n1)
+   +25.37*n1*Math.exp(1.09*(1-rt))/Math.pow(f-380,2)
+   +17.40*n1*Math.exp(1.46*(1-rt))/Math.pow(f-448,2)
+   +844.6*n1*Math.exp(0.17*(1-rt))/Math.pow(f-557,2)*g(f,557)
+   +290.0*n1*Math.exp(0.41*(1-rt))/Math.pow(f-752,2)*g(f,752)
+   +8.3328e4*n2*Math.exp(0.99*(1-rt))/Math.pow(f-1780,2)*g(f,1780);
+  return S*f*f*Math.pow(rt,2.5)*rho*1e-4;
+}
+function heights(f,p,t){
+  const rp=p/1013;
+  const ho=6.1/(1+0.17*Math.pow(rp,-1.1));
+  const sw=1.013/(1+Math.exp(-8.6*(rp-0.57)));
+  const hw=1.66*(1+1.39*sw/(Math.pow(f-22.235,2)+2.56*sw)
+                  +3.37*sw/(Math.pow(f-183.31,2)+4.69*sw)
+                  +1.58*sw/(Math.pow(f-325.1,2)+2.89*sw));
+  return {ho,hw};
+}
+function compute(){
+  const f=Math.min(Math.max(num('freq'),1),54);
+  const th=Math.max(num('elev'),3);
+  const p=num('p'), t=num('t'), rho=Math.max(num('rho'),0);
+  const go=gammaO(f,p,t), gw=gammaW(f,p,t,rho), {ho,hw}=heights(f,p,t);
+  const zen=go*ho+gw*hw;
+  const slant=zen/Math.sin(th*Math.PI/180);
+  const f3=x=>x.toFixed(4), f2=x=>x.toFixed(3);
+  $('r_go').textContent=f3(go);
+  $('r_gw').textContent=f3(gw);
+  $('r_gt').textContent=f3(go+gw);
+  $('r_zen').textContent=f2(zen);
+  $('r_slant').textContent=f2(slant);
+  $('note').textContent='Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).';
+  const rows=[
+    ['Oxygen specific γ_o',f3(go)+' dB/km'],
+    ['Water-vapour specific γ_w',f3(gw)+' dB/km'],
+    ['Oxygen equivalent height h_o',ho.toFixed(3)+' km'],
+    ['Water-vapour equivalent height h_w',hw.toFixed(3)+' km'],
+    ['Zenith attenuation γ_o·h_o + γ_w·h_w',f2(zen)+' dB'],
+    ['Slant-path (÷ sin θ)',f2(slant)+' dB'],
+  ];
+  $('bd').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('');
+}
+const presets={
+  std:{freq:20,elev:30,p:1013.25,t:15,rho:7.5},
+  tropical:{freq:20,elev:30,p:1013.25,t:28,rho:19.5},
+  dry:{freq:20,elev:30,p:1013.25,t:-5,rho:1.5},
+  alt:{freq:20,elev:30,p:750,t:5,rho:3},
+};
+document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
+  const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+compute();
+</script>
+</body>
+</html>
