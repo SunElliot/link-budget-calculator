@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BER vs Eb/N0 Curve Calculator — Modulation Bit Error Rate Plot</title>
+<meta name="description" content="Free BER vs Eb/N0 calculator and plot for BPSK, QPSK, 8PSK, 16PSK, 16/64/256-QAM, FSK and DBPSK over AWGN. Compare modulation bit error rate curves and read required Eb/N0 for any target BER.">
+<meta name="keywords" content="BER calculator, bit error rate, Eb/N0, BER curve, BPSK QPSK QAM PSK BER, modulation comparison, AWGN, bit error rate plot">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/ber.html">
+<link rel="stylesheet" href="styles.css">
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"BER vs Eb/N0 Curve Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html">🛰 SatTools</a>
+  <div class="pills">
+    <a href="link-budget.html">Link Budget</a>
+    <a href="doppler.html">Doppler</a>
+    <a href="pass-prediction.html">Pass</a>
+    <a href="antenna.html">Antenna</a>
+    <a href="gt.html">G/T</a>
+    <a href="rain.html">Rain</a>
+    <a href="gas.html">Gas</a>
+    <a href="ber.html" class="active">BER</a>
+    <a href="bands.html">Bands</a>
+  </div>
+</nav>
+
+<header>
+  <h1>📉 BER vs Eb/N₀ Curves</h1>
+  <p>Bit error rate for BPSK · QPSK · M-PSK · M-QAM · FSK · DBPSK over AWGN</p>
+</header>
+
+<div class="wrap">
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Controls</h2>
+      <div class="row"><label>Target BER<span class="hint">draws a reference line</span></label><input type="number" id="target" value="1e-6" step="any"></div>
+      <div class="row"><label>Max Eb/N₀<span class="hint">dB, x-axis range</span></label><input type="number" id="xmax" value="20" step="any"></div>
+      <p style="color:var(--muted);font-size:.8rem;margin:12px 0 6px">Show modulations:</p>
+      <div id="toggles"></div>
+    </div>
+
+    <div class="card results" style="grid-column:span 1">
+      <h2><span class="dot"></span>Required Eb/N₀ @ target BER</h2>
+      <table id="reqtab"><thead><tr><th>Modulation</th><th>bits/sym</th><th class="num">Eb/N₀ (dB)</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>BER Curves</h2>
+      <canvas id="chart" width="1000" height="540" style="width:100%;height:auto;display:block"></canvas>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <div class="article">
+      <h2>Reading a BER curve</h2>
+      <p>A <strong>BER vs Eb/N₀</strong> curve shows the theoretical bit error rate of a modulation over an
+      additive white Gaussian noise (AWGN) channel as a function of the energy-per-bit to noise-density
+      ratio. Lower and further left is better. To hit a target BER (say 10⁻⁶), read across from the BER axis
+      to a curve, then down to the required Eb/N₀ — that is the number you feed into a
+      <a href="link-budget.html" style="color:var(--accent)">link budget</a> as "required Eb/N₀".</p>
+      <h2>Formulas (AWGN, uncoded)</h2>
+      <p><strong>BPSK / QPSK:</strong> <code>P_b = Q(√(2·Eb/N0))</code></p>
+      <p><strong>M-PSK:</strong> <code>P_b ≈ (2/k)·Q(√(2k·Eb/N0)·sin(π/M))</code>, k = log₂M</p>
+      <p><strong>M-QAM:</strong> <code>P_b ≈ (4/k)(1−1/√M)·Q(√(3k/(M−1)·Eb/N0))</code></p>
+      <p><strong>Coherent FSK:</strong> <code>P_b = Q(√(Eb/N0))</code> &nbsp; <strong>DBPSK:</strong> <code>P_b = ½·e^(−Eb/N0)</code></p>
+      <p>where Q(·) is the Gaussian Q-function. Higher-order schemes carry more bits per symbol (better
+      spectral efficiency) but need a higher Eb/N₀ for the same BER. Forward error correction (e.g. LDPC in
+      DVB-S2) shifts these curves sharply to the left. All computation runs locally in your browser.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Free BER vs Eb/N₀ curve plotter · BPSK/QPSK/PSK/QAM/FSK over AWGN · runs entirely in your browser.</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+function erfc(x){
+  const z=Math.abs(x), t=1/(1+0.5*z);
+  const tau=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+
+    t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));
+  return x>=0?tau:2-tau;
+}
+const Q=x=>0.5*erfc(x/Math.SQRT2);
+const g=db=>Math.pow(10,db/10);
+
+const MODS=[
+  {id:'bpsk', name:'BPSK / QPSK', k:1, color:'#2563eb', f:db=>Q(Math.sqrt(2*g(db)))},
+  {id:'8psk', name:'8-PSK',       k:3, color:'#16a34a', f:db=>(2/3)*Q(Math.sqrt(6*g(db))*Math.sin(Math.PI/8))},
+  {id:'16psk',name:'16-PSK',      k:4, color:'#0891b2', f:db=>(2/4)*Q(Math.sqrt(8*g(db))*Math.sin(Math.PI/16))},
+  {id:'16qam',name:'16-QAM',      k:4, color:'#d97706', f:db=>0.75*Q(Math.sqrt(0.8*g(db)))},
+  {id:'64qam',name:'64-QAM',      k:6, color:'#dc2626', f:db=>(4/6)*(1-1/8)*Q(Math.sqrt((18/63)*g(db)))},
+  {id:'256qam',name:'256-QAM',    k:8, color:'#7c3aed', f:db=>(4/8)*(1-1/16)*Q(Math.sqrt((24/255)*g(db)))},
+  {id:'bfsk',name:'BFSK (coh.)',  k:1, color:'#db2777', f:db=>Q(Math.sqrt(g(db)))},
+  {id:'dbpsk',name:'DBPSK',       k:1, color:'#65a30d', f:db=>0.5*Math.exp(-g(db))},
+];
+const shown={bpsk:true,'8psk':true,'16qam':true,'64qam':true,'256qam':false,'16psk':false,bfsk:false,dbpsk:false};
+
+// build toggles
+$('toggles').innerHTML=MODS.map(m=>
+  `<label style="display:flex;align-items:center;gap:8px;font-size:.85rem;margin:5px 0;cursor:pointer">
+     <input type="checkbox" data-id="${m.id}" ${shown[m.id]?'checked':''} style="width:auto">
+     <span style="display:inline-block;width:18px;height:3px;background:${m.color};border-radius:2px"></span>${m.name}
+   </label>`).join('');
+$('toggles').querySelectorAll('input').forEach(c=>c.addEventListener('change',e=>{shown[e.target.dataset.id]=e.target.checked;draw();}));
+
+const Y_MIN_EXP=-10; // 1e-10 floor
+function reqEbN0(f,target){ // bisection
+  if(target<=0)return NaN;
+  let lo=-5,hi=50; if(f(hi)>target)return NaN;
+  for(let i=0;i<60;i++){const m=(lo+hi)/2;(f(m)>target)?lo=m:hi=m;}
+  return (lo+hi)/2;
+}
+
+function draw(){
+  const cv=$('chart'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const pl=64,pr=20,pt=18,pb=44,pw=W-pl-pr,ph=H-pt-pb;
+  const xmax=Math.max(num('xmax'),4);
+  const target=parseFloat($('target').value);
+  ctx.clearRect(0,0,W,H);
+  const x=db=>pl+(db/xmax)*pw;
+  const y=ber=>{const lv=Math.log10(Math.min(Math.max(ber,Math.pow(10,Y_MIN_EXP)),1));return pt+(-lv/(-Y_MIN_EXP))*ph;};
+
+  // y grid (decades)
+  ctx.font='12px -apple-system,Segoe UI,Roboto,sans-serif';
+  ctx.strokeStyle='#e6e8ec';ctx.fillStyle='#697086';ctx.lineWidth=1;
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let e=0;e>=Y_MIN_EXP;e--){const yy=y(Math.pow(10,e));
+    ctx.beginPath();ctx.moveTo(pl,yy);ctx.lineTo(W-pr,yy);ctx.stroke();
+    ctx.fillText('10'+sup(e),pl-8,yy);}
+  // x grid
+  ctx.textAlign='center';ctx.textBaseline='top';
+  const xstep=xmax<=12?2:xmax<=24?4:5;
+  for(let d=0;d<=xmax+0.001;d+=xstep){const xx=x(d);
+    ctx.beginPath();ctx.moveTo(xx,pt);ctx.lineTo(xx,H-pb);ctx.stroke();
+    ctx.fillText(d.toFixed(0),xx,H-pb+8);}
+  ctx.fillText('Eb/N₀ (dB)',pl+pw/2,H-pb+24);
+  ctx.save();ctx.translate(16,pt+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('Bit Error Rate (BER)',0,0);ctx.restore();
+
+  // target line
+  if(target>0 && target<1){
+    ctx.strokeStyle='#94a3b8';ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(pl,y(target));ctx.lineTo(W-pr,y(target));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle='#64748b';ctx.textAlign='left';ctx.textBaseline='bottom';
+    ctx.fillText('target '+target.toExponential(0),pl+6,y(target)-3);
+  }
+
+  // curves
+  MODS.forEach(m=>{
+    if(!shown[m.id])return;
+    ctx.strokeStyle=m.color;ctx.lineWidth=2.2;ctx.beginPath();let started=false;
+    for(let d=0;d<=xmax;d+=xmax/600){
+      const b=m.f(d); if(b>1) continue;
+      const xx=x(d),yy=y(b);
+      if(!started){ctx.moveTo(xx,yy);started=true;}else ctx.lineTo(xx,yy);
+    }
+    ctx.stroke();
+  });
+
+  // required-Eb/N0 table
+  const tb=$('reqtab').querySelector('tbody');tb.innerHTML='';
+  MODS.filter(m=>shown[m.id]).forEach(m=>{
+    const r=reqEbN0(m.f,target);
+    tb.insertAdjacentHTML('beforeend',
+      `<tr><td><span style="display:inline-block;width:12px;height:12px;background:${m.color};border-radius:3px;vertical-align:-1px;margin-right:6px"></span>${m.name}</td><td>${m.k}</td><td class="num">${isFinite(r)?r.toFixed(2):'—'}</td></tr>`);
+  });
+}
+function num(id){return parseFloat($(id).value)||0;}
+function sup(e){ // superscript for exponent incl. minus
+  const map={'-':'⁻','0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+  return String(e).split('').map(c=>map[c]||c).join('');
+}
+document.querySelectorAll('#target,#xmax').forEach(el=>el.addEventListener('input',draw));
+draw();
+</script>
+</body>
+</html>
