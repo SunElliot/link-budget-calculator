@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sunelliot.github.io/link-budget-calculator/sitemap.xml
