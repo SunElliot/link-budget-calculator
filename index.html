@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Satellite Link Budget Calculator (LEO / Smallsat) — Free Online Tool</title>
+<meta name="description" content="Free online satellite link budget calculator for LEO smallsats and ground stations. Compute EIRP, free space path loss (FSPL), G/T, C/N0, Eb/N0 and link margin instantly.">
+<meta name="keywords" content="link budget calculator, satellite link budget, EIRP calculator, free space path loss, FSPL, Eb/N0, C/N0, G/T, LEO satellite, smallsat, cubesat communication, ground station">
+<link rel="canonical" href="https://example.com/">
+<meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
+<meta property="og:description" content="Compute EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin for satellite links instantly.">
+<meta property="og:type" content="website">
+
+<!-- Google AdSense (replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID) -->
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+
+<!-- Structured data for SEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Satellite Link Budget Calculator",
+  "applicationCategory": "EngineeringApplication",
+  "operatingSystem": "Any",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "description": "Free online satellite link budget calculator for LEO smallsats: EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin."
+}
+</script>
+
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --line:#272e3a; --txt:#e6edf3; --muted:#8b949e;
+    --accent:#3b82f6; --good:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--txt);line-height:1.5}
+  header{padding:28px 20px 12px;text-align:center;border-bottom:1px solid var(--line)}
+  header h1{margin:0 0 6px;font-size:1.5rem}
+  header p{margin:0;color:var(--muted);font-size:.92rem}
+  .wrap{max-width:1080px;margin:0 auto;padding:20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .card h2{margin:0 0 14px;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+  .card h2 .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0}
+  .row label{flex:1;font-size:.9rem;color:var(--txt)}
+  .row .hint{display:block;color:var(--muted);font-size:.72rem;margin-top:1px}
+  .row input,.row select{width:130px;padding:7px 9px;background:#0d1117;color:var(--txt);
+       border:1px solid var(--line);border-radius:7px;font-size:.9rem;text-align:right}
+  .row select{text-align:left;width:130px}
+  .ig{display:flex;gap:6px;width:130px}
+  .ig input{width:80px}
+  .ig select{width:auto;flex:1;min-width:0}
+  .results{grid-column:1 / -1}
+  .resgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .metric{background:#0d1117;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .metric .k{font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .metric .v{font-size:1.35rem;font-weight:600;margin-top:3px}
+  .metric .u{font-size:.8rem;color:var(--muted);font-weight:400}
+  .margin-box{margin-top:16px;padding:16px;border-radius:10px;text-align:center;font-weight:600;font-size:1.1rem}
+  .margin-good{background:rgba(34,197,94,.12);border:1px solid var(--good);color:var(--good)}
+  .margin-bad{background:rgba(239,68,68,.12);border:1px solid var(--bad);color:var(--bad)}
+  .margin-warn{background:rgba(245,158,11,.12);border:1px solid var(--warn);color:var(--warn)}
+  details{margin-top:14px;background:#0d1117;border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+  details summary{cursor:pointer;color:var(--accent);font-size:.9rem}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.85rem}
+  td{padding:5px 4px;border-bottom:1px solid var(--line)}
+  td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .adslot{margin:18px 0;min-height:90px;display:flex;align-items:center;justify-content:center;
+          background:var(--card);border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:.8rem}
+  .preset-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;justify-content:center}
+  .preset-bar button{background:var(--card);border:1px solid var(--line);color:var(--txt);
+       padding:7px 13px;border-radius:20px;font-size:.83rem;cursor:pointer}
+  .preset-bar button:hover{border-color:var(--accent);color:var(--accent)}
+  footer{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 20px;border-top:1px solid var(--line)}
+  .article{color:var(--muted);font-size:.9rem;line-height:1.7;margin-top:8px}
+  .article h2{color:var(--txt);font-size:1.1rem;margin-top:22px}
+  .article code{background:#0d1117;padding:2px 6px;border-radius:5px;color:var(--txt)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🛰️ Satellite Link Budget Calculator</h1>
+  <p>LEO / Smallsat &amp; ground-station link analysis — EIRP, FSPL, G/T, C/N₀, Eb/N₀ &amp; margin</p>
+</header>
+
+<div class="wrap">
+
+  <div class="preset-bar">
+    <button data-preset="leo-s">LEO S-band downlink</button>
+    <button data-preset="cubesat-uhf">CubeSat UHF</button>
+    <button data-preset="leo-x">LEO X-band payload</button>
+    <button data-preset="geo-ku">GEO Ku-band</button>
+  </div>
+
+  <div class="adslot">Ad placeholder — paste your AdSense ad unit here</div>
+
+  <div class="grid">
+
+    <!-- TRANSMITTER -->
+    <div class="card">
+      <h2><span class="dot"></span>Transmitter</h2>
+      <div class="row">
+        <label>Transmit power<span class="hint">RF output power</span></label>
+        <div class="ig">
+          <input type="number" id="txPower" value="2" step="any">
+          <select id="txPowerUnit"><option value="W">W</option><option value="dBW">dBW</option><option value="dBm">dBm</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <label>Tx antenna gain<span class="hint">dBi</span></label>
+        <input type="number" id="txGain" value="6" step="any">
+      </div>
+      <div class="row">
+        <label>Tx line / feeder loss<span class="hint">dB</span></label>
+        <input type="number" id="txLoss" value="1" step="any">
+      </div>
+    </div>
+
+    <!-- PATH -->
+    <div class="card">
+      <h2><span class="dot"></span>Propagation Path</h2>
+      <div class="row">
+        <label>Frequency</label>
+        <div class="ig">
+          <input type="number" id="freq" value="2200" step="any">
+          <select id="freqUnit"><option value="MHz">MHz</option><option value="GHz">GHz</option><option value="kHz">kHz</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <label>Slant range / distance<span class="hint">km</span></label>
+        <input type="number" id="dist" value="2000" step="any">
+      </div>
+      <div class="row">
+        <label>Atmospheric loss<span class="hint">dB</span></label>
+        <input type="number" id="atmLoss" value="0.5" step="any">
+      </div>
+      <div class="row">
+        <label>Rain loss<span class="hint">dB</span></label>
+        <input type="number" id="rainLoss" value="0" step="any">
+      </div>
+      <div class="row">
+        <label>Polarization loss<span class="hint">dB</span></label>
+        <input type="number" id="polLoss" value="0.5" step="any">
+      </div>
+      <div class="row">
+        <label>Pointing loss<span class="hint">dB</span></label>
+        <input type="number" id="pointLoss" value="0.5" step="any">
+      </div>
+    </div>
+
+    <!-- RECEIVER -->
+    <div class="card">
+      <h2><span class="dot"></span>Receiver</h2>
+      <div class="row">
+        <label>Rx antenna gain<span class="hint">dBi</span></label>
+        <input type="number" id="rxGain" value="30" step="any">
+      </div>
+      <div class="row">
+        <label>System noise temperature<span class="hint">Kelvin (incl. LNA, sky, feed)</span></label>
+        <input type="number" id="sysTemp" value="200" step="any">
+      </div>
+      <div class="row">
+        <label>Rx line loss before LNA<span class="hint">dB</span></label>
+        <input type="number" id="rxLoss" value="0.5" step="any">
+      </div>
+    </div>
+
+    <!-- LINK / MODEM -->
+    <div class="card">
+      <h2><span class="dot"></span>Data Link / Modem</h2>
+      <div class="row">
+        <label>Data rate</label>
+        <div class="ig">
+          <input type="number" id="rate" value="1" step="any">
+          <select id="rateUnit"><option value="Mbps">Mbps</option><option value="kbps">kbps</option><option value="bps">bps</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <label>Modulation / coding<span class="hint">auto-sets required Eb/N₀</span></label>
+        <select id="modcod" style="width:160px;text-align:left">
+          <optgroup label="Uncoded (BER 1e-5)">
+            <option value="u-bpsk"  data-bps="1" data-cr="1" data-ebn0="9.6">BPSK (uncoded)</option>
+            <option value="u-qpsk"  data-bps="2" data-cr="1" data-ebn0="9.6">QPSK (uncoded)</option>
+            <option value="u-8psk"  data-bps="3" data-cr="1" data-ebn0="13.0">8PSK (uncoded)</option>
+            <option value="u-16qam" data-bps="4" data-cr="1" data-ebn0="13.4">16QAM (uncoded)</option>
+            <option value="u-32qam" data-bps="5" data-cr="1" data-ebn0="16.5">32QAM (uncoded)</option>
+            <option value="u-64qam" data-bps="6" data-cr="1" data-ebn0="17.8">64QAM (uncoded)</option>
+          </optgroup>
+          <optgroup label="DVB-S2 LDPC+BCH (QEF)">
+            <option value="s2-qpsk12"  data-bps="2" data-cr="0.5"   data-ebn0="1.0">QPSK 1/2</option>
+            <option value="s2-qpsk34"  data-bps="2" data-cr="0.75"  data-ebn0="2.27">QPSK 3/4</option>
+            <option value="s2-qpsk56"  data-bps="2" data-cr="0.833" data-ebn0="2.96">QPSK 5/6</option>
+            <option value="s2-8psk23"  data-bps="3" data-cr="0.667" data-ebn0="3.61">8PSK 2/3</option>
+            <option value="s2-8psk34"  data-bps="3" data-cr="0.75"  data-ebn0="4.39" selected>8PSK 3/4</option>
+            <option value="s2-8psk56"  data-bps="3" data-cr="0.833" data-ebn0="5.37">8PSK 5/6</option>
+            <option value="s2-16a34"   data-bps="4" data-cr="0.75"  data-ebn0="5.44">16APSK 3/4</option>
+            <option value="s2-16a56"   data-bps="4" data-cr="0.833" data-ebn0="6.38">16APSK 5/6</option>
+            <option value="s2-32a34"   data-bps="5" data-cr="0.75"  data-ebn0="6.99">32APSK 3/4</option>
+            <option value="s2-32a56"   data-bps="5" data-cr="0.833" data-ebn0="8.08">32APSK 5/6</option>
+          </optgroup>
+          <option value="custom">Custom (set Eb/N₀ below)</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Required Eb/N₀<span class="hint">dB, for target BER incl. FEC</span></label>
+        <input type="number" id="reqEbN0" value="4.4" step="any">
+      </div>
+      <div class="row">
+        <label>Roll-off factor (α)<span class="hint">filter excess bandwidth, e.g. 0.20–0.35</span></label>
+        <input type="number" id="rolloff" value="0.2" step="any">
+      </div>
+      <div class="row">
+        <label>Implementation loss<span class="hint">dB</span></label>
+        <input type="number" id="implLoss" value="1" step="any">
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="card results">
+      <h2><span class="dot"></span>Results</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">EIRP</div><div class="v"><span id="r_eirp">–</span> <span class="u">dBW</span></div></div>
+        <div class="metric"><div class="k">Free space path loss</div><div class="v"><span id="r_fspl">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Total path loss</div><div class="v"><span id="r_totloss">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">G/T</div><div class="v"><span id="r_gt">–</span> <span class="u">dB/K</span></div></div>
+        <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
+        <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="r_ebn0">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Spectral efficiency</div><div class="v"><span id="r_speceff">–</span> <span class="u">bit/s/Hz</span></div></div>
+        <div class="metric"><div class="k">Occupied bandwidth</div><div class="v"><span id="r_bw">–</span> <span class="u">MHz</span></div></div>
+        <div class="metric"><div class="k">C/N (received)</div><div class="v"><span id="r_cn">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">C/N (required)</div><div class="v"><span id="r_cnreq">–</span> <span class="u">dB</span></div></div>
+      </div>
+      <div id="marginBox" class="margin-box margin-good">Link margin: <span id="r_margin">–</span> dB</div>
+
+      <details>
+        <summary>Show full calculation breakdown</summary>
+        <table id="breakdown"></table>
+      </details>
+    </div>
+
+    <!-- ELEVATION CHART -->
+    <div class="card results">
+      <h2><span class="dot"></span>Link Margin vs Elevation Angle</h2>
+      <div class="row" style="max-width:360px">
+        <label>Orbit altitude<span class="hint">km — sets slant range vs elevation</span></label>
+        <input type="number" id="altitude" value="550" step="any">
+      </div>
+      <p style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
+        Sweeps a satellite pass from horizon (0°) to zenith (90°). Slant range is derived from the
+        orbit altitude, so closer to overhead = shorter range = more margin. Other parameters use the
+        values above. (Atmospheric loss is held constant; real low-elevation passes see extra fade.)
+      </p>
+      <canvas id="chart" width="1000" height="420" style="width:100%;height:auto;display:block"></canvas>
+      <div id="elevSummary" style="margin-top:10px;font-size:.9rem;color:var(--txt)"></div>
+    </div>
+
+  </div>
+
+  <div class="adslot">Ad placeholder — in-content ad unit</div>
+
+  <!-- SEO article content -->
+  <div class="card">
+    <div class="article">
+      <h2>What is a satellite link budget?</h2>
+      <p>A <strong>link budget</strong> accounts for all the gains and losses a radio signal experiences
+      from the transmitter, through the propagation path, to the receiver. It tells you whether a
+      satellite link will close — i.e. whether the received signal is strong enough to be demodulated
+      at your target bit error rate (BER) — and how much <strong>margin</strong> you have against fades
+      and uncertainties.</p>
+
+      <h2>The equations used by this calculator</h2>
+      <p><strong>EIRP</strong> = P<sub>tx</sub>(dBW) + G<sub>tx</sub>(dBi) − L<sub>tx</sub>(dB)</p>
+      <p><strong>Free space path loss</strong> (FSPL) = 32.44 + 20·log₁₀(d<sub>km</sub>) + 20·log₁₀(f<sub>MHz</sub>) dB</p>
+      <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
+      <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k, where k = −228.6 dBW/K/Hz (Boltzmann)</p>
+      <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
+      <p><strong>Link margin</strong> = Eb/N₀<sub>received</sub> − Eb/N₀<sub>required</sub> − implementation loss</p>
+
+      <h2>Typical LEO smallsat values</h2>
+      <p>For a CubeSat S-band downlink you might use ~2 W transmit power, a 6 dBi patch antenna,
+      a 3 m ground-station dish (~30 dBi at S-band), a slant range around 1500–2500 km, and a
+      system noise temperature of 150–250 K. A healthy design keeps at least <strong>3 dB of margin</strong>
+      at the lowest elevation angle you plan to operate.</p>
+      <p>All computation runs locally in your browser — nothing is uploaded.</p>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Free satellite link budget calculator · Computes EIRP, FSPL, G/T, C/N₀, Eb/N₀ and margin · No data leaves your browser.
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const K_BOLTZMANN_DBW = -228.6; // dBW/K/Hz
+
+function toDBW(val, unit){
+  if(unit === 'dBW') return val;
+  if(unit === 'dBm') return val - 30;
+  if(unit === 'W')   return 10 * Math.log10(val); // W -> dBW
+  return val;
+}
+function freqMHz(val, unit){
+  if(unit === 'MHz') return val;
+  if(unit === 'GHz') return val * 1000;
+  if(unit === 'kHz') return val / 1000;
+  return val;
+}
+function rateBps(val, unit){
+  if(unit === 'bps')  return val;
+  if(unit === 'kbps') return val * 1e3;
+  if(unit === 'Mbps') return val * 1e6;
+  return val;
+}
+const num = id => parseFloat($(id).value) || 0;
+
+function compute(){
+  const txP   = toDBW(num('txPower'), $('txPowerUnit').value);
+  const txG   = num('txGain');
+  const txL   = num('txLoss');
+  const f     = freqMHz(num('freq'), $('freqUnit').value);
+  const d     = num('dist');
+  const atm   = num('atmLoss');
+  const rain  = num('rainLoss');
+  const pol   = num('polLoss');
+  const point = num('pointLoss');
+  const rxG   = num('rxGain');
+  const Tsys  = num('sysTemp');
+  const rxL   = num('rxLoss');
+  const Rb    = rateBps(num('rate'), $('rateUnit').value);
+  const reqEb = num('reqEbN0');
+  const impl  = num('implLoss');
+  const alpha = num('rolloff');
+  const sel   = $('modcod').selectedOptions[0];
+  const bps   = parseFloat(sel.dataset.bps);   // bits per symbol
+  const cr    = parseFloat(sel.dataset.cr);    // code rate
+  const isCustom = $('modcod').value === 'custom';
+
+  const eirp  = txP + txG - txL;
+  const fspl  = (f > 0 && d > 0) ? 32.44 + 20*Math.log10(d) + 20*Math.log10(f) : 0;
+  const extra = atm + rain + pol + point;
+  const totLoss = fspl + extra;
+  const gt    = rxG - rxL - (Tsys > 0 ? 10*Math.log10(Tsys) : 0);
+  const cn0   = eirp - totLoss + gt - K_BOLTZMANN_DBW;
+  const ebn0  = Rb > 0 ? cn0 - 10*Math.log10(Rb) : 0;
+  const margin = ebn0 - reqEb - impl;
+
+  // Modulation / bandwidth derived metrics
+  const specEff   = (!isCustom && bps && cr) ? bps * cr : NaN;        // info bit/s/Hz
+  const symRate   = specEff > 0 ? Rb / specEff : NaN;                 // symbols/s
+  const bwHz      = symRate > 0 ? symRate * (1 + alpha) : NaN;        // occupied BW
+  const cnRx      = bwHz > 0 ? cn0 - 10*Math.log10(bwHz) : NaN;       // received C/N
+  const cnReq     = (specEff > 0) ? reqEb + 10*Math.log10(specEff/(1+alpha)) : NaN; // required C/N
+
+  const f1 = x => (Math.round(x*100)/100).toFixed(2);
+  const fd = (x,u) => isFinite(x) ? f1(x) : '–';
+  $('r_eirp').textContent   = f1(eirp);
+  $('r_fspl').textContent   = f1(fspl);
+  $('r_totloss').textContent= f1(totLoss);
+  $('r_gt').textContent     = f1(gt);
+  $('r_cn0').textContent    = f1(cn0);
+  $('r_ebn0').textContent   = f1(ebn0);
+  $('r_margin').textContent = f1(margin);
+  $('r_speceff').textContent= fd(specEff);
+  $('r_bw').textContent     = isFinite(bwHz) ? f1(bwHz/1e6) : '–';
+  $('r_cn').textContent     = fd(cnRx);
+  $('r_cnreq').textContent  = fd(cnReq);
+
+  const box = $('marginBox');
+  box.className = 'margin-box ' + (margin >= 3 ? 'margin-good' : margin >= 0 ? 'margin-warn' : 'margin-bad');
+  const verdict = margin >= 3 ? '✓ Link closes with comfortable margin'
+                : margin >= 0 ? '⚠ Link closes but margin is tight'
+                : '✗ Link does NOT close';
+  box.innerHTML = `Link margin: <span>${f1(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
+
+  const rows = [
+    ['Transmit power', f1(txP)+' dBW'],
+    ['Tx antenna gain', '+'+f1(txG)+' dBi'],
+    ['Tx line loss', '−'+f1(txL)+' dB'],
+    ['= EIRP', f1(eirp)+' dBW'],
+    ['Free space path loss', '−'+f1(fspl)+' dB'],
+    ['Atmospheric / rain / pol / pointing', '−'+f1(extra)+' dB'],
+    ['Rx antenna gain', '+'+f1(rxG)+' dBi'],
+    ['Rx line loss', '−'+f1(rxL)+' dB'],
+    ['System noise temp', f1(Tsys)+' K ('+f1(10*Math.log10(Tsys||1))+' dB)'],
+    ['= G/T', f1(gt)+' dB/K'],
+    ['Boltzmann constant', f1(K_BOLTZMANN_DBW)+' dBW/K/Hz'],
+    ['= C/N₀', f1(cn0)+' dB-Hz'],
+    ['Data rate', (Rb/1e6).toFixed(3)+' Mbps ('+f1(10*Math.log10(Rb||1))+' dB)'],
+    ['Modulation / coding', isCustom ? 'custom' : sel.textContent.trim()+' ('+bps+' bit/sym × '+cr+')'],
+    ['Spectral efficiency', fd(specEff)+' bit/s/Hz'],
+    ['Occupied bandwidth', isFinite(bwHz) ? f1(bwHz/1e6)+' MHz' : '–'],
+    ['C/N received', fd(cnRx)+' dB'],
+    ['C/N required', fd(cnReq)+' dB'],
+    ['= Eb/N₀ received', f1(ebn0)+' dB'],
+    ['Required Eb/N₀', '−'+f1(reqEb)+' dB'],
+    ['Implementation loss', '−'+f1(impl)+' dB'],
+    ['= LINK MARGIN', f1(margin)+' dB'],
+  ];
+  $('breakdown').innerHTML = rows.map(r =>
+    `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+
+  drawChart();
+}
+
+const RE = 6371; // Earth mean radius, km
+
+// Slant range (km) to a satellite at altitude h (km) seen at elevation E (deg).
+function slantRange(h, elevDeg){
+  const E = elevDeg * Math.PI / 180;
+  const Rs = RE + h;
+  return Math.sqrt(Rs*Rs - (RE*Math.cos(E))**2) - RE*Math.sin(E);
+}
+
+// Link margin (dB) for an arbitrary slant range, reusing all current inputs.
+function marginForDistance(d){
+  const txP   = toDBW(num('txPower'), $('txPowerUnit').value);
+  const eirp  = txP + num('txGain') - num('txLoss');
+  const f     = freqMHz(num('freq'), $('freqUnit').value);
+  const fspl  = (f>0 && d>0) ? 32.44 + 20*Math.log10(d) + 20*Math.log10(f) : 0;
+  const extra = num('atmLoss')+num('rainLoss')+num('polLoss')+num('pointLoss');
+  const gt    = num('rxGain') - num('rxLoss') - (num('sysTemp')>0 ? 10*Math.log10(num('sysTemp')) : 0);
+  const cn0   = eirp - (fspl+extra) + gt - K_BOLTZMANN_DBW;
+  const Rb    = rateBps(num('rate'), $('rateUnit').value);
+  const ebn0  = Rb>0 ? cn0 - 10*Math.log10(Rb) : 0;
+  return ebn0 - num('reqEbN0') - num('implLoss');
+}
+
+function drawChart(){
+  const cv = $('chart'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const padL = 56, padR = 20, padT = 16, padB = 40;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  ctx.clearRect(0,0,W,H);
+
+  const h = num('altitude');
+  // sample margin from 1° to 90°
+  const pts = [];
+  for(let e=1; e<=90; e++){ pts.push([e, marginForDistance(slantRange(h, e))]); }
+
+  let mins = Math.min(...pts.map(p=>p[1]), 0);
+  let maxs = Math.max(...pts.map(p=>p[1]), 3);
+  const pad = (maxs-mins)*0.1 || 1; mins -= pad; maxs += pad;
+
+  const x = e => padL + (e/90)*plotW;
+  const y = m => padT + (1-(m-mins)/(maxs-mins))*plotH;
+
+  // grid + axes
+  ctx.strokeStyle = '#272e3a'; ctx.fillStyle = '#8b949e'; ctx.lineWidth = 1;
+  ctx.font = '12px -apple-system,Segoe UI,Roboto,sans-serif';
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  const yticks = 6;
+  for(let i=0;i<=yticks;i++){
+    const m = mins + (maxs-mins)*i/yticks, yy = y(m);
+    ctx.beginPath(); ctx.moveTo(padL,yy); ctx.lineTo(W-padR,yy); ctx.stroke();
+    ctx.fillText(m.toFixed(0), padL-8, yy);
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for(let e=0;e<=90;e+=15){
+    ctx.beginPath(); ctx.moveTo(x(e),padT); ctx.lineTo(x(e),H-padB); ctx.stroke();
+    ctx.fillText(e+'°', x(e), H-padB+8);
+  }
+  ctx.fillText('Elevation angle', padL+plotW/2, H-padB+22);
+
+  // zero margin line
+  if(0>=mins && 0<=maxs){
+    ctx.strokeStyle = '#ef4444'; ctx.setLineDash([5,4]);
+    ctx.beginPath(); ctx.moveTo(padL,y(0)); ctx.lineTo(W-padR,y(0)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  // 3 dB target line
+  if(3>=mins && 3<=maxs){
+    ctx.strokeStyle = '#f59e0b'; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(padL,y(3)); ctx.lineTo(W-padR,y(3)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // margin curve
+  ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2.5; ctx.beginPath();
+  pts.forEach((p,i)=>{ const xx=x(p[0]), yy=y(p[1]); i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy); });
+  ctx.stroke();
+
+  // find minimum elevation where margin crosses 0 and 3 dB
+  const cross = thr => { for(const p of pts){ if(p[1]>=thr) return p[0]; } return null; };
+  const e0 = cross(0), e3 = cross(3);
+  [['#ef4444',e0],['#f59e0b',e3]].forEach(([c,e])=>{
+    if(e==null) return;
+    ctx.strokeStyle=c; ctx.setLineDash([2,3]);
+    ctx.beginPath(); ctx.moveTo(x(e),padT); ctx.lineTo(x(e),H-padB); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  const fmt = e => e==null ? 'never (link never closes)' : '≥ '+e+'°';
+  $('elevSummary').innerHTML =
+    `<span style="color:#ef4444">Link closes (margin ≥ 0):</span> ${fmt(e0)} &nbsp;·&nbsp; ` +
+    `<span style="color:#f59e0b">Comfortable (margin ≥ 3 dB):</span> ${fmt(e3)} &nbsp;·&nbsp; ` +
+    `<span style="color:#8b949e">altitude ${h} km, range ${slantRange(h,90).toFixed(0)}–${slantRange(h,1).toFixed(0)} km</span>`;
+}
+
+const presets = {
+  'leo-s':       {txPower:2,txPowerUnit:'W',txGain:6,txLoss:1,freq:2200,freqUnit:'MHz',dist:2000,atmLoss:0.5,rainLoss:0,polLoss:0.5,pointLoss:0.5,rxGain:30,sysTemp:200,rxLoss:0.5,rate:1,rateUnit:'Mbps',modcod:'s2-qpsk34',rolloff:0.2,implLoss:1},
+  'cubesat-uhf': {txPower:1,txPowerUnit:'W',txGain:2,txLoss:0.5,freq:437,freqUnit:'MHz',dist:1500,atmLoss:0.3,rainLoss:0,polLoss:1,pointLoss:0.5,rxGain:15,sysTemp:300,rxLoss:1,rate:9.6,rateUnit:'kbps',modcod:'u-bpsk',rolloff:0.35,implLoss:2},
+  'leo-x':       {txPower:5,txPowerUnit:'W',txGain:8,txLoss:1.5,freq:8200,freqUnit:'MHz',dist:2200,atmLoss:1,rainLoss:1,polLoss:0.5,pointLoss:0.5,rxGain:45,sysTemp:150,rxLoss:0.5,rate:150,rateUnit:'Mbps',modcod:'s2-8psk34',rolloff:0.2,implLoss:1.5},
+  'geo-ku':      {txPower:20,txPowerUnit:'W',txGain:35,txLoss:1,freq:12000,freqUnit:'MHz',dist:38500,atmLoss:0.5,rainLoss:3,polLoss:0.5,pointLoss:0.5,rxGain:40,sysTemp:120,rxLoss:0.5,rate:36,rateUnit:'Mbps',modcod:'s2-16a34',rolloff:0.25,implLoss:1.5},
+};
+function applyPreset(p){
+  const c = presets[p]; if(!c) return;
+  for(const k in c){ const el = $(k); if(el) el.value = c[k]; }
+  fillReqEbN0();
+  compute();
+}
+
+// When a defined MODCOD is picked, auto-fill the required Eb/N0 field.
+function fillReqEbN0(){
+  const sel = $('modcod').selectedOptions[0];
+  const ro = $('reqEbN0');
+  if($('modcod').value === 'custom'){ ro.removeAttribute('readonly'); ro.style.opacity = 1; return; }
+  const v = parseFloat(sel.dataset.ebn0);
+  if(isFinite(v)) ro.value = v;
+  ro.setAttribute('readonly','');     // value is driven by the scheme
+  ro.style.opacity = .7;
+}
+
+document.querySelectorAll('.preset-bar button').forEach(b =>
+  b.addEventListener('click', () => applyPreset(b.dataset.preset)));
+$('modcod').addEventListener('change', () => { fillReqEbN0(); compute(); });
+document.querySelectorAll('input,select').forEach(el =>
+  el.addEventListener('input', compute));
+
+fillReqEbN0();
+
+compute();
+</script>
+</body>
+</html>
