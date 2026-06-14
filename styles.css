@@ -1,5 +1,5 @@
 :root{
-  --bg:#f7f8fa; --card:#ffffff; --line:#e6e8ec; --txt:#1a1f2e; --muted:#697086;
+  --bg:#e9f3e9; --card:#ffffff; --line:#dde6dd; --txt:#1a1f2e; --muted:#5f6b66;
   --accent:#2563eb; --accent-soft:rgba(37,99,235,.10); --good:#16a34a; --bad:#dc2626; --warn:#d97706;
   --shadow:0 1px 2px rgba(16,24,40,.05); --shadow-lg:0 12px 30px rgba(16,24,40,.10);
 }
@@ -13,7 +13,7 @@ a{color:var(--accent)}
         padding:11px 24px;background:rgba(255,255,255,.82);backdrop-filter:blur(10px);
         border-bottom:1px solid var(--line)}
 .topnav .brand{font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--txt);white-space:nowrap}
-.topnav .pills{display:flex;gap:3px;flex-wrap:wrap;margin-left:auto;background:#eef0f4;padding:4px;border-radius:11px}
+.topnav .pills{display:flex;gap:3px;flex-wrap:wrap;margin-left:auto;background:#dcead9;padding:4px;border-radius:11px}
 .topnav .pills a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:6px 12px;border-radius:8px;white-space:nowrap}
 .topnav .pills a:hover{color:var(--txt)}
 .topnav .pills a.active{background:#fff;color:var(--accent);box-shadow:var(--shadow);font-weight:600}
@@ -70,7 +70,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 20px;bo
 .note{background:#eef4ff;border:1px solid #cfe0ff;color:#1d4ed8;border-radius:10px;padding:10px 14px;font-size:.85rem;margin:12px 0}
 
 /* ---- hub home page ---- */
-.hero{text-align:center;padding:62px 20px 34px;background:radial-gradient(900px 360px at 50% -40px,rgba(37,99,235,.10),transparent)}
+.hero{text-align:center;padding:62px 20px 34px;background:radial-gradient(900px 360px at 50% -40px,rgba(34,160,90,.14),transparent)}
 .hero .tag{display:inline-block;font-size:.78rem;color:var(--accent);background:var(--accent-soft);
            border:1px solid rgba(37,99,235,.25);padding:5px 12px;border-radius:20px;margin-bottom:18px}
 .hero h1{font-size:2.4rem;margin:0 0 12px;letter-spacing:-.025em}
