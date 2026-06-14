@@ -7,6 +7,14 @@
 <meta name="description" content="Free Doppler shift calculator for LEO satellites. Compute orbital velocity, maximum Doppler shift and Doppler rate from carrier frequency and orbit altitude, with a Doppler-vs-time pass curve.">
 <meta name="keywords" content="doppler shift calculator, satellite doppler, LEO doppler, doppler rate, orbital velocity, frequency offset, ground station tracking">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/doppler.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="LEO Satellite Doppler Shift Calculator">
+<meta property="og:description" content="Orbital velocity, max Doppler shift, Doppler rate and a pass curve for LEO satellites.">
+<meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <link rel="stylesheet" href="styles.css">
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
@@ -115,6 +123,7 @@
 
 <footer>Free LEO Doppler shift calculator · orbital velocity, max Doppler, Doppler rate, pass curve · nothing leaves your browser.</footer>
 
+<script src="share.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -197,7 +206,9 @@ const presets={
 document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
   const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
 document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+if(window.ShareTool) ShareTool.apply();
 compute();
+if(window.ShareTool) ShareTool.initButton();
 </script>
 </body>
 </html>

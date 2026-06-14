@@ -7,6 +7,14 @@
 <meta name="description" content="Free BER vs Eb/N0 calculator and plot for BPSK, QPSK, 8PSK, 16PSK, 16/64/256-QAM, FSK and DBPSK over AWGN. Compare modulation bit error rate curves and read required Eb/N0 for any target BER.">
 <meta name="keywords" content="BER calculator, bit error rate, Eb/N0, BER curve, BPSK QPSK QAM PSK BER, modulation comparison, AWGN, bit error rate plot">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/ber.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="BER vs Eb/N0 Curve Calculator">
+<meta property="og:description" content="Bit error rate curves for BPSK, QPSK, M-PSK, M-QAM, APSK, FSK and DBPSK over AWGN.">
+<meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <link rel="stylesheet" href="styles.css">
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
@@ -85,6 +93,7 @@
 
 <footer>Free BER vs Eb/N₀ curve plotter · BPSK/QPSK/PSK/QAM/FSK over AWGN · runs entirely in your browser.</footer>
 
+<script src="share.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 function erfc(x){
@@ -203,7 +212,9 @@ function sup(e){ // superscript for exponent incl. minus
   return String(e).split('').map(c=>map[c]||c).join('');
 }
 document.querySelectorAll('#target,#xmax').forEach(el=>el.addEventListener('input',draw));
+if(window.ShareTool) ShareTool.apply();
 draw();
+if(window.ShareTool) ShareTool.initButton();
 </script>
 </body>
 </html>

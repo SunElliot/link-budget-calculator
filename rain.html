@@ -7,6 +7,14 @@
 <meta name="description" content="Free satellite rain attenuation calculator using ITU-R P.838 and P.618 models. Compute specific attenuation and slant-path rain fade vs frequency, elevation, rain rate and link availability.">
 <meta name="keywords" content="rain attenuation calculator, ITU-R P.618, ITU-R P.838, rain fade, specific attenuation, slant path attenuation, Ku Ka rain margin, satellite rain loss">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/rain.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Rain Attenuation Calculator (ITU-R P.618/P.838)">
+<meta property="og:description" content="Specific attenuation and slant-path rain fade vs link availability, per ITU-R P.618/P.838.">
+<meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <link rel="stylesheet" href="styles.css">
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
@@ -108,6 +116,7 @@
 
 <footer>Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation &amp; slant-path fade · runs in your browser.</footer>
 
+<script src="share.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -177,7 +186,9 @@ const presets={
 document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
   const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
 document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+if(window.ShareTool) ShareTool.apply();
 compute();
+if(window.ShareTool) ShareTool.initButton();
 </script>
 </body>
 </html>

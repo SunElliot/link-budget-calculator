@@ -17,6 +17,9 @@ a{color:var(--accent)}
 .topnav .pills a{color:var(--muted);text-decoration:none;font-size:.82rem;padding:6px 12px;border-radius:8px;white-space:nowrap}
 .topnav .pills a:hover{color:var(--txt)}
 .topnav .pills a.active{background:#fff;color:var(--accent);box-shadow:var(--shadow);font-weight:600}
+.sharebtn{margin-left:8px;background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:9px;
+          font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow)}
+.sharebtn:hover{filter:brightness(1.07)}
 
 header{padding:30px 20px 12px;text-align:center}
 header h1{margin:0 0 6px;font-size:1.55rem;letter-spacing:-.02em}

@@ -7,6 +7,14 @@
 <meta name="description" content="Free satellite pass predictor. Paste a TLE and your ground-station coordinates to compute upcoming visible passes: AOS, LOS, maximum elevation and duration. Runs in your browser.">
 <meta name="keywords" content="satellite pass predictor, TLE tracker, satellite tracking, AOS LOS, satellite visibility, ground station pass prediction, ISS pass">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/pass-prediction.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Satellite Pass Predictor (TLE)">
+<meta property="og:description" content="Paste a TLE and your coordinates to get upcoming visible passes: AOS, LOS, max elevation, duration.">
+<meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <link rel="stylesheet" href="styles.css">
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
@@ -95,6 +103,7 @@
 <footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/satellite.js@5/dist/satellite.min.js"></script>
+<script src="share.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -155,6 +164,9 @@ $('geo').addEventListener('click',()=>{
     status.textContent='Location set — click "Predict passes".';
   },()=>{status.textContent='Could not get location (permission denied).';});
 });
+
+if(window.ShareTool){ const shared = ShareTool.apply(); ShareTool.initButton();
+  if(shared && libReady()) predict(); }
 </script>
 </body>
 </html>

@@ -7,6 +7,14 @@
 <meta name="description" content="Free G/T calculator for satellite ground stations. Build up system noise temperature from antenna temp, feed loss, LNA noise figure and receiver chain, and get the G/T figure of merit in dB/K.">
 <meta name="keywords" content="G/T calculator, figure of merit, system noise temperature, antenna G/T, LNA noise figure, ground station G/T, receiver noise temperature">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/gt.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="G/T Figure-of-Merit Calculator">
+<meta property="og:description" content="Build system noise temperature from antenna, feed, LNA & receiver to get G/T in dB/K.">
+<meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <link rel="stylesheet" href="styles.css">
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
@@ -105,6 +113,7 @@
 
 <footer>Free G/T figure-of-merit calculator · system noise temperature cascade · runs entirely in your browser.</footer>
 
+<script src="share.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -150,7 +159,9 @@ const presets={
 document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
   const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
 document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+if(window.ShareTool) ShareTool.apply();
 compute();
+if(window.ShareTool) ShareTool.initButton();
 </script>
 </body>
 </html>
