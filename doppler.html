@@ -15,13 +15,16 @@
 </head>
 <body>
 <nav class="topnav">
-  <a href="index.html">Link Budget</a>
-  <a href="doppler.html" class="active">Doppler Shift</a>
-  <a href="pass-prediction.html">Pass Predictor</a>
-  <a href="antenna.html">Antenna Gain</a>
-  <a href="gt.html">G/T</a>
-  <a href="rain.html">Rain Fade</a>
-  <a href="bands.html">Frequency Bands</a>
+  <a class="brand" href="index.html">🛰 SatTools</a>
+  <div class="pills">
+    <a href="link-budget.html">Link Budget</a>
+    <a href="doppler.html" class="active">Doppler</a>
+    <a href="pass-prediction.html">Pass</a>
+    <a href="antenna.html">Antenna</a>
+    <a href="gt.html">G/T</a>
+    <a href="rain.html">Rain</a>
+    <a href="bands.html">Bands</a>
+  </div>
 </nav>
 
 <header>
@@ -165,7 +168,7 @@ function drawChart(Rs,w,phiH,df){
   const pad=(ymax-ymin)*0.1||1; ymin-=pad; ymax+=pad;
   const x=t=>pl+((t+tMax)/(2*tMax))*pw;
   const y=v=>pt+(1-(v-ymin)/(ymax-ymin))*ph;
-  ctx.strokeStyle='#272e3a';ctx.fillStyle='#8b949e';ctx.font='12px sans-serif';
+  ctx.strokeStyle='#e6e8ec';ctx.fillStyle='#697086';ctx.font='12px sans-serif';
   ctx.textAlign='right';ctx.textBaseline='middle';
   for(let i=0;i<=6;i++){const val=ymin+(ymax-ymin)*i/6,yy=y(val);
     ctx.beginPath();ctx.moveTo(pl,yy);ctx.lineTo(W-pr,yy);ctx.stroke();
@@ -176,9 +179,9 @@ function drawChart(Rs,w,phiH,df){
     ctx.fillText((t/60).toFixed(1),xx,H-pb+8);}
   ctx.fillText('Time from closest approach (min)',pl+pw/2,H-pb+22);
   ctx.save();ctx.translate(14,pt+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('Doppler shift (kHz)',0,0);ctx.restore();
-  if(0>=ymin&&0<=ymax){ctx.strokeStyle='#ef4444';ctx.setLineDash([5,4]);
+  if(0>=ymin&&0<=ymax){ctx.strokeStyle='#dc2626';ctx.setLineDash([5,4]);
     ctx.beginPath();ctx.moveTo(pl,y(0));ctx.lineTo(W-pr,y(0));ctx.stroke();ctx.setLineDash([]);}
-  ctx.strokeStyle='#3b82f6';ctx.lineWidth=2.5;ctx.beginPath();
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=2.5;ctx.beginPath();
   pts.forEach((p,i)=>{const xx=x(p[0]),yy=y(p[1]);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});
   ctx.stroke();
 }

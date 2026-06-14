@@ -15,13 +15,16 @@
 </head>
 <body>
 <nav class="topnav">
-  <a href="index.html">Link Budget</a>
-  <a href="doppler.html">Doppler Shift</a>
-  <a href="pass-prediction.html">Pass Predictor</a>
-  <a href="antenna.html">Antenna Gain</a>
-  <a href="gt.html" class="active">G/T</a>
-  <a href="rain.html">Rain Fade</a>
-  <a href="bands.html">Frequency Bands</a>
+  <a class="brand" href="index.html">🛰 SatTools</a>
+  <div class="pills">
+    <a href="link-budget.html">Link Budget</a>
+    <a href="doppler.html">Doppler</a>
+    <a href="pass-prediction.html">Pass</a>
+    <a href="antenna.html">Antenna</a>
+    <a href="gt.html" class="active">G/T</a>
+    <a href="rain.html">Rain</a>
+    <a href="bands.html">Bands</a>
+  </div>
 </nav>
 
 <header>
@@ -92,7 +95,7 @@
       its own noise and attenuates the signal — which is why <strong>keeping pre-LNA loss tiny</strong> matters
       so much. Finally: <code>G/T = G_antenna(dBi) − 10·log₁₀(T_sys)</code>.</p>
       <p>Plug the resulting G/T straight into the
-      <a href="index.html" style="color:var(--accent)">link budget calculator</a>.
+      <a href="link-budget.html" style="color:var(--accent)">link budget calculator</a>.
       All computation runs locally in your browser.</p>
     </div>
   </div>
