@@ -22,6 +22,7 @@
     return any;
   }
   function initButton(){
+    return; // Share button hidden — top bar keeps only the language toggle
     const nav = document.querySelector('.topnav');
     if(!nav) return;
     const btn = document.createElement('button');

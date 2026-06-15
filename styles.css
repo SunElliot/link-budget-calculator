@@ -20,7 +20,7 @@ a{color:var(--accent)}
 .sharebtn{margin-left:8px;background:var(--accent);color:#fff;border:none;padding:7px 14px;border-radius:9px;
           font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow)}
 .sharebtn:hover{filter:brightness(1.07)}
-.langtoggle{display:flex;gap:2px;background:#dcead9;padding:3px;border-radius:9px;margin-left:8px}
+.langtoggle{display:flex;gap:2px;background:#dcead9;padding:3px;border-radius:9px;margin-left:auto}
 .langtoggle button{background:none;border:none;color:var(--muted);font-size:.8rem;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:inherit}
 .langtoggle button.active{background:#fff;color:var(--accent);font-weight:700;box-shadow:var(--shadow)}
 body.lang-en .howto .cn{display:none}
