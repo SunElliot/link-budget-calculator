@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=5">
-<script src="i18n.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="i18n.js?v=6"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"G/T Figure of Merit Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -105,12 +105,12 @@
   <div class="card">
     <h2><span class="dot"></span>📖 How to use</h2>
     <ol class="howto">
-      <li>Enter the <b>antenna gain</b> (from the Antenna tool) and the <b>antenna noise temperature</b> (sky + ground pickup).<span class="cn">输入<b>天线增益</b>(可由天线工具得到)和<b>天线噪声温度</b>(天空 + 地面拾取)。</span></li>
-      <li>Add the <b>feed loss before the LNA</b> and its physical temperature (≈290 K).<span class="cn">填入 <b>LNA 之前的馈线损耗</b>及其物理温度(≈290 K)。</span></li>
-      <li>Enter the <b>LNA noise figure & gain</b>, and the post-LNA receiver noise figure.<span class="cn">输入 <b>LNA 噪声系数与增益</b>,以及 LNA 之后接收机的噪声系数。</span></li>
-      <li>Read <b>G/T (dB/K)</b> — paste it straight into the link budget's G/T input.<span class="cn">读取 <b>G/T(dB/K)</b>——直接填进链路预算的 G/T 输入。</span></li>
-      <li>Open the breakdown to see how each stage adds to the system noise temperature (pre-LNA loss hurts most).<span class="cn">展开明细可看各级对系统噪温的贡献(LNA 前的损耗影响最大)。</span></li>
-      <li>Click <b>🔗 Share</b> to copy this configuration as a link.<span class="cn">点 <b>🔗 Share</b> 复制这套配置的链接。</span></li>
+      <li><span class="en-only">Enter the <b>antenna gain</b> (from the Antenna tool) and the <b>antenna noise temperature</b> (sky + ground pickup).</span><span class="zh-only">输入<b>天线增益</b>(可由天线工具得到)和<b>天线噪声温度</b>(天空 + 地面拾取)。</span></li>
+      <li><span class="en-only">Add the <b>feed loss before the LNA</b> and its physical temperature (≈290 K).</span><span class="zh-only">填入 <b>LNA 之前的馈线损耗</b>及其物理温度(≈290 K)。</span></li>
+      <li><span class="en-only">Enter the <b>LNA noise figure & gain</b>, and the post-LNA receiver noise figure.</span><span class="zh-only">输入 <b>LNA 噪声系数与增益</b>,以及 LNA 之后接收机的噪声系数。</span></li>
+      <li><span class="en-only">Read <b>G/T (dB/K)</b> — paste it straight into the link budget's G/T input.</span><span class="zh-only">读取 <b>G/T(dB/K)</b>——直接填进链路预算的 G/T 输入。</span></li>
+      <li><span class="en-only">Open the breakdown to see how each stage adds to the system noise temperature (pre-LNA loss hurts most).</span><span class="zh-only">展开明细可看各级对系统噪温的贡献(LNA 前的损耗影响最大)。</span></li>
+      <li><span class="en-only">Click <b>🔗 Share</b> to copy this configuration as a link.</span><span class="zh-only">点 <b>🔗 Share</b> 复制这套配置的链接。</span></li>
     </ol>
   </div>
 
@@ -140,7 +140,7 @@
 
 <footer>Free G/T figure-of-merit calculator · system noise temperature cascade · runs entirely in your browser.</footer>
 
-<script src="share.js?v=5"></script>
+<script src="share.js?v=6"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -166,7 +166,7 @@ function compute(){
   $('r_tsys').textContent=f2(Tsys);
   $('r_tsysdb').textContent=f2(10*Math.log10(Tsys));
   $('r_gt').textContent=f2(gt);
-  $('gnote').textContent='G/T = '+f2(gt)+' dB/K — paste this into the link budget calculator’s G/T (or Rx gain + system temp) inputs.';
+  $('gnote').textContent=t('G/T = '+f2(gt)+' dB/K — paste this into the link budget calculator’s G/T (or Rx gain + system temp) inputs.','G/T = '+f2(gt)+' dB/K —— 直接填进链路预算的 G/T(或接收增益 + 系统噪温)输入。');
   const rows=[
     ['Antenna noise temp T_A',TA.toFixed(2)+' K'],
     ['Feed loss noise (L−1)·T_phys',feedContrib.toFixed(2)+' K'],
@@ -189,6 +189,7 @@ document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input
 if(window.ShareTool) ShareTool.apply();
 compute();
 if(window.ShareTool) ShareTool.initButton();
+if(window.onLang) window.onLang(compute);
 </script>
 </body>
 </html>

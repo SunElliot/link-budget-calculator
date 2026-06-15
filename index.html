@@ -11,8 +11,8 @@
 <meta property="og:title" content="SatTools — Free Satellite Communication Calculators">
 <meta property="og:description" content="Link budget, Doppler, pass prediction, antenna, G/T, rain and BER calculators for LEO smallsats — all free, in your browser.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=5">
-<script src="i18n.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="i18n.js?v=6"></script>
 <meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -53,7 +53,7 @@
       <span class="count" id="count">9 tools</span>
       <div class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#697086" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
-        <input id="q" type="search" placeholder="Search tools…" autocomplete="off">
+        <input id="q" type="search" placeholder="Search tools…" data-ph-en="Search tools…" data-ph-zh="搜索工具…" autocomplete="off">
       </div>
     </div>
 
@@ -195,9 +195,11 @@ function refresh(){
     c.style.display = show ? '' : 'none';
     if(show) n++;
   });
-  document.getElementById('count').textContent = n + (n === 1 ? ' tool' : ' tools');
+  const T = window.t || ((a,b)=>a);
+  document.getElementById('count').textContent = n + (n === 1 ? T(' tool',' 个工具') : T(' tools',' 个工具'));
   document.getElementById('empty').style.display = n ? 'none' : '';
 }
+if(window.onLang) window.onLang(refresh);
 catBtns.forEach(b => b.addEventListener('click', ()=>{
   curCat = b.dataset.cat;
   catBtns.forEach(x => x.classList.toggle('active', x === b));

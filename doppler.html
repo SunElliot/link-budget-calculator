@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=5">
-<script src="i18n.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="i18n.js?v=6"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"LEO Satellite Doppler Shift Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -118,12 +118,12 @@
   <div class="card">
     <h2><span class="dot"></span>📖 How to use</h2>
     <ol class="howto">
-      <li>Choose a <b>preset band</b> or enter your <b>carrier frequency</b> and <b>orbit altitude</b>.<span class="cn">选一个<b>预设频段</b>,或输入<b>载波频率</b>和<b>轨道高度</b>。</span></li>
-      <li>Read the <b>orbital velocity</b>, <b>maximum Doppler shift</b> and <b>peak Doppler rate</b> at the top.<span class="cn">在上方读取<b>轨道速度</b>、<b>最大多普勒频移</b>和<b>峰值多普勒变化率</b>。</span></li>
-      <li>Set the <b>elevation angle</b> to get the instantaneous Doppler at that point in a pass.<span class="cn">设置<b>仰角</b>,得到过境中该点的瞬时多普勒。</span></li>
-      <li>The curve shows <b>Doppler vs time</b> over an overhead pass — the steep slope at closest approach is the rate your tracking loop must follow.<span class="cn">曲线是一次过顶的<b>多普勒-时间</b>关系——最近点处的陡峭斜率就是跟踪环路必须跟上的变化率。</span></li>
-      <li>Remember: higher carrier frequency → larger Doppler. Size your receiver's acquisition range accordingly.<span class="cn">记住:频率越高,多普勒越大;据此设计接收机的捕获范围。</span></li>
-      <li>Click <b>🔗 Share</b> to send this exact case to a colleague.<span class="cn">点 <b>🔗 Share</b> 把这个算例发给同事。</span></li>
+      <li><span class="en-only">Choose a <b>preset band</b> or enter your <b>carrier frequency</b> and <b>orbit altitude</b>.</span><span class="zh-only">选一个<b>预设频段</b>,或输入<b>载波频率</b>和<b>轨道高度</b>。</span></li>
+      <li><span class="en-only">Read the <b>orbital velocity</b>, <b>maximum Doppler shift</b> and <b>peak Doppler rate</b> at the top.</span><span class="zh-only">在上方读取<b>轨道速度</b>、<b>最大多普勒频移</b>和<b>峰值多普勒变化率</b>。</span></li>
+      <li><span class="en-only">Set the <b>elevation angle</b> to get the instantaneous Doppler at that point in a pass.</span><span class="zh-only">设置<b>仰角</b>,得到过境中该点的瞬时多普勒。</span></li>
+      <li><span class="en-only">The curve shows <b>Doppler vs time</b> over an overhead pass — the steep slope at closest approach is the rate your tracking loop must follow.</span><span class="zh-only">曲线是一次过顶的<b>多普勒-时间</b>关系——最近点处的陡峭斜率就是跟踪环路必须跟上的变化率。</span></li>
+      <li><span class="en-only">Remember: higher carrier frequency → larger Doppler. Size your receiver's acquisition range accordingly.</span><span class="zh-only">记住:频率越高,多普勒越大;据此设计接收机的捕获范围。</span></li>
+      <li><span class="en-only">Click <b>🔗 Share</b> to send this exact case to a colleague.</span><span class="zh-only">点 <b>🔗 Share</b> 把这个算例发给同事。</span></li>
     </ol>
   </div>
 
@@ -150,7 +150,7 @@
 
 <footer>Free LEO Doppler shift calculator · orbital velocity, max Doppler, Doppler rate, pass curve · nothing leaves your browser.</footer>
 
-<script src="share.js?v=5"></script>
+<script src="share.js?v=6"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -215,8 +215,8 @@ function drawChart(Rs,w,phiH,df){
   for(let i=0;i<=6;i++){const t=-tMax+2*tMax*i/6,xx=x(t);
     ctx.beginPath();ctx.moveTo(xx,pt);ctx.lineTo(xx,H-pb);ctx.stroke();
     ctx.fillText((t/60).toFixed(1),xx,H-pb+8);}
-  ctx.fillText('Time from closest approach (min)',pl+pw/2,H-pb+22);
-  ctx.save();ctx.translate(14,pt+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('Doppler shift (kHz)',0,0);ctx.restore();
+  ctx.fillText(t('Time from closest approach (min)','距最近点时间(分钟)'),pl+pw/2,H-pb+22);
+  ctx.save();ctx.translate(14,pt+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText(t('Doppler shift (kHz)','多普勒频移(kHz)'),0,0);ctx.restore();
   if(0>=ymin&&0<=ymax){ctx.strokeStyle='#dc2626';ctx.setLineDash([5,4]);
     ctx.beginPath();ctx.moveTo(pl,y(0));ctx.lineTo(W-pr,y(0));ctx.stroke();ctx.setLineDash([]);}
   ctx.strokeStyle='#2563eb';ctx.lineWidth=2.5;ctx.beginPath();
@@ -236,6 +236,7 @@ document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input
 if(window.ShareTool) ShareTool.apply();
 compute();
 if(window.ShareTool) ShareTool.initButton();
+if(window.onLang) window.onLang(compute);
 </script>
 </body>
 </html>

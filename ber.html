@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=5">
-<script src="i18n.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="i18n.js?v=6"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"BER vs Eb/N0 Curve Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -82,12 +82,12 @@
   <div class="card">
     <h2><span class="dot"></span>📖 How to use</h2>
     <ol class="howto">
-      <li><b>Tick</b> the modulation schemes you want to compare (the coloured swatches match the curves).<span class="cn"><b>勾选</b>想对比的调制方式(彩色色块对应曲线颜色)。</span></li>
-      <li>Set a <b>target BER</b> (e.g. 1e-6) — a reference line is drawn across the plot.<span class="cn">设置<b>目标 BER</b>(如 1e-6)——图上会画一条参考线。</span></li>
-      <li>Read the <b>required Eb/N₀</b> for each scheme from the table on the right.<span class="cn">在右侧表格读取每种调制<b>所需的 Eb/N₀</b>。</span></li>
-      <li>Adjust <b>Max Eb/N₀</b> to zoom the x-axis in or out.<span class="cn">调整 <b>Max Eb/N₀</b> 来缩放横轴范围。</span></li>
-      <li>Use that required Eb/N₀ as the <b>"required Eb/N₀"</b> input in the link budget.<span class="cn">把这个所需 Eb/N₀ 填进链路预算的 <b>"required Eb/N₀"</b> 输入。</span></li>
-      <li>Curves marked <b>*</b> (16/32-APSK) are union-bound approximations.<span class="cn">标 <b>*</b> 的曲线(16/32-APSK)为联合界近似。</span></li>
+      <li><span class="en-only"><b>Tick</b> the modulation schemes you want to compare (the coloured swatches match the curves).</span><span class="zh-only"><b>勾选</b>想对比的调制方式(彩色色块对应曲线颜色)。</span></li>
+      <li><span class="en-only">Set a <b>target BER</b> (e.g. 1e-6) — a reference line is drawn across the plot.</span><span class="zh-only">设置<b>目标 BER</b>(如 1e-6)——图上会画一条参考线。</span></li>
+      <li><span class="en-only">Read the <b>required Eb/N₀</b> for each scheme from the table on the right.</span><span class="zh-only">在右侧表格读取每种调制<b>所需的 Eb/N₀</b>。</span></li>
+      <li><span class="en-only">Adjust <b>Max Eb/N₀</b> to zoom the x-axis in or out.</span><span class="zh-only">调整 <b>Max Eb/N₀</b> 来缩放横轴范围。</span></li>
+      <li><span class="en-only">Use that required Eb/N₀ as the <b>"required Eb/N₀"</b> input in the link budget.</span><span class="zh-only">把这个所需 Eb/N₀ 填进链路预算的 <b>"required Eb/N₀"</b> 输入。</span></li>
+      <li><span class="en-only">Curves marked <b>*</b> (16/32-APSK) are union-bound approximations.</span><span class="zh-only">标 <b>*</b> 的曲线(16/32-APSK)为联合界近似。</span></li>
     </ol>
   </div>
 
@@ -120,7 +120,7 @@
 
 <footer>Free BER vs Eb/N₀ curve plotter · BPSK/QPSK/PSK/QAM/FSK over AWGN · runs entirely in your browser.</footer>
 
-<script src="share.js?v=5"></script>
+<script src="share.js?v=6"></script>
 <script>
 const $=id=>document.getElementById(id);
 function erfc(x){
@@ -203,7 +203,7 @@ function draw(){
     ctx.beginPath();ctx.moveTo(xx,pt);ctx.lineTo(xx,H-pb);ctx.stroke();
     ctx.fillText(d.toFixed(0),xx,H-pb+8);}
   ctx.fillText('Eb/N₀ (dB)',pl+pw/2,H-pb+24);
-  ctx.save();ctx.translate(16,pt+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText('Bit Error Rate (BER)',0,0);ctx.restore();
+  ctx.save();ctx.translate(16,pt+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText(t('Bit Error Rate (BER)','误码率 (BER)'),0,0);ctx.restore();
 
   // target line
   if(target>0 && target<1){
@@ -242,6 +242,7 @@ document.querySelectorAll('#target,#xmax').forEach(el=>el.addEventListener('inpu
 if(window.ShareTool) ShareTool.apply();
 draw();
 if(window.ShareTool) ShareTool.initButton();
+if(window.onLang) window.onLang(draw);
 </script>
 </body>
 </html>

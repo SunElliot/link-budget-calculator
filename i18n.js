@@ -124,12 +124,23 @@
     // ---- gallery home (cards, categories, head) ----
     "Satellite Communication Tools":"卫星通信工具",
     "Free browser-based calculators for LEO smallsat and ground-station link design — no signup, nothing uploaded.":"面向 LEO 小卫星与地面站链路设计的免费在线计算器 — 免注册,数据不上传。",
-    "Categories":"分类","All tools":"全部工具","Link Analysis":"链路分析",
+    "Categories":"分类","All tools":"全部工具","← All tools":"← 全部工具","Link Analysis":"链路分析",
     "Orbit & Tracking":"轨道与跟踪","Hardware":"硬件","Reference":"参考",
     "Link Budget":"链路预算","Doppler Shift":"多普勒频移","Pass Predictor":"过顶预测",
     "Antenna Gain":"天线增益","G/T Figure of Merit":"G/T 品质因数","Rain Fade":"雨衰",
     "Gaseous Attenuation":"气体衰减","Frequency Bands":"频段速查",
-    "No tools match your search.":"没有匹配的工具。"
+    "No tools match your search.":"没有匹配的工具。",
+    // ---- footers ----
+    "SatTools · Free satellite communication calculators · LEO / smallsat / ground station · runs entirely in your browser.":"SatTools · 免费卫星通信计算器 · LEO / 小卫星 / 地面站 · 完全在浏览器中运行。",
+    "Free satellite link budget calculator · Computes EIRP, FSPL, G/T, C/N₀, Eb/N₀ and margin · No data leaves your browser.":"免费卫星链路预算计算器 · 计算 EIRP、FSPL、G/T、C/N₀、Eb/N₀ 与余量 · 数据不离开你的浏览器。",
+    "Free LEO Doppler shift calculator · orbital velocity, max Doppler, Doppler rate, pass curve · nothing leaves your browser.":"免费 LEO 多普勒频移计算器 · 轨道速度、最大多普勒、多普勒变化率、过境曲线 · 数据不上传。",
+    "Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.":"免费 TLE 卫星过顶预测 · 基于 satellite.js 的 SGP4 · 完全在浏览器中运行。",
+    "Free parabolic antenna calculator · gain, beamwidth, aperture, far-field · nothing leaves your browser.":"免费抛物面天线计算器 · 增益、波束宽度、口径、远场 · 数据不上传。",
+    "Free G/T figure-of-merit calculator · system noise temperature cascade · runs entirely in your browser.":"免费 G/T 品质因数计算器 · 系统噪温级联 · 完全在浏览器中运行。",
+    "Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation & slant-path fade · runs in your browser.":"免费雨衰计算器 · ITU-R P.838 + P.618 · 比衰减与斜路径衰减 · 在浏览器中运行。",
+    "Free atmospheric gaseous attenuation calculator · ITU-R P.676 · oxygen + water vapour · runs in your browser.":"免费大气气体衰减计算器 · ITU-R P.676 · 氧气 + 水汽 · 在浏览器中运行。",
+    "Free BER vs Eb/N₀ curve plotter · BPSK/QPSK/PSK/QAM/FSK over AWGN · runs entirely in your browser.":"免费 BER vs Eb/N₀ 曲线绘制 · AWGN 下 BPSK/QPSK/PSK/QAM/FSK · 完全在浏览器中运行。",
+    "Satellite frequency band reference · VHF to W-band · IEEE designations & typical uses.":"卫星频段速查 · VHF 到 W 波段 · IEEE 划分与典型用途。"
   };
 
   let nodes = [];
@@ -146,16 +157,34 @@
     });
     let n; while((n = w.nextNode())) nodes.push({ node:n, en:n.nodeValue });
   }
+  // dynamic-content helpers used by each calculator's JS
+  window.SATLANG = 'en';
+  window.t = function(en, zh){ return (window.SATLANG === 'zh' && zh != null) ? zh : en; };
+  const langCbs = [];
+  window.onLang = function(cb){ langCbs.push(cb); };
+
   function applyLang(lang){
+    window.SATLANG = (lang === 'zh') ? 'zh' : 'en';
     nodes.forEach(({node,en})=>{
       const key = en.trim();
       node.nodeValue = (lang === 'zh' && DICT[key]) ? en.replace(key, DICT[key]) : en;
+    });
+    // markup blocks via data-en / data-zh (innerHTML swap)
+    document.querySelectorAll('[data-en]').forEach(el=>{
+      const html = (lang === 'zh' && el.dataset.zh != null) ? el.dataset.zh : el.dataset.en;
+      if(html != null) el.innerHTML = html;
+    });
+    // input placeholders
+    document.querySelectorAll('[data-ph-en]').forEach(el=>{
+      el.placeholder = (lang === 'zh' && el.dataset.phZh != null) ? el.dataset.phZh : el.dataset.phEn;
     });
     document.documentElement.lang = (lang === 'zh' ? 'zh-CN' : 'en');
     document.body.classList.toggle('lang-zh', lang === 'zh');
     document.body.classList.toggle('lang-en', lang !== 'zh');
     if(bEn && bZh){ bEn.classList.toggle('active', lang !== 'zh'); bZh.classList.toggle('active', lang === 'zh'); }
     try{ localStorage.setItem('sattools_lang', lang); }catch(e){}
+    // let calculators re-render their dynamic text in the new language
+    langCbs.forEach(cb=>{ try{ cb(lang); }catch(e){} });
   }
   let bEn, bZh;
   function initToggle(){

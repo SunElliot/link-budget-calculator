@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=5">
-<script src="i18n.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="i18n.js?v=6"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Atmospheric Gaseous Attenuation Calculator (ITU-R P.676)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -100,11 +100,11 @@
   <div class="card">
     <h2><span class="dot"></span>📖 How to use</h2>
     <ol class="howto">
-      <li>Enter <b>frequency</b> (1–54 GHz) and <b>elevation angle</b>; pick an atmosphere preset if unsure.<span class="cn">输入<b>频率</b>(1–54 GHz)和<b>仰角</b>;不确定就先选大气预设。</span></li>
-      <li>Set surface <b>pressure</b>, <b>temperature</b> and <b>water-vapour density</b> for your site.<span class="cn">设置站点的地面<b>气压</b>、<b>温度</b>和<b>水汽密度</b>。</span></li>
-      <li>Read the <b>specific (dB/km)</b>, <b>zenith</b> and <b>slant-path</b> gaseous attenuation.<span class="cn">读取<b>比衰减(dB/km)</b>、<b>天顶</b>和<b>斜路径</b>气体衰减。</span></li>
-      <li>Add the slant-path loss <b>alongside rain fade</b> in your link budget (they are separate effects).<span class="cn">把斜路径衰减与<b>雨衰一起</b>加进链路预算(两者是独立效应)。</span></li>
-      <li>Click <b>🔗 Share</b> to copy this case as a link.<span class="cn">点 <b>🔗 Share</b> 复制这个算例的链接。</span></li>
+      <li><span class="en-only">Enter <b>frequency</b> (1–54 GHz) and <b>elevation angle</b>; pick an atmosphere preset if unsure.</span><span class="zh-only">输入<b>频率</b>(1–54 GHz)和<b>仰角</b>;不确定就先选大气预设。</span></li>
+      <li><span class="en-only">Set surface <b>pressure</b>, <b>temperature</b> and <b>water-vapour density</b> for your site.</span><span class="zh-only">设置站点的地面<b>气压</b>、<b>温度</b>和<b>水汽密度</b>。</span></li>
+      <li><span class="en-only">Read the <b>specific (dB/km)</b>, <b>zenith</b> and <b>slant-path</b> gaseous attenuation.</span><span class="zh-only">读取<b>比衰减(dB/km)</b>、<b>天顶</b>和<b>斜路径</b>气体衰减。</span></li>
+      <li><span class="en-only">Add the slant-path loss <b>alongside rain fade</b> in your link budget (they are separate effects).</span><span class="zh-only">把斜路径衰减与<b>雨衰一起</b>加进链路预算(两者是独立效应)。</span></li>
+      <li><span class="en-only">Click <b>🔗 Share</b> to copy this case as a link.</span><span class="zh-only">点 <b>🔗 Share</b> 复制这个算例的链接。</span></li>
     </ol>
   </div>
 
@@ -133,7 +133,7 @@
 
 <footer>Free atmospheric gaseous attenuation calculator · ITU-R P.676 · oxygen + water vapour · runs in your browser.</footer>
 
-<script src="share.js?v=5"></script>
+<script src="share.js?v=6"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -185,7 +185,7 @@ function compute(){
   $('r_gt').textContent=f3(go+gw);
   $('r_zen').textContent=f2(zen);
   $('r_slant').textContent=f2(slant);
-  $('note').textContent='Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).';
+  $('note').textContent=t('Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).','在 '+f+' GHz / '+th+'° 仰角下,给链路预算增加约 '+f2(slant)+' dB 晴空气体损耗(与雨衰独立)。');
   const rows=[
     ['Oxygen specific γ_o',f3(go)+' dB/km'],
     ['Water-vapour specific γ_w',f3(gw)+' dB/km'],
@@ -208,6 +208,7 @@ document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input
 if(window.ShareTool) ShareTool.apply();
 compute();
 if(window.ShareTool) ShareTool.initButton();
+if(window.onLang) window.onLang(compute);
 </script>
 </body>
 </html>

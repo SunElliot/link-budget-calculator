@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=5">
-<script src="i18n.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="i18n.js?v=6"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Pass Predictor","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -100,12 +100,12 @@
   <div class="card">
     <h2><span class="dot"></span>📖 How to use</h2>
     <ol class="howto">
-      <li>Paste a current <b>TLE</b> (both lines) from <a href="https://celestrak.org/NORAD/elements/" target="_blank" rel="noopener">CelesTrak</a> — the fresher, the more accurate.<span class="cn">从 <a href="https://celestrak.org/NORAD/elements/" target="_blank" rel="noopener">CelesTrak</a> 粘贴最新的<b>两行根数 TLE</b>(两行都要)——越新越准。</span></li>
-      <li>Enter your ground-station <b>latitude, longitude and altitude</b>, or click <b>📍 Detect</b> to use your location.<span class="cn">输入地面站<b>纬度、经度、海拔</b>,或点 <b>📍 Detect</b> 使用当前位置。</span></li>
-      <li>Set the <b>minimum elevation</b> (horizon mask) and how many <b>hours ahead</b> to search.<span class="cn">设置<b>最低仰角</b>(地平遮挡)和向后预测的<b>小时数</b>。</span></li>
-      <li>Click <b>Predict passes</b> to list upcoming passes with AOS, LOS, maximum elevation and duration.<span class="cn">点 <b>Predict passes</b> 列出未来过境的 AOS、LOS、最大仰角和时长。</span></li>
-      <li>Times are shown in your browser's <b>local timezone</b>; everything runs on your device.<span class="cn">时间按浏览器<b>本地时区</b>显示;全部在本地运算,坐标不上传。</span></li>
-      <li>Click <b>🔗 Share</b> to share the TLE + station setup as a link.<span class="cn">点 <b>🔗 Share</b> 把 TLE + 地面站设置作为链接分享。</span></li>
+      <li><span class="en-only">Paste a current <b>TLE</b> (both lines) from <a href="https://celestrak.org/NORAD/elements/" target="_blank" rel="noopener">CelesTrak</a> — the fresher, the more accurate.</span><span class="zh-only">从 <a href="https://celestrak.org/NORAD/elements/" target="_blank" rel="noopener">CelesTrak</a> 粘贴最新的<b>两行根数 TLE</b>(两行都要)——越新越准。</span></li>
+      <li><span class="en-only">Enter your ground-station <b>latitude, longitude and altitude</b>, or click <b>📍 Detect</b> to use your location.</span><span class="zh-only">输入地面站<b>纬度、经度、海拔</b>,或点 <b>📍 Detect</b> 使用当前位置。</span></li>
+      <li><span class="en-only">Set the <b>minimum elevation</b> (horizon mask) and how many <b>hours ahead</b> to search.</span><span class="zh-only">设置<b>最低仰角</b>(地平遮挡)和向后预测的<b>小时数</b>。</span></li>
+      <li><span class="en-only">Click <b>Predict passes</b> to list upcoming passes with AOS, LOS, maximum elevation and duration.</span><span class="zh-only">点 <b>Predict passes</b> 列出未来过境的 AOS、LOS、最大仰角和时长。</span></li>
+      <li><span class="en-only">Times are shown in your browser's <b>local timezone</b>; everything runs on your device.</span><span class="zh-only">时间按浏览器<b>本地时区</b>显示;全部在本地运算,坐标不上传。</span></li>
+      <li><span class="en-only">Click <b>🔗 Share</b> to share the TLE + station setup as a link.</span><span class="zh-only">点 <b>🔗 Share</b> 把 TLE + 地面站设置作为链接分享。</span></li>
     </ol>
   </div>
 
@@ -130,7 +130,7 @@
 <footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/satellite.js@5/dist/satellite.min.js"></script>
-<script src="share.js?v=5"></script>
+<script src="share.js?v=6"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;

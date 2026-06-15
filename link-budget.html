@@ -12,8 +12,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=5">
-<script src="i18n.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="i18n.js?v=6"></script>
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="Compute EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin for satellite links instantly.">
 <meta property="og:type" content="website">
@@ -231,18 +231,18 @@
   <div class="card">
     <h2><span class="dot"></span>📖 How to use</h2>
     <ol class="howto">
-      <li>Pick a <b>preset</b> (e.g. "LEO S-band downlink") as a starting point, or enter your own values.<span class="cn">选一个<b>预设</b>(如 "LEO S-band downlink")作为起点,或直接输入自己的参数。</span></li>
-      <li>Fill in the <b>Transmitter, Path, Receiver and Data-Link</b> cards — power, gains, frequency, slant range, data rate.<span class="cn">填写<b>发射机 / 路径 / 接收机 / 数据链路</b>四张卡片——功率、增益、频率、斜距、数据率。</span></li>
-      <li>Choose a <b>Modulation / coding</b> scheme; the required Eb/N₀ fills in automatically (or pick "Custom" to type your own).<span class="cn">选择<b>调制 / 编码</b>方式,所需 Eb/N₀ 会自动填入(或选 "Custom" 手动输入)。</span></li>
-      <li>Read the <b>Link margin</b> box: green = closes comfortably, amber = tight, red = does not close. Open the breakdown to see every term.<span class="cn">看<b>链路余量</b>框:绿=余量充足、黄=偏紧、红=链路不通;展开明细可看每一项。</span></li>
-      <li>Set the <b>orbit altitude</b> to see the margin-vs-elevation curve and your minimum usable elevation angle.<span class="cn">设置<b>轨道高度</b>,查看"余量-仰角"曲线和最低可用仰角。</span></li>
-      <li>Click <b>🔗 Share</b> in the top bar to copy a link to this exact configuration.<span class="cn">点顶栏 <b>🔗 Share</b> 复制这条配置的链接。</span></li>
+      <li><span class="en-only">Pick a <b>preset</b> (e.g. "LEO S-band downlink") as a starting point, or enter your own values.</span><span class="zh-only">选一个<b>预设</b>(如 "LEO S-band downlink")作为起点,或直接输入自己的参数。</span></li>
+      <li><span class="en-only">Fill in the <b>Transmitter, Path, Receiver and Data-Link</b> cards — power, gains, frequency, slant range, data rate.</span><span class="zh-only">填写<b>发射机 / 路径 / 接收机 / 数据链路</b>四张卡片——功率、增益、频率、斜距、数据率。</span></li>
+      <li><span class="en-only">Choose a <b>Modulation / coding</b> scheme; the required Eb/N₀ fills in automatically (or pick "Custom" to type your own).</span><span class="zh-only">选择<b>调制 / 编码</b>方式,所需 Eb/N₀ 会自动填入(或选 "Custom" 手动输入)。</span></li>
+      <li><span class="en-only">Read the <b>Link margin</b> box: green = closes comfortably, amber = tight, red = does not close. Open the breakdown to see every term.</span><span class="zh-only">看<b>链路余量</b>框:绿=余量充足、黄=偏紧、红=链路不通;展开明细可看每一项。</span></li>
+      <li><span class="en-only">Set the <b>orbit altitude</b> to see the margin-vs-elevation curve and your minimum usable elevation angle.</span><span class="zh-only">设置<b>轨道高度</b>,查看"余量-仰角"曲线和最低可用仰角。</span></li>
+      <li><span class="en-only">Click <b>🔗 Share</b> in the top bar to copy a link to this exact configuration.</span><span class="zh-only">点顶栏 <b>🔗 Share</b> 复制这条配置的链接。</span></li>
     </ol>
   </div>
 
   <!-- SEO article content -->
   <div class="card">
-    <div class="article">
+    <div class="article en-only">
       <h2>What is a satellite link budget?</h2>
       <p>A <strong>link budget</strong> accounts for all the gains and losses a radio signal experiences
       from the transmitter, through the propagation path, to the receiver. It tells you whether a
@@ -265,6 +265,24 @@
       at the lowest elevation angle you plan to operate.</p>
       <p>All computation runs locally in your browser — nothing is uploaded.</p>
     </div>
+    <div class="article zh-only">
+      <h2>什么是卫星链路预算?</h2>
+      <p><strong>链路预算</strong>把无线信号从发射机、经过传播路径、到接收机所经历的全部增益与损耗逐项累加。
+      它告诉你这条卫星链路能否"闭合"——即接收信号是否强到能在目标误码率(BER)下被解调——
+      以及你针对衰落和各种不确定性留有多少<strong>余量</strong>。</p>
+      <h2>本计算器使用的公式</h2>
+      <p><strong>EIRP</strong> = P<sub>tx</sub>(dBW) + G<sub>tx</sub>(dBi) − L<sub>tx</sub>(dB)</p>
+      <p><strong>自由空间路径损耗</strong> (FSPL) = 32.44 + 20·log₁₀(d<sub>km</sub>) + 20·log₁₀(f<sub>MHz</sub>) dB</p>
+      <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
+      <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k,其中 k = −228.6 dBW/K/Hz(玻尔兹曼)</p>
+      <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
+      <p><strong>链路余量</strong> = Eb/N₀<sub>接收</sub> − Eb/N₀<sub>所需</sub> − 实现损耗</p>
+      <h2>典型 LEO 小卫星取值</h2>
+      <p>对于一条立方星 S 波段下行,可取 ~2 W 发射功率、6 dBi 贴片天线、3 m 地面站碟(S 波段约 30 dBi)、
+      斜距约 1500–2500 km、系统噪温 150–250 K。良好的设计应在你计划使用的最低仰角处至少保留
+      <strong>3 dB 余量</strong>。</p>
+      <p>全部计算在你的浏览器本地完成——不会上传任何数据。</p>
+    </div>
   </div>
 
 </div>
@@ -276,7 +294,7 @@
   Free satellite link budget calculator · Computes EIRP, FSPL, G/T, C/N₀, Eb/N₀ and margin · No data leaves your browser.
 </footer>
 
-<script src="share.js?v=5"></script>
+<script src="share.js?v=6"></script>
 <script>
 const $ = id => document.getElementById(id);
 const K_BOLTZMANN_DBW = -228.6; // dBW/K/Hz
@@ -355,10 +373,10 @@ function compute(){
 
   const box = $('marginBox');
   box.className = 'margin-box ' + (margin >= 3 ? 'margin-good' : margin >= 0 ? 'margin-warn' : 'margin-bad');
-  const verdict = margin >= 3 ? '✓ Link closes with comfortable margin'
-                : margin >= 0 ? '⚠ Link closes but margin is tight'
-                : '✗ Link does NOT close';
-  box.innerHTML = `Link margin: <span>${f1(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
+  const verdict = margin >= 3 ? t('✓ Link closes with comfortable margin','✓ 链路闭合,余量充足')
+                : margin >= 0 ? t('⚠ Link closes but margin is tight','⚠ 链路勉强闭合,余量偏紧')
+                : t('✗ Link does NOT close','✗ 链路无法闭合');
+  box.innerHTML = `${t('Link margin','链路余量')}: <span>${f1(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
 
   const rows = [
     ['Transmit power', f1(txP)+' dBW'],
@@ -447,7 +465,7 @@ function drawChart(){
     ctx.beginPath(); ctx.moveTo(x(e),padT); ctx.lineTo(x(e),H-padB); ctx.stroke();
     ctx.fillText(e+'°', x(e), H-padB+8);
   }
-  ctx.fillText('Elevation angle', padL+plotW/2, H-padB+22);
+  ctx.fillText(t('Elevation angle','仰角'), padL+plotW/2, H-padB+22);
 
   // zero margin line
   if(0>=mins && 0<=maxs){
@@ -477,11 +495,11 @@ function drawChart(){
     ctx.setLineDash([]);
   });
 
-  const fmt = e => e==null ? 'never (link never closes)' : '≥ '+e+'°';
+  const fmt = e => e==null ? t('never (link never closes)','永不(链路始终不通)') : '≥ '+e+'°';
   $('elevSummary').innerHTML =
-    `<span style="color:#dc2626">Link closes (margin ≥ 0):</span> ${fmt(e0)} &nbsp;·&nbsp; ` +
-    `<span style="color:#d97706">Comfortable (margin ≥ 3 dB):</span> ${fmt(e3)} &nbsp;·&nbsp; ` +
-    `<span style="color:#697086">altitude ${h} km, range ${slantRange(h,90).toFixed(0)}–${slantRange(h,1).toFixed(0)} km</span>`;
+    `<span style="color:#dc2626">${t('Link closes (margin ≥ 0):','链路闭合(余量 ≥ 0):')}</span> ${fmt(e0)} &nbsp;·&nbsp; ` +
+    `<span style="color:#d97706">${t('Comfortable (margin ≥ 3 dB):','舒适(余量 ≥ 3 dB):')}</span> ${fmt(e3)} &nbsp;·&nbsp; ` +
+    `<span style="color:#697086">${t('altitude','高度')} ${h} km, ${t('range','斜距')} ${slantRange(h,90).toFixed(0)}–${slantRange(h,1).toFixed(0)} km</span>`;
 }
 
 const presets = {
@@ -519,6 +537,7 @@ fillReqEbN0();
 
 compute();
 if(window.ShareTool) ShareTool.initButton();
+if(window.onLang) window.onLang(compute);
 </script>
 </body>
 </html>

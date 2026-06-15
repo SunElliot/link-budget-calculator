@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=5">
-<script src="i18n.js?v=5"></script>
+<link rel="stylesheet" href="styles.css?v=6">
+<script src="i18n.js?v=6"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Parabolic Antenna Gain & Beamwidth Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -103,11 +103,11 @@
   <div class="card">
     <h2><span class="dot"></span>📖 How to use</h2>
     <ol class="howto">
-      <li>Pick a <b>preset</b> or enter the <b>dish diameter</b>, <b>frequency</b> and <b>aperture efficiency</b> (0.55–0.65 typical).<span class="cn">选<b>预设</b>,或输入<b>口径</b>、<b>频率</b>和<b>口面效率</b>(常取 0.55–0.65)。</span></li>
-      <li>Read the <b>gain (dBi)</b>, <b>half-power beamwidth</b>, effective aperture and far-field distance.<span class="cn">读取<b>增益(dBi)</b>、<b>半功率波束宽度</b>、有效口径和远场距离。</span></li>
-      <li>Use the gain value as the <b>Rx/Tx antenna gain</b> in the link budget or G/T tool.<span class="cn">把增益值作为链路预算或 G/T 工具里的<b>收/发天线增益</b>。</span></li>
-      <li>Mind the pointing note: keep pointing error below <b>~1/10 of the beamwidth</b> to limit pointing loss.<span class="cn">注意指向提示:对准误差应小于<b>约 1/10 波束宽度</b>,以限制指向损耗。</span></li>
-      <li>Click <b>🔗 Share</b> to copy this antenna case as a link.<span class="cn">点 <b>🔗 Share</b> 复制这个天线算例的链接。</span></li>
+      <li><span class="en-only">Pick a <b>preset</b> or enter the <b>dish diameter</b>, <b>frequency</b> and <b>aperture efficiency</b> (0.55–0.65 typical).</span><span class="zh-only">选<b>预设</b>,或输入<b>口径</b>、<b>频率</b>和<b>口面效率</b>(常取 0.55–0.65)。</span></li>
+      <li><span class="en-only">Read the <b>gain (dBi)</b>, <b>half-power beamwidth</b>, effective aperture and far-field distance.</span><span class="zh-only">读取<b>增益(dBi)</b>、<b>半功率波束宽度</b>、有效口径和远场距离。</span></li>
+      <li><span class="en-only">Use the gain value as the <b>Rx/Tx antenna gain</b> in the link budget or G/T tool.</span><span class="zh-only">把增益值作为链路预算或 G/T 工具里的<b>收/发天线增益</b>。</span></li>
+      <li><span class="en-only">Mind the pointing note: keep pointing error below <b>~1/10 of the beamwidth</b> to limit pointing loss.</span><span class="zh-only">注意指向提示:对准误差应小于<b>约 1/10 波束宽度</b>,以限制指向损耗。</span></li>
+      <li><span class="en-only">Click <b>🔗 Share</b> to copy this antenna case as a link.</span><span class="zh-only">点 <b>🔗 Share</b> 复制这个天线算例的链接。</span></li>
     </ol>
   </div>
 
@@ -132,7 +132,7 @@
 
 <footer>Free parabolic antenna calculator · gain, beamwidth, aperture, far-field · nothing leaves your browser.</footer>
 
-<script src="share.js?v=5"></script>
+<script src="share.js?v=6"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -156,7 +156,7 @@ function compute(){
   $('r_aeff').textContent=f2(aeff);
   $('r_ff').textContent=ff>=1000?(ff/1000).toFixed(2)+'k':f2(ff);
   $('r_fnbw').textContent=f2(fnbw);
-  $('ptnote').textContent='Keep pointing error below ~'+f2(hpbw/10)+'° (1/10 of HPBW) to limit pointing loss.';
+  $('ptnote').textContent=t('Keep pointing error below ~'+f2(hpbw/10)+'° (1/10 of HPBW) to limit pointing loss.','将指向误差控制在约 '+f2(hpbw/10)+'°(波束宽度的 1/10)以内,以限制指向损耗。');
 }
 const presets={
   s3m:{dia:3,freq:2.2,freqUnit:'GHz',eff:0.55},
@@ -170,6 +170,7 @@ document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input
 if(window.ShareTool) ShareTool.apply();
 compute();
 if(window.ShareTool) ShareTool.initButton();
+if(window.onLang) window.onLang(compute);
 </script>
 </body>
 </html>
