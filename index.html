@@ -5,19 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="google-site-verification" content="8ujBM2WYxZip-c83w41vhZ7XcYc9sGJne3xDa06zi1k" />
 <title>SatTools — Free Satellite Communication Calculators (LEO / Smallsat)</title>
-<meta name="description" content="A free toolkit of satellite communication calculators for LEO smallsats and ground stations: link budget, Doppler shift, TLE pass prediction, antenna gain, G/T, rain attenuation and a frequency band reference.">
-<meta name="keywords" content="satellite calculators, link budget, doppler shift, pass predictor, antenna gain, G/T, rain attenuation, frequency bands, LEO, smallsat, cubesat, ground station">
+<meta name="description" content="A free toolkit of satellite communication calculators for LEO smallsats and ground stations: link budget, Doppler shift, TLE pass prediction, antenna gain, G/T, rain & gaseous attenuation, BER curves and a frequency band reference.">
+<meta name="keywords" content="satellite calculators, link budget, doppler shift, pass predictor, antenna gain, G/T, rain attenuation, BER, frequency bands, LEO, smallsat, cubesat, ground station">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/">
+<meta property="og:title" content="SatTools — Free Satellite Communication Calculators">
+<meta property="og:description" content="Link budget, Doppler, pass prediction, antenna, G/T, rain and BER calculators for LEO smallsats — all free, in your browser.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="styles.css">
+<script src="i18n.js"></script>
 <meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<meta property="og:title" content="SatTools — Free Satellite Communication Calculators">
-<meta property="og:description" content="Link budget, Doppler, pass prediction, antenna, G/T and rain-fade calculators for LEO smallsats — all free, all in your browser.">
-<meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css">
-<script src="i18n.js"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"SatTools","url":"https://sunelliot.github.io/link-budget-calculator/","description":"Free satellite communication calculators for LEO smallsats and ground stations."}
@@ -39,77 +39,152 @@
   </div>
 </nav>
 
-<div class="hero">
-  <span class="tag">9 free engineering tools · no signup · runs in your browser</span>
-  <h1>Satellite Comms Toolkit</h1>
-  <p>Link budgets, Doppler, pass prediction, antenna, G/T and rain-fade calculators for LEO smallsats and ground stations.</p>
-</div>
+<div class="pagehead"><div class="inner">
+  <h1>Satellite Communication Tools</h1>
+  <p>Free browser-based calculators for LEO smallsat and ground-station link design — no signup, nothing uploaded.</p>
+</div></div>
 
-<div class="wrap">
-  <div class="adslot">Ad placeholder — leaderboard</div>
+<div class="gallery">
+  <!-- sidebar -->
+  <aside class="sidebar">
+    <h3>Categories</h3>
+    <ul class="cat-list">
+      <li><button data-cat="all" class="active">All tools <span class="ct">9</span></button></li>
+      <li><button data-cat="link">Link Analysis <span class="ct">3</span></button></li>
+      <li><button data-cat="orbit">Orbit &amp; Tracking <span class="ct">2</span></button></li>
+      <li><button data-cat="hw">Hardware <span class="ct">2</span></button></li>
+      <li><button data-cat="mod">Modulation <span class="ct">1</span></button></li>
+      <li><button data-cat="ref">Reference <span class="ct">1</span></button></li>
+    </ul>
+  </aside>
 
-  <div class="cards">
-    <a class="tool" href="link-budget.html">
-      <div class="ic">🛰️</div><h3>Link Budget</h3>
-      <p>EIRP, FSPL, G/T, C/N₀, Eb/N₀, margin & MODCOD with a margin-vs-elevation chart.</p>
-      <div class="go">Open →</div>
-    </a>
-    <a class="tool" href="doppler.html">
-      <div class="ic">📡</div><h3>Doppler Shift</h3>
-      <p>Orbital velocity, maximum Doppler shift, Doppler rate and a pass curve over time.</p>
-      <div class="go">Open →</div>
-    </a>
-    <a class="tool" href="pass-prediction.html">
-      <div class="ic">🛰️</div><h3>Pass Predictor</h3>
-      <p>Paste a TLE and your coordinates to get upcoming passes: AOS, LOS, max elevation, duration.</p>
-      <div class="go">Open →</div>
-    </a>
-    <a class="tool" href="antenna.html">
-      <div class="ic">📶</div><h3>Antenna Gain</h3>
-      <p>Parabolic dish gain, half-power beamwidth, effective aperture and far-field distance.</p>
-      <div class="go">Open →</div>
-    </a>
-    <a class="tool" href="gt.html">
-      <div class="ic">📐</div><h3>G/T Figure of Merit</h3>
-      <p>Build system noise temperature from antenna, feed, LNA & receiver → G/T in dB/K.</p>
-      <div class="go">Open →</div>
-    </a>
-    <a class="tool" href="rain.html">
-      <div class="ic">🌧️</div><h3>Rain Fade</h3>
-      <p>ITU-R P.838 + P.618 rain attenuation and slant-path fade vs link availability.</p>
-      <div class="go">Open →</div>
-    </a>
-    <a class="tool" href="gas.html">
-      <div class="ic">🌫️</div><h3>Gaseous Attenuation</h3>
-      <p>ITU-R P.676 clear-air loss from oxygen & water vapour, zenith and slant path.</p>
-      <div class="go">Open →</div>
-    </a>
-    <a class="tool" href="ber.html">
-      <div class="ic">📉</div><h3>BER Curves</h3>
-      <p>Bit error rate vs Eb/N₀ for BPSK, QPSK, M-PSK, M-QAM, FSK and DBPSK over AWGN.</p>
-      <div class="go">Open →</div>
-    </a>
-    <a class="tool" href="bands.html">
-      <div class="ic">📻</div><h3>Frequency Bands</h3>
-      <p>VHF–W band reference with IEEE designations and satellite up/downlink pairs.</p>
-      <div class="go">Open →</div>
-    </a>
-  </div>
+  <!-- main -->
+  <div class="main">
+    <div class="main-head">
+      <span class="count" id="count">9 tools</span>
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#697086" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+        <input id="q" type="search" placeholder="Search tools…" autocomplete="off">
+      </div>
+    </div>
 
-  <div class="adslot">Ad placeholder — in-content</div>
+    <div class="tool-grid" id="grid">
 
-  <div class="card">
-    <div class="article">
-      <h2>A free toolkit for satellite link design</h2>
-      <p>SatTools is a collection of browser-based calculators for designing and analysing satellite
-      communication links — aimed at <strong>LEO smallsat / CubeSat</strong> engineers, ground-station
-      operators, radio amateurs and students. Every tool runs entirely on your device; nothing is
-      uploaded, and there is no signup.</p>
-      <p>Start with the <a href="link-budget.html">link budget calculator</a> to size a link end to end,
-      use the <a href="doppler.html">Doppler</a> and <a href="pass-prediction.html">pass predictor</a> tools
-      to plan ground-station tracking, the <a href="antenna.html">antenna</a> and <a href="gt.html">G/T</a>
-      calculators to spec your hardware, and the <a href="rain.html">rain-fade</a> tool to set your margin
-      at Ku/Ka-band. The <a href="bands.html">frequency band reference</a> ties it together.</p>
+      <a class="tcard" href="link-budget.html" data-cat="link" data-search="link budget eirp fspl margin eb/n0 链路预算 余量">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#eef4ff"/>
+          <line x1="34" y1="22" x2="34" y2="112" stroke="#c9d8f5" stroke-width="1.5"/>
+          <line x1="34" y1="112" x2="232" y2="112" stroke="#c9d8f5" stroke-width="1.5"/>
+          <line x1="34" y1="92" x2="232" y2="92" stroke="#dc2626" stroke-dasharray="4 4" stroke-width="1.5"/>
+          <polyline points="40,104 78,86 116,64 154,48 192,40 226,36" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div class="body"><span class="tag">Link Analysis</span><h3>Link Budget</h3>
+          <p>EIRP, FSPL, G/T, C/N₀, Eb/N₀, margin & MODCOD with a margin-vs-elevation chart.</p></div>
+      </a>
+
+      <a class="tcard" href="doppler.html" data-cat="orbit" data-search="doppler shift frequency offset 多普勒 频移">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#eefaf2"/>
+          <line x1="30" y1="69" x2="232" y2="69" stroke="#bfe6cf" stroke-dasharray="4 4" stroke-width="1.5"/>
+          <path d="M34,34 C92,34 92,69 132,69 C172,69 172,104 228,104" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div class="body"><span class="tag">Orbit & Tracking</span><h3>Doppler Shift</h3>
+          <p>Orbital velocity, maximum Doppler shift, Doppler rate and a pass curve over time.</p></div>
+      </a>
+
+      <a class="tcard" href="pass-prediction.html" data-cat="orbit" data-search="pass predictor tle aos los visibility 过顶 预测">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#eef4ff"/>
+          <line x1="20" y1="112" x2="240" y2="112" stroke="#c9d8f5" stroke-width="2"/>
+          <path d="M34,112 Q130,18 226,112" fill="none" stroke="#2563eb" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round"/>
+          <circle cx="130" cy="112" r="5" fill="#16a34a"/>
+          <rect x="124" y="30" width="12" height="12" rx="2" fill="#2563eb"/>
+        </svg>
+        <div class="body"><span class="tag">Orbit & Tracking</span><h3>Pass Predictor</h3>
+          <p>Paste a TLE and your coordinates to get upcoming passes: AOS, LOS, max elevation, duration.</p></div>
+      </a>
+
+      <a class="tcard" href="antenna.html" data-cat="hw" data-search="antenna gain beamwidth dish parabolic 天线 增益">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#f0f5f0"/>
+          <path d="M96,28 Q56,69 96,110" fill="none" stroke="#16a34a" stroke-width="4" stroke-linecap="round"/>
+          <line x1="96" y1="69" x2="150" y2="69" stroke="#16a34a" stroke-width="2"/>
+          <circle cx="150" cy="69" r="5" fill="#16a34a"/>
+          <line x1="150" y1="69" x2="232" y2="50" stroke="#94c9aa" stroke-dasharray="4 4" stroke-width="1.5"/>
+          <line x1="150" y1="69" x2="232" y2="88" stroke="#94c9aa" stroke-dasharray="4 4" stroke-width="1.5"/>
+        </svg>
+        <div class="body"><span class="tag">Hardware</span><h3>Antenna Gain</h3>
+          <p>Parabolic dish gain, half-power beamwidth, effective aperture and far-field distance.</p></div>
+      </a>
+
+      <a class="tcard" href="gt.html" data-cat="hw" data-search="g/t figure of merit noise temperature lna 品质因数 噪温">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#eef4ff"/>
+          <path d="M40,52 L62,40 L62,64 Z" fill="#2563eb"/>
+          <line x1="62" y1="52" x2="92" y2="52" stroke="#9bb8ef" stroke-width="2"/>
+          <rect x="92" y="40" width="44" height="24" rx="4" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+          <text x="114" y="56" font-size="12" fill="#2563eb" text-anchor="middle" font-family="sans-serif">LNA</text>
+          <line x1="136" y1="52" x2="160" y2="52" stroke="#9bb8ef" stroke-width="2"/>
+          <rect x="160" y="40" width="40" height="24" rx="4" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+          <text x="180" y="56" font-size="11" fill="#2563eb" text-anchor="middle" font-family="sans-serif">Rx</text>
+          <text x="130" y="104" font-size="30" fill="#16a34a" text-anchor="middle" font-family="sans-serif" font-weight="700">G/T</text>
+        </svg>
+        <div class="body"><span class="tag">Hardware</span><h3>G/T Figure of Merit</h3>
+          <p>Build system noise temperature from antenna, feed, LNA & receiver → G/T in dB/K.</p></div>
+      </a>
+
+      <a class="tcard" href="rain.html" data-cat="link" data-search="rain attenuation fade itu p618 p838 雨衰">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#eaf1fb"/>
+          <path d="M40,118 C120,118 150,40 226,30" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+          <g stroke="#7aa7e6" stroke-width="2" stroke-linecap="round">
+            <line x1="70" y1="26" x2="64" y2="40"/><line x1="100" y1="22" x2="94" y2="36"/>
+            <line x1="132" y1="28" x2="126" y2="42"/><line x1="164" y1="24" x2="158" y2="38"/>
+          </g>
+        </svg>
+        <div class="body"><span class="tag">Link Analysis</span><h3>Rain Fade</h3>
+          <p>ITU-R P.838 + P.618 rain attenuation and slant-path fade vs link availability.</p></div>
+      </a>
+
+      <a class="tcard" href="gas.html" data-cat="link" data-search="gaseous attenuation atmosphere oxygen water vapour itu p676 气体衰减">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#eefaf2"/>
+          <line x1="30" y1="108" x2="232" y2="108" stroke="#bfe6cf" stroke-width="1.5"/>
+          <path d="M34,100 C92,100 104,40 132,40 C160,40 172,98 228,92" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div class="body"><span class="tag">Link Analysis</span><h3>Gaseous Attenuation</h3>
+          <p>ITU-R P.676 clear-air loss from oxygen & water vapour, zenith and slant path.</p></div>
+      </a>
+
+      <a class="tcard" href="ber.html" data-cat="mod" data-search="ber bit error rate eb/n0 qpsk qam psk 误码率">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#f4eefb"/>
+          <line x1="34" y1="22" x2="34" y2="112" stroke="#ddc9f0" stroke-width="1.5"/>
+          <line x1="34" y1="112" x2="232" y2="112" stroke="#ddc9f0" stroke-width="1.5"/>
+          <path d="M44,28 C110,30 130,96 150,120" fill="none" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M70,28 C140,30 162,96 186,120" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M98,28 C168,30 192,98 222,120" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <div class="body"><span class="tag">Modulation</span><h3>BER Curves</h3>
+          <p>Bit error rate vs Eb/N₀ for BPSK, QPSK, M-PSK, M-QAM, FSK and DBPSK over AWGN.</p></div>
+      </a>
+
+      <a class="tcard" href="bands.html" data-cat="ref" data-search="frequency bands ieee vhf uhf s c x ku ka spectrum 频段">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#fff7ed"/>
+          <rect x="34"  y="78" width="24" height="34" fill="#16a34a"/>
+          <rect x="62"  y="64" width="24" height="48" fill="#0891b2"/>
+          <rect x="90"  y="52" width="24" height="60" fill="#2563eb"/>
+          <rect x="118" y="44" width="24" height="68" fill="#7c3aed"/>
+          <rect x="146" y="36" width="24" height="76" fill="#d97706"/>
+          <rect x="174" y="50" width="24" height="62" fill="#dc2626"/>
+          <rect x="202" y="62" width="24" height="50" fill="#db2777"/>
+        </svg>
+        <div class="body"><span class="tag">Reference</span><h3>Frequency Bands</h3>
+          <p>VHF–W band reference with IEEE designations and satellite up/downlink pairs.</p></div>
+      </a>
+
+      <div class="empty" id="empty" style="display:none">No tools match your search.</div>
     </div>
   </div>
 </div>
@@ -117,5 +192,30 @@
 <footer>
   SatTools · Free satellite communication calculators · LEO / smallsat / ground station · runs entirely in your browser.
 </footer>
+
+<script>
+const cards = [...document.querySelectorAll('.tcard')];
+const catBtns = [...document.querySelectorAll('.cat-list button')];
+let curCat = 'all', q = '';
+function refresh(){
+  let n = 0;
+  cards.forEach(c=>{
+    const okCat = curCat === 'all' || c.dataset.cat === curCat;
+    const okQ = !q || (c.dataset.search || '').toLowerCase().includes(q);
+    const show = okCat && okQ;
+    c.style.display = show ? '' : 'none';
+    if(show) n++;
+  });
+  document.getElementById('count').textContent = n + (n === 1 ? ' tool' : ' tools');
+  document.getElementById('empty').style.display = n ? 'none' : '';
+}
+catBtns.forEach(b => b.addEventListener('click', ()=>{
+  curCat = b.dataset.cat;
+  catBtns.forEach(x => x.classList.toggle('active', x === b));
+  refresh();
+}));
+document.getElementById('q').addEventListener('input', e=>{ q = e.target.value.trim().toLowerCase(); refresh(); });
+refresh();
+</script>
 </body>
 </html>

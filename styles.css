@@ -81,7 +81,42 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 20px;bo
 .howto b{color:var(--txt)}
 .howto .cn{display:block;color:var(--muted);font-size:.86rem;margin-top:2px}
 
-/* ---- hub home page ---- */
+/* ---- MathWorks-style examples gallery (home) ---- */
+.pagehead{border-bottom:1px solid var(--line);background:#fff}
+.pagehead .inner{max-width:1180px;margin:0 auto;padding:26px 20px 22px}
+.pagehead h1{margin:0 0 6px;font-size:1.6rem;letter-spacing:-.02em}
+.pagehead p{margin:0;color:var(--muted);font-size:.95rem}
+.gallery{display:grid;grid-template-columns:228px 1fr;gap:30px;max-width:1180px;margin:0 auto;padding:24px 20px 60px}
+@media(max-width:800px){.gallery{grid-template-columns:1fr;gap:18px}}
+.sidebar{position:sticky;top:70px;align-self:start}
+@media(max-width:800px){.sidebar{position:static}}
+.sidebar h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:0 0 10px}
+.cat-list{list-style:none;margin:0;padding:0}
+.cat-list li{margin:2px 0}
+.cat-list button{width:100%;text-align:left;background:none;border:none;color:#3a4256;font-size:.9rem;
+  padding:9px 12px;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cat-list button:hover{background:#fff}
+.cat-list button.active{background:#fff;color:var(--accent);font-weight:600;box-shadow:var(--shadow)}
+.cat-list .ct{color:var(--muted);font-size:.76rem;background:#eef0f4;border-radius:20px;padding:1px 8px}
+.cat-list button.active .ct{background:var(--accent-soft);color:var(--accent)}
+.main-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.main-head .count{font-size:.9rem;color:var(--muted)}
+.search{flex:1;max-width:340px;position:relative;min-width:200px}
+.search input{width:100%;padding:9px 12px 9px 36px;border:1px solid var(--line);border-radius:10px;font-size:.9rem;background:#fff;color:var(--txt)}
+.search input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.5}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:20px}
+.tcard{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:#fff;
+  border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s,box-shadow .15s,border-color .15s}
+.tcard:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.tcard .thumb{display:block;width:100%;height:138px;border-bottom:1px solid var(--line)}
+.tcard .body{padding:15px 16px 17px}
+.tcard .tag{display:inline-block;font-size:.7rem;color:var(--accent);background:var(--accent-soft);padding:3px 10px;border-radius:20px;margin-bottom:9px}
+.tcard h3{margin:0 0 6px;font-size:1.02rem}
+.tcard p{margin:0;color:var(--muted);font-size:.85rem;line-height:1.5}
+.empty{grid-column:1/-1;color:var(--muted);padding:48px;text-align:center}
+
+/* ---- hub home page (legacy hero/cards, still used elsewhere) ---- */
 .hero{text-align:center;padding:62px 20px 34px;background:radial-gradient(900px 360px at 50% -40px,rgba(34,160,90,.14),transparent)}
 .hero .tag{display:inline-block;font-size:.78rem;color:var(--accent);background:var(--accent-soft);
            border:1px solid rgba(37,99,235,.25);padding:5px 12px;border-radius:20px;margin-bottom:18px}

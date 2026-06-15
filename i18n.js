@@ -112,9 +112,6 @@
     "km above sea level":"km(海拔)","deg (abs value used)":"度(取绝对值)",
     "deg — horizon mask":"度 — 地平遮挡","hours ahead":"向后小时数","metres":"米",
     // ---- hub home ----
-    "Satellite Comms Toolkit":"卫星通信工具箱",
-    "9 free engineering tools · no signup · runs in your browser":"9 个免费工程工具 · 免注册 · 浏览器中运行",
-    "Link budgets, Doppler, pass prediction, antenna, G/T and rain-fade calculators for LEO smallsats and ground stations.":"面向 LEO 小卫星与地面站的链路预算、多普勒、过顶预测、天线、G/T 与雨衰计算器。",
     "EIRP, FSPL, G/T, C/N₀, Eb/N₀, margin & MODCOD with a margin-vs-elevation chart.":"EIRP、FSPL、G/T、C/N₀、Eb/N₀、余量与 MODCOD,含余量-仰角曲线。",
     "Orbital velocity, maximum Doppler shift, Doppler rate and a pass curve over time.":"轨道速度、最大多普勒频移、多普勒变化率和随时间的过境曲线。",
     "Paste a TLE and your coordinates to get upcoming passes: AOS, LOS, max elevation, duration.":"粘贴 TLE 与坐标,得到未来过境:AOS、LOS、最大仰角、时长。",
@@ -123,7 +120,16 @@
     "ITU-R P.838 + P.618 rain attenuation and slant-path fade vs link availability.":"ITU-R P.838 + P.618 雨衰与斜路径衰减 vs 链路可用度。",
     "ITU-R P.676 clear-air loss from oxygen & water vapour, zenith and slant path.":"ITU-R P.676 氧气与水汽晴空衰减,天顶与斜路径。",
     "Bit error rate vs Eb/N₀ for BPSK, QPSK, M-PSK, M-QAM, FSK and DBPSK over AWGN.":"AWGN 下 BPSK、QPSK、M-PSK、M-QAM、FSK、DBPSK 的误码率 vs Eb/N₀。",
-    "VHF–W band reference with IEEE designations and satellite up/downlink pairs.":"VHF–W 波段速查,含 IEEE 划分与卫星上/下行配对。"
+    "VHF–W band reference with IEEE designations and satellite up/downlink pairs.":"VHF–W 波段速查,含 IEEE 划分与卫星上/下行配对。",
+    // ---- gallery home (cards, categories, head) ----
+    "Satellite Communication Tools":"卫星通信工具",
+    "Free browser-based calculators for LEO smallsat and ground-station link design — no signup, nothing uploaded.":"面向 LEO 小卫星与地面站链路设计的免费在线计算器 — 免注册,数据不上传。",
+    "Categories":"分类","All tools":"全部工具","Link Analysis":"链路分析",
+    "Orbit & Tracking":"轨道与跟踪","Hardware":"硬件","Reference":"参考",
+    "Link Budget":"链路预算","Doppler Shift":"多普勒频移","Pass Predictor":"过顶预测",
+    "Antenna Gain":"天线增益","G/T Figure of Merit":"G/T 品质因数","Rain Fade":"雨衰",
+    "Gaseous Attenuation":"气体衰减","Frequency Bands":"频段速查",
+    "No tools match your search.":"没有匹配的工具。"
   };
 
   let nodes = [];
