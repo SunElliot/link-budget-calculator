@@ -75,6 +75,7 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 20px;bo
 .howto li{margin:8px 0}
 .howto li::marker{color:var(--accent);font-weight:700}
 .howto b{color:var(--txt)}
+.howto .cn{display:block;color:var(--muted);font-size:.86rem;margin-top:2px}
 
 /* ---- hub home page ---- */
 .hero{text-align:center;padding:62px 20px 34px;background:radial-gradient(900px 360px at 50% -40px,rgba(34,160,90,.14),transparent)}
