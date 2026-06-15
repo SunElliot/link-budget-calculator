@@ -11,8 +11,8 @@
 <meta property="og:title" content="SatTools — Free Satellite Communication Calculators">
 <meta property="og:description" content="Link budget, Doppler, pass prediction, antenna, G/T, rain and BER calculators for LEO smallsats — all free, in your browser.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=7">
-<script src="i18n.js?v=7"></script>
+<link rel="stylesheet" href="styles.css?v=8">
+<script src="i18n.js?v=8"></script>
 <meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -38,10 +38,10 @@
   <aside class="sidebar">
     <h3>Categories</h3>
     <ul class="cat-list">
-      <li><button data-cat="all" class="active">All tools <span class="ct">9</span></button></li>
+      <li><button data-cat="all" class="active">All tools <span class="ct">10</span></button></li>
       <li><button data-cat="link">Link Analysis <span class="ct">3</span></button></li>
       <li><button data-cat="orbit">Orbit &amp; Tracking <span class="ct">2</span></button></li>
-      <li><button data-cat="hw">Hardware <span class="ct">2</span></button></li>
+      <li><button data-cat="hw">Hardware <span class="ct">3</span></button></li>
       <li><button data-cat="mod">Modulation <span class="ct">1</span></button></li>
       <li><button data-cat="ref">Reference <span class="ct">1</span></button></li>
     </ul>
@@ -50,7 +50,7 @@
   <!-- main -->
   <div class="main">
     <div class="main-head">
-      <span class="count" id="count">9 tools</span>
+      <span class="count" id="count">10 tools</span>
       <div class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#697086" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
         <input id="q" type="search" placeholder="Search tools…" data-ph-en="Search tools…" data-ph-zh="搜索工具…" autocomplete="off">
@@ -104,6 +104,16 @@
         </svg>
         <div class="body"><span class="tag">Hardware</span><h3>Antenna Gain</h3>
           <p>Parabolic dish gain, half-power beamwidth, effective aperture and far-field distance.</p></div>
+      </a>
+
+      <a class="tcard" href="phased-array.html" data-cat="hw" data-search="phased array gain scan loss grating lobe beamwidth aesa 相控阵 扫描 增益">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#eef4ff"/>
+          <path d="M114,118 L70,28 L188,28 Z" fill="rgba(22,160,90,.16)" stroke="#16a34a" stroke-width="2" stroke-linejoin="round"/>
+          <g fill="#2563eb"><circle cx="40" cy="118" r="4"/><circle cx="66" cy="118" r="4"/><circle cx="92" cy="118" r="4"/><circle cx="118" cy="118" r="4"/><circle cx="144" cy="118" r="4"/><circle cx="170" cy="118" r="4"/><circle cx="196" cy="118" r="4"/><circle cx="222" cy="118" r="4"/></g>
+        </svg>
+        <div class="body"><span class="tag">Hardware</span><h3>Phased Array Gain</h3>
+          <p>Array gain, scan loss, beamwidth, aperture and grating-lobe-free scan limit.</p></div>
       </a>
 
       <a class="tcard" href="gt.html" data-cat="hw" data-search="g/t figure of merit noise temperature lna 品质因数 噪温">

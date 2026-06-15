@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phased Array Antenna Gain Calculator — Scan Loss, Beamwidth, Grating Lobes</title>
+<meta name="description" content="Free phased array antenna gain calculator. Compute array gain, scan loss, half-power beamwidth, aperture size and the grating-lobe-free scan limit from element count, spacing and scan angle.">
+<meta name="keywords" content="phased array gain calculator, array antenna gain, scan loss, grating lobe, beamwidth, AESA, element spacing, beam steering">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/phased-array.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Phased Array Antenna Gain Calculator">
+<meta property="og:description" content="Array gain, scan loss, beamwidth, aperture and grating-lobe-free scan limit for phased arrays.">
+<meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<link rel="stylesheet" href="styles.css?v=8">
+<script src="i18n.js?v=8"></script>
+<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Phased Array Antenna Gain Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html">🛰 SatTools</a>
+</nav>
+
+<div class="page">
+<aside class="sidebar">
+  <a class="home" href="index.html" style="display:block;text-decoration:none">← All tools</a>
+  <ul class="toolnav">
+    <li class="grp">Link Analysis</li>
+    <li><a href="link-budget.html">Link Budget</a></li>
+    <li><a href="rain.html">Rain Fade</a></li>
+    <li><a href="gas.html">Gaseous Attenuation</a></li>
+    <li class="grp">Orbit &amp; Tracking</li>
+    <li><a href="doppler.html">Doppler Shift</a></li>
+    <li><a href="pass-prediction.html">Pass Predictor</a></li>
+    <li class="grp">Hardware</li>
+    <li><a href="antenna.html">Antenna Gain</a></li>
+    <li><a href="phased-array.html" class="active">Phased Array Gain</a></li>
+    <li><a href="gt.html">G/T Figure of Merit</a></li>
+    <li class="grp">Modulation</li>
+    <li><a href="ber.html">BER Curves</a></li>
+    <li class="grp">Reference</li>
+    <li><a href="bands.html">Frequency Bands</a></li>
+  </ul>
+</aside>
+<div class="pagemain">
+<header>
+  <h1>📡 Phased Array Antenna Gain</h1>
+  <p>Array gain · scan loss · beamwidth · grating-lobe limit</p>
+</header>
+
+<div class="wrap">
+  <div class="preset-bar">
+    <button data-preset="p88">8×8 patch, λ/2</button>
+    <button data-preset="ka">16×16 Ka-band</button>
+    <button data-preset="lin">Linear 32, scan 45°</button>
+    <button data-preset="big">32×32 (1024 elem)</button>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Array Geometry</h2>
+      <div class="row">
+        <label>Frequency</label>
+        <div class="ig">
+          <input type="number" id="freq" value="10" step="any">
+          <select id="frequnit"><option value="GHz">GHz</option><option value="MHz">MHz</option></select>
+        </div>
+      </div>
+      <div class="row"><label>Elements X (N_x)<span class="hint">columns</span></label><input type="number" id="nx" value="8" step="1"></div>
+      <div class="row"><label>Elements Y (N_y)<span class="hint">rows (1 = linear array)</span></label><input type="number" id="ny" value="8" step="1"></div>
+      <div class="row"><label>Element spacing X<span class="hint">λ (e.g. 0.5)</span></label><input type="number" id="dx" value="0.5" step="any"></div>
+      <div class="row"><label>Element spacing Y<span class="hint">λ (e.g. 0.5)</span></label><input type="number" id="dy" value="0.5" step="any"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Element &amp; Scan</h2>
+      <div class="row"><label>Element gain<span class="hint">dBi (single element)</span></label><input type="number" id="ge" value="6" step="any"></div>
+      <div class="row"><label>Scan angle<span class="hint">deg from broadside</span></label><input type="number" id="scan" value="0" step="any"></div>
+      <div class="row"><label>Taper / efficiency loss<span class="hint">dB (amplitude taper, losses)</span></label><input type="number" id="taper" value="0" step="any"></div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Results</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">Total elements</div><div class="v"><span id="r_n">–</span></div></div>
+        <div class="metric"><div class="k">Broadside gain</div><div class="v"><span id="r_g0">–</span> <span class="u">dBi</span></div></div>
+        <div class="metric"><div class="k">Scan loss</div><div class="v"><span id="r_sl">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Gain @ scan</div><div class="v"><span id="r_gs">–</span> <span class="u">dBi</span></div></div>
+        <div class="metric"><div class="k">Beamwidth X @ scan</div><div class="v"><span id="r_bwx">–</span> <span class="u">deg</span></div></div>
+        <div class="metric"><div class="k">Beamwidth Y @ scan</div><div class="v"><span id="r_bwy">–</span> <span class="u">deg</span></div></div>
+        <div class="metric"><div class="k">Aperture size</div><div class="v"><span id="r_ap">–</span> <span class="u">cm</span></div></div>
+        <div class="metric"><div class="k">Grating-lobe-free scan limit</div><div class="v"><span id="r_gl">–</span> <span class="u">deg</span></div></div>
+      </div>
+      <div class="note" id="note"></div>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <h2><span class="dot"></span>📖 How to use</h2>
+    <ol class="howto">
+      <li><span class="en-only">Set the <b>frequency</b> and the array size — number of elements in X and Y (set N_y = 1 for a linear array).</span><span class="zh-only">设置<b>频率</b>和阵列规模——X、Y 方向的阵元数(Y 向填 1 即为线阵)。</span></li>
+      <li><span class="en-only">Enter the <b>element spacing</b> in wavelengths (0.5 λ is typical and avoids grating lobes).</span><span class="zh-only">输入以波长为单位的<b>阵元间距</b>(常取 0.5 λ,可避免栅瓣)。</span></li>
+      <li><span class="en-only">Give the <b>single-element gain</b> (≈5–8 dBi for a patch) and any amplitude-taper / efficiency loss.</span><span class="zh-only">填入<b>单个阵元增益</b>(贴片约 5–8 dBi)以及幅度加权/效率损耗。</span></li>
+      <li><span class="en-only">Set the <b>scan angle</b> off broadside — the gain drops by the scan loss and the beam broadens by 1/cos θ.</span><span class="zh-only">设置距法向的<b>扫描角</b>——增益按扫描损耗下降,波束按 1/cos θ 展宽。</span></li>
+      <li><span class="en-only">Use <b>Gain @ scan</b> as the antenna gain in the <a href="link-budget.html" style="color:var(--accent)">link budget</a>; watch the grating-lobe limit if spacing &gt; 0.5 λ.</span><span class="zh-only">把<b>扫描角增益</b>作为<a href="link-budget.html" style="color:var(--accent)">链路预算</a>里的天线增益;间距 &gt; 0.5 λ 时注意栅瓣极限。</span></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div class="article en-only">
+      <h2>Phased array gain &amp; scanning</h2>
+      <p>A <strong>phased array</strong> forms a beam by combining many small radiating elements with controlled
+      phase. Adding elements raises the gain by <code>10·log₁₀(N)</code>, and steering the beam off broadside is
+      done electronically (no moving parts) by progressively phasing the elements.</p>
+      <h2>Formulas used</h2>
+      <p><strong>Broadside gain:</strong> <code>G₀ = G_element(dBi) + 10·log₁₀(N) − L_taper</code>, N = N_x·N_y</p>
+      <p><strong>Scan loss:</strong> <code>ΔG = 10·log₁₀(cos θ_scan)</code> (projected-aperture model; real arrays lose a little more from the element pattern)</p>
+      <p><strong>Beamwidth:</strong> <code>HPBW ≈ 0.886·λ / (N·d)</code> at broadside, broadening as <code>1/cos θ</code> when scanned</p>
+      <p><strong>Grating lobes</strong> stay out of the visible region while <code>sin θ_scan ≤ λ/d − 1</code>;
+      with 0.5 λ spacing you can scan to the horizon without grating lobes.</p>
+      <p>This is a first-order model (uniform amplitude, ideal elements). All computation runs locally in your browser.</p>
+    </div>
+    <div class="article zh-only">
+      <h2>相控阵增益与扫描</h2>
+      <p><strong>相控阵</strong>通过对许多小辐射阵元施加受控相位来形成波束。增加阵元数使增益提高 <code>10·log₁₀(N)</code>,
+      而把波束偏离法向是通过逐元移相<strong>电扫描</strong>实现的(无机械运动)。</p>
+      <h2>使用的公式</h2>
+      <p><strong>法向增益:</strong> <code>G₀ = G_阵元(dBi) + 10·log₁₀(N) − L_加权</code>,N = N_x·N_y</p>
+      <p><strong>扫描损耗:</strong> <code>ΔG = 10·log₁₀(cos θ_扫描)</code>(投影口径模型;真实阵列因阵元方向图还会多损失一点)</p>
+      <p><strong>波束宽度:</strong> 法向 <code>HPBW ≈ 0.886·λ / (N·d)</code>,扫描时按 <code>1/cos θ</code> 展宽</p>
+      <p>当 <code>sin θ_扫描 ≤ λ/d − 1</code> 时<strong>栅瓣</strong>不进入可见区;采用 0.5 λ 间距可扫描到地平线而无栅瓣。</p>
+      <p>这是一阶模型(均匀幅度、理想阵元)。全部计算在你的浏览器本地完成。</p>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<footer>Free phased array gain calculator · array gain, scan loss, beamwidth, grating lobes · runs in your browser.</footer>
+
+<script src="share.js?v=8"></script>
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value)||0;
+const C=299792458, L10=Math.log10, PI=Math.PI;
+function compute(){
+  const f=num('freq')*($('frequnit').value==='GHz'?1e9:1e6);
+  const lam=f>0?C/f:0;
+  const Nx=Math.max(Math.round(num('nx')),1), Ny=Math.max(Math.round(num('ny')),1), N=Nx*Ny;
+  const dx=num('dx'), dy=num('dy'), Ge=num('ge'), taper=num('taper');
+  const thDeg=Math.min(Math.max(num('scan'),0),89.9), th=thDeg*PI/180, cosS=Math.cos(th);
+  const G0=Ge+10*L10(N)-taper;
+  const sl=10*L10(cosS);
+  const Gs=G0+sl;
+  const Lx=Nx*dx*lam, Ly=Ny*dy*lam;
+  const bwx=Lx>0?0.886*lam/Lx*180/PI/cosS:0, bwy=Ly>0?0.886*lam/Ly*180/PI/cosS:0;
+  const dmax=Math.max(dx,dy), arg=dmax>0?1/dmax-1:1;
+  const gl=arg>=1?90:(arg<=-1?0:Math.asin(arg)*180/PI);
+  const f1=x=>x.toFixed(1), f2=x=>x.toFixed(2);
+  $('r_n').textContent=N;
+  $('r_g0').textContent=f1(G0);
+  $('r_sl').textContent=f2(sl);
+  $('r_gs').textContent=f1(Gs);
+  $('r_bwx').textContent=f1(bwx);
+  $('r_bwy').textContent=Ny>1?f1(bwy):'–';
+  $('r_ap').textContent=f1(Lx*100)+' × '+f1(Ly*100);
+  $('r_gl').textContent=gl>=90?'≥ 90':f1(gl);
+  const warn = thDeg>gl;
+  $('note').textContent = warn
+    ? t('⚠ Scan angle '+f1(thDeg)+'° exceeds the grating-lobe-free limit of '+f1(gl)+'° — reduce element spacing below 0.5 λ-equivalent.',
+        '⚠ 扫描角 '+f1(thDeg)+'° 超过无栅瓣极限 '+f1(gl)+'° —— 请把阵元间距减小到约 0.5 λ 以下。')
+    : t('Use the Gain @ scan ('+f1(Gs)+' dBi) as the antenna gain in your link budget.',
+        '把扫描角增益('+f1(Gs)+' dBi)作为链路预算里的天线增益。');
+}
+const presets={
+  p88:{freq:10,frequnit:'GHz',nx:8,ny:8,dx:0.5,dy:0.5,ge:6,scan:0,taper:0},
+  ka:{freq:30,frequnit:'GHz',nx:16,ny:16,dx:0.5,dy:0.5,ge:5,scan:30,taper:1},
+  lin:{freq:10,frequnit:'GHz',nx:32,ny:1,dx:0.5,dy:0.5,ge:6,scan:45,taper:0.5},
+  big:{freq:14,frequnit:'GHz',nx:32,ny:32,dx:0.5,dy:0.5,ge:5,scan:20,taper:1},
+};
+document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('click',()=>{
+  const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
+if(window.ShareTool) ShareTool.apply();
+compute();
+if(window.ShareTool) ShareTool.initButton();
+if(window.onLang) window.onLang(compute);
+</script>
+</body>
+</html>
