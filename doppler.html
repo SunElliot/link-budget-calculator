@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=6">
-<script src="i18n.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="i18n.js?v=7"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"LEO Satellite Doppler Shift Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -105,9 +105,13 @@
 
     <div class="card results">
       <h2><span class="dot"></span>Doppler Shift vs Time (overhead pass)</h2>
-      <p style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
+      <p class="en-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
         Signal arrives high (approaching, +Doppler), crosses zero at closest approach, then drops (receding, −Doppler).
         The steepest slope at t=0 is the peak Doppler rate your receiver's tracking loop must follow.
+      </p>
+      <p class="zh-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
+        信号到来时频率偏高(接近,+多普勒),在最近点穿过零点,随后下降(远离,−多普勒)。
+        t=0 处最陡的斜率就是接收机跟踪环路必须跟上的峰值多普勒变化率。
       </p>
       <canvas id="chart" width="1000" height="380" style="width:100%;height:auto;display:block"></canvas>
     </div>
@@ -123,12 +127,11 @@
       <li><span class="en-only">Set the <b>elevation angle</b> to get the instantaneous Doppler at that point in a pass.</span><span class="zh-only">设置<b>仰角</b>,得到过境中该点的瞬时多普勒。</span></li>
       <li><span class="en-only">The curve shows <b>Doppler vs time</b> over an overhead pass — the steep slope at closest approach is the rate your tracking loop must follow.</span><span class="zh-only">曲线是一次过顶的<b>多普勒-时间</b>关系——最近点处的陡峭斜率就是跟踪环路必须跟上的变化率。</span></li>
       <li><span class="en-only">Remember: higher carrier frequency → larger Doppler. Size your receiver's acquisition range accordingly.</span><span class="zh-only">记住:频率越高,多普勒越大;据此设计接收机的捕获范围。</span></li>
-      <li><span class="en-only">Click <b>🔗 Share</b> to send this exact case to a colleague.</span><span class="zh-only">点 <b>🔗 Share</b> 把这个算例发给同事。</span></li>
     </ol>
   </div>
 
   <div class="card">
-    <div class="article">
+    <div class="article en-only">
       <h2>How Doppler shift works for satellites</h2>
       <p>A LEO satellite moves fast (~7.5 km/s) relative to a ground station, so the received carrier
       frequency is shifted by the radial (line-of-sight) component of that velocity. As the satellite
@@ -142,6 +145,17 @@
       links need far wider acquisition ranges than UHF.</p>
       <p>All computation runs locally in your browser.</p>
     </div>
+    <div class="article zh-only">
+      <h2>卫星多普勒频移原理</h2>
+      <p>LEO 卫星相对地面站运动很快(~7.5 km/s),因此接收到的载波频率会被该速度的径向(视线方向)分量所偏移。
+      卫星升起、向你接近时,频率<strong>上移</strong>;在最近点径向速度为零(无偏移);卫星落下、远离时频率<strong>下移</strong>。</p>
+      <h2>使用的公式</h2>
+      <p>轨道速度:<code>v = √(μ / (Rₑ + h))</code>,μ = 398600.4418 km³/s²</p>
+      <p>多普勒频移:<code>Δf = −(ṙ / c) · f</code>,其中 ṙ 为距离变化率,c 为光速</p>
+      <p>本计算器按最坏情况的过顶(天顶)过境建模,此时多普勒频移与变化率最大。最大多普勒与载波频率成正比——
+      这正是 X、Ku 波段链路比 UHF 需要宽得多的捕获范围的原因。</p>
+      <p>全部计算在你的浏览器本地完成。</p>
+    </div>
   </div>
 </div>
 
@@ -150,7 +164,7 @@
 
 <footer>Free LEO Doppler shift calculator · orbital velocity, max Doppler, Doppler rate, pass curve · nothing leaves your browser.</footer>
 
-<script src="share.js?v=6"></script>
+<script src="share.js?v=7"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;

@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=6">
-<script src="i18n.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="i18n.js?v=7"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"G/T Figure of Merit Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -110,12 +110,11 @@
       <li><span class="en-only">Enter the <b>LNA noise figure & gain</b>, and the post-LNA receiver noise figure.</span><span class="zh-only">输入 <b>LNA 噪声系数与增益</b>,以及 LNA 之后接收机的噪声系数。</span></li>
       <li><span class="en-only">Read <b>G/T (dB/K)</b> — paste it straight into the link budget's G/T input.</span><span class="zh-only">读取 <b>G/T(dB/K)</b>——直接填进链路预算的 G/T 输入。</span></li>
       <li><span class="en-only">Open the breakdown to see how each stage adds to the system noise temperature (pre-LNA loss hurts most).</span><span class="zh-only">展开明细可看各级对系统噪温的贡献(LNA 前的损耗影响最大)。</span></li>
-      <li><span class="en-only">Click <b>🔗 Share</b> to copy this configuration as a link.</span><span class="zh-only">点 <b>🔗 Share</b> 复制这套配置的链接。</span></li>
     </ol>
   </div>
 
   <div class="card">
-    <div class="article">
+    <div class="article en-only">
       <h2>What is G/T?</h2>
       <p><strong>G/T</strong> (gain-to-noise-temperature ratio, the "figure of merit") summarises a receiving
       system's sensitivity in a single number: the antenna gain divided by the total system noise temperature,
@@ -132,6 +131,16 @@
       <a href="link-budget.html" style="color:var(--accent)">link budget calculator</a>.
       All computation runs locally in your browser.</p>
     </div>
+    <div class="article zh-only">
+      <h2>什么是 G/T?</h2>
+      <p><strong>G/T</strong>(增益与噪声温度之比,即"品质因数")用一个数概括接收系统的灵敏度:天线增益除以系统总噪声温度,单位 <strong>dB/K</strong>。越高越好。它直接进入载噪比计算:<code>C/N₀ = EIRP − 路径损耗 + G/T − k</code>。</p>
+      <h2>使用的公式</h2>
+      <p>由噪声系数得噪声温度:<code>T = (10^(NF/10) − 1) · 290 K</code></p>
+      <p>折算到天线口面的系统噪温(Friis 级联):</p>
+      <p><code>T_sys = T_A + (L−1)·T_phys + L·T_LNA + L·T_rx / G_LNA</code></p>
+      <p>其中 L 为 LNA 之前的线性馈线损耗。由于该损耗位于 LNA 之前,它既引入自身噪声又衰减信号——这正是<strong>把 LNA 前损耗做到极小</strong>如此重要的原因。最后:<code>G/T = G_antenna(dBi) − 10·log₁₀(T_sys)</code>。</p>
+      <p>把得到的 G/T 直接填进<a href="link-budget.html" style="color:var(--accent)">链路预算计算器</a>。全部计算在你的浏览器本地完成。</p>
+    </div>
   </div>
 </div>
 
@@ -140,7 +149,7 @@
 
 <footer>Free G/T figure-of-merit calculator · system noise temperature cascade · runs entirely in your browser.</footer>
 
-<script src="share.js?v=6"></script>
+<script src="share.js?v=7"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -168,13 +177,13 @@ function compute(){
   $('r_gt').textContent=f2(gt);
   $('gnote').textContent=t('G/T = '+f2(gt)+' dB/K — paste this into the link budget calculator’s G/T (or Rx gain + system temp) inputs.','G/T = '+f2(gt)+' dB/K —— 直接填进链路预算的 G/T(或接收增益 + 系统噪温)输入。');
   const rows=[
-    ['Antenna noise temp T_A',TA.toFixed(2)+' K'],
-    ['Feed loss noise (L−1)·T_phys',feedContrib.toFixed(2)+' K'],
-    ['LNA noise (referred) L·T_LNA',lnaContrib.toFixed(2)+' K'],
-    ['Post-LNA noise L·T_rx/G_LNA',rxContrib.toFixed(2)+' K'],
-    ['= System noise temp T_sys',Tsys.toFixed(2)+' K'],
-    ['Antenna gain',G.toFixed(2)+' dBi'],
-    ['= G/T',gt.toFixed(2)+' dB/K'],
+    [t('Antenna noise temp T_A','天线噪声温度 T_A'),TA.toFixed(2)+' K'],
+    [t('Feed loss noise (L−1)·T_phys','馈线损耗噪声 (L−1)·T_phys'),feedContrib.toFixed(2)+' K'],
+    [t('LNA noise (referred) L·T_LNA','LNA 噪声(折算) L·T_LNA'),lnaContrib.toFixed(2)+' K'],
+    [t('Post-LNA noise L·T_rx/G_LNA','LNA 后噪声 L·T_rx/G_LNA'),rxContrib.toFixed(2)+' K'],
+    [t('= System noise temp T_sys','= 系统噪温 T_sys'),Tsys.toFixed(2)+' K'],
+    [t('Antenna gain','天线增益'),G.toFixed(2)+' dBi'],
+    [t('= G/T','= G/T'),gt.toFixed(2)+' dB/K'],
   ];
   $('bd').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('');
 }

@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=6">
-<script src="i18n.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="i18n.js?v=7"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"BER vs Eb/N0 Curve Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -92,7 +92,7 @@
   </div>
 
   <div class="card">
-    <div class="article">
+    <div class="article en-only">
       <h2>Reading a BER curve</h2>
       <p>A <strong>BER vs Eb/N₀</strong> curve shows the theoretical bit error rate of a modulation over an
       additive white Gaussian noise (AWGN) channel as a function of the energy-per-bit to noise-density
@@ -112,6 +112,17 @@
       spectral efficiency) but need a higher Eb/N₀ for the same BER. Forward error correction (e.g. LDPC in
       DVB-S2) shifts these curves sharply to the left. All computation runs locally in your browser.</p>
     </div>
+    <div class="article zh-only">
+      <h2>如何看 BER 曲线</h2>
+      <p><strong>BER vs Eb/N₀</strong> 曲线给出某调制在加性高斯白噪声(AWGN)信道下的理论误码率,作为每比特能量与噪声密度之比的函数。越低越靠左越好。要达到目标 BER(比如 10⁻⁶),从 BER 轴横向读到曲线,再向下读出所需 Eb/N₀——这个数就是你填进<a href="link-budget.html" style="color:var(--accent)">链路预算</a>的 "所需 Eb/N₀"。</p>
+      <h2>公式(AWGN,未编码)</h2>
+      <p><strong>BPSK / QPSK:</strong> <code>P_b = Q(√(2·Eb/N0))</code></p>
+      <p><strong>M-PSK:</strong> <code>P_b ≈ (2/k)·Q(√(2k·Eb/N0)·sin(π/M))</code>,k = log₂M</p>
+      <p><strong>M-QAM:</strong> <code>P_b ≈ (4/k)(1−1/√M)·Q(√(3k/(M−1)·Eb/N0))</code></p>
+      <p><strong>相干 FSK:</strong> <code>P_b = Q(√(Eb/N0))</code> &nbsp; <strong>DBPSK:</strong> <code>P_b = ½·e^(−Eb/N0)</code></p>
+      <p><strong>16/32-APSK *</strong>(DVB-S2):没有简单闭式——用环状星座(4+12 与 4+12+16)的最近邻联合界近似,并归一化到单位平均能量。在线性 AWGN 下,APSK 略逊于同阶 QAM,其真正优势是抗功放非线性。标 <strong>*</strong> 的曲线为近似。</p>
+      <p>其中 Q(·) 为高斯 Q 函数。高阶方案每符号携带更多比特(频谱效率更高),但要达到相同 BER 需要更高的 Eb/N₀。前向纠错(如 DVB-S2 的 LDPC)会把这些曲线大幅左移。全部计算在你的浏览器本地完成。</p>
+    </div>
   </div>
 </div>
 
@@ -120,7 +131,7 @@
 
 <footer>Free BER vs Eb/N₀ curve plotter · BPSK/QPSK/PSK/QAM/FSK over AWGN · runs entirely in your browser.</footer>
 
-<script src="share.js?v=6"></script>
+<script src="share.js?v=7"></script>
 <script>
 const $=id=>document.getElementById(id);
 function erfc(x){

@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=6">
-<script src="i18n.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="i18n.js?v=7"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Atmospheric Gaseous Attenuation Calculator (ITU-R P.676)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -104,12 +104,11 @@
       <li><span class="en-only">Set surface <b>pressure</b>, <b>temperature</b> and <b>water-vapour density</b> for your site.</span><span class="zh-only">设置站点的地面<b>气压</b>、<b>温度</b>和<b>水汽密度</b>。</span></li>
       <li><span class="en-only">Read the <b>specific (dB/km)</b>, <b>zenith</b> and <b>slant-path</b> gaseous attenuation.</span><span class="zh-only">读取<b>比衰减(dB/km)</b>、<b>天顶</b>和<b>斜路径</b>气体衰减。</span></li>
       <li><span class="en-only">Add the slant-path loss <b>alongside rain fade</b> in your link budget (they are separate effects).</span><span class="zh-only">把斜路径衰减与<b>雨衰一起</b>加进链路预算(两者是独立效应)。</span></li>
-      <li><span class="en-only">Click <b>🔗 Share</b> to copy this case as a link.</span><span class="zh-only">点 <b>🔗 Share</b> 复制这个算例的链接。</span></li>
     </ol>
   </div>
 
   <div class="card">
-    <div class="article">
+    <div class="article en-only">
       <h2>About gaseous (clear-air) attenuation</h2>
       <p>Even with no rain or cloud, the atmosphere absorbs radio energy through two gases:
       <strong>oxygen</strong> (with a strong absorption complex around 60 GHz and weaker effects below)
@@ -125,6 +124,13 @@
       <a href="link-budget.html" style="color:var(--accent)">link budget</a>. This implementation is valid
       for 1–54 GHz (below the 60 GHz oxygen complex). All computation runs locally in your browser.</p>
     </div>
+    <div class="article zh-only">
+      <h2>关于气体(晴空)衰减</h2>
+      <p>即使没有降雨或云层,大气也会通过两种气体吸收无线电能量:<strong>氧气</strong>(在 60 GHz 附近有强吸收复合带,其下方也有较弱效应)和<strong>水汽</strong>(在 <strong>22.235 GHz</strong> 有一条显著吸收线)。本计算器实现 <strong>ITU-R P.676</strong> 附件 2 方法。</p>
+      <h2>计算内容</h2>
+      <p><strong>比衰减</strong> γ = γ_o + γ_w(dB/km),基于你的地面条件;再通过等效高度得<strong>天顶</strong>衰减(A = γ_o·h_o + γ_w·h_w),以及仰角 θ 下的<strong>斜路径</strong>损耗 A / sin(θ)。</p>
+      <p>在 Ku/Ka 波段,气体损耗相比雨衰较小,但并非可忽略——尤其在 22 GHz 水汽线附近、低仰角或潮湿站点。把它与<a href="rain.html" style="color:var(--accent)">雨衰</a>项一起加进你的<a href="link-budget.html" style="color:var(--accent)">链路预算</a>。本实现适用于 1–54 GHz(60 GHz 氧气复合带以下)。全部计算在你的浏览器本地完成。</p>
+    </div>
   </div>
 </div>
 
@@ -133,7 +139,7 @@
 
 <footer>Free atmospheric gaseous attenuation calculator · ITU-R P.676 · oxygen + water vapour · runs in your browser.</footer>
 
-<script src="share.js?v=6"></script>
+<script src="share.js?v=7"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -187,12 +193,12 @@ function compute(){
   $('r_slant').textContent=f2(slant);
   $('note').textContent=t('Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).','在 '+f+' GHz / '+th+'° 仰角下,给链路预算增加约 '+f2(slant)+' dB 晴空气体损耗(与雨衰独立)。');
   const rows=[
-    ['Oxygen specific γ_o',f3(go)+' dB/km'],
-    ['Water-vapour specific γ_w',f3(gw)+' dB/km'],
-    ['Oxygen equivalent height h_o',ho.toFixed(3)+' km'],
-    ['Water-vapour equivalent height h_w',hw.toFixed(3)+' km'],
-    ['Zenith attenuation γ_o·h_o + γ_w·h_w',f2(zen)+' dB'],
-    ['Slant-path (÷ sin θ)',f2(slant)+' dB'],
+    [t('Oxygen specific γ_o','氧气比衰减 γ_o'),f3(go)+' dB/km'],
+    [t('Water-vapour specific γ_w','水汽比衰减 γ_w'),f3(gw)+' dB/km'],
+    [t('Oxygen equivalent height h_o','氧气等效高度 h_o'),ho.toFixed(3)+' km'],
+    [t('Water-vapour equivalent height h_w','水汽等效高度 h_w'),hw.toFixed(3)+' km'],
+    [t('Zenith attenuation γ_o·h_o + γ_w·h_w','天顶衰减 γ_o·h_o + γ_w·h_w'),f2(zen)+' dB'],
+    [t('Slant-path (÷ sin θ)','斜路径(÷ sin θ)'),f2(slant)+' dB'],
   ];
   $('bd').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('');
 }

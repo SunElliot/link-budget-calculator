@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=6">
-<script src="i18n.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="i18n.js?v=7"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Pass Predictor","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -61,7 +61,7 @@
     <div class="card">
       <h2><span class="dot"></span>Two-Line Element (TLE)</h2>
       <p style="color:var(--muted);font-size:.8rem;margin:0 0 8px">
-        Paste the two TLE lines (get them from <a href="https://celestrak.org/NORAD/elements/" style="color:var(--accent)" target="_blank" rel="noopener">CelesTrak</a>).
+        <span class="en-only">Paste the two TLE lines (get them from <a href="https://celestrak.org/NORAD/elements/" style="color:var(--accent)" target="_blank" rel="noopener">CelesTrak</a>).</span><span class="zh-only">粘贴两行 TLE(可从 <a href="https://celestrak.org/NORAD/elements/" style="color:var(--accent)" target="_blank" rel="noopener">CelesTrak</a> 获取)。</span>
       </p>
       <div class="row"><textarea id="tle" rows="3" spellcheck="false">1 25544U 98067A   24001.50000000  .00016717  00000-0  10270-3 0  9000
 2 25544  51.6400 208.0000 0006703 130.0000 325.0000 15.50000000    05</textarea></div>
@@ -105,12 +105,11 @@
       <li><span class="en-only">Set the <b>minimum elevation</b> (horizon mask) and how many <b>hours ahead</b> to search.</span><span class="zh-only">设置<b>最低仰角</b>(地平遮挡)和向后预测的<b>小时数</b>。</span></li>
       <li><span class="en-only">Click <b>Predict passes</b> to list upcoming passes with AOS, LOS, maximum elevation and duration.</span><span class="zh-only">点 <b>Predict passes</b> 列出未来过境的 AOS、LOS、最大仰角和时长。</span></li>
       <li><span class="en-only">Times are shown in your browser's <b>local timezone</b>; everything runs on your device.</span><span class="zh-only">时间按浏览器<b>本地时区</b>显示;全部在本地运算,坐标不上传。</span></li>
-      <li><span class="en-only">Click <b>🔗 Share</b> to share the TLE + station setup as a link.</span><span class="zh-only">点 <b>🔗 Share</b> 把 TLE + 地面站设置作为链接分享。</span></li>
     </ol>
   </div>
 
   <div class="card">
-    <div class="article">
+    <div class="article en-only">
       <h2>How satellite pass prediction works</h2>
       <p>A <strong>TLE (Two-Line Element set)</strong> encodes a satellite's orbit at a reference epoch.
       This tool runs the standard <strong>SGP4</strong> propagator (via the open-source satellite.js library)
@@ -121,6 +120,11 @@
       elements decay quickly, especially for low CubeSats. Times are shown in your browser's local timezone.
       Everything runs locally; your coordinates never leave your device.</p>
     </div>
+    <div class="article zh-only">
+      <h2>卫星过顶预测原理</h2>
+      <p><strong>TLE(两行根数)</strong>以一个参考历元编码卫星轨道。本工具运行标准的 <strong>SGP4</strong> 传播器(通过开源库 satellite.js)计算卫星随时间的位置,再换算为相对地面站的视角(方位/仰角)。每当仰角升过你的地平遮挡时,一次<strong>过境</strong>开始(AOS —— 信号捕获),再次落到其下时结束(LOS —— 信号丢失)。</p>
+      <p>要预测准确,请始终使用<strong>最新的 TLE</strong>(不超过几天)——轨道根数衰减很快,低轨立方星尤甚。时间按你浏览器的本地时区显示。一切在本地运行,你的坐标绝不离开你的设备。</p>
+    </div>
   </div>
 </div>
 
@@ -130,29 +134,29 @@
 <footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/satellite.js@5/dist/satellite.min.js"></script>
-<script src="share.js?v=6"></script>
+<script src="share.js?v=7"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
 const status=$('status');
 
 function libReady(){return typeof satellite!=='undefined'&&satellite.twoline2satrec;}
-if(libReady()) status.textContent='Ready — click "Predict passes".';
-else { status.textContent='Loading orbit library…';
-  let n=0,iv=setInterval(()=>{ if(libReady()){clearInterval(iv);status.textContent='Ready — click "Predict passes".';}
-    else if(++n>40){clearInterval(iv);status.innerHTML='<span style="color:var(--bad)">Could not load the orbit library (satellite.js). Check your internet connection and reload.</span>';}},250);}
+if(libReady()) status.textContent=t('Ready — click "Predict passes".','已就绪 —— 点"预测过境"。');
+else { status.textContent=t('Loading orbit library…','正在加载轨道库…');
+  let n=0,iv=setInterval(()=>{ if(libReady()){clearInterval(iv);status.textContent=t('Ready — click "Predict passes".','已就绪 —— 点"预测过境"。');}
+    else if(++n>40){clearInterval(iv);status.innerHTML='<span style="color:var(--bad)">'+t('Could not load the orbit library (satellite.js). Check your internet connection and reload.','无法加载轨道库(satellite.js)。请检查网络连接后刷新。')+'</span>';}},250);}
 
 function fmtLocal(d){return d.toLocaleString(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function fmtTime(d){return d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 
 function predict(){
-  if(!libReady()){status.textContent='Orbit library not loaded yet — please wait a moment.';return;}
+  if(!libReady()){status.textContent=t('Orbit library not loaded yet — please wait a moment.','轨道库尚未加载完成 —— 请稍候。');return;}
   const lines=$('tle').value.trim().split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
   const l1=lines.find(l=>l.startsWith('1 '))||lines[lines.length-2];
   const l2=lines.find(l=>l.startsWith('2 '))||lines[lines.length-1];
   let rec;
   try{ rec=satellite.twoline2satrec(l1,l2); }catch(e){ rec=null; }
-  if(!rec||rec.error){status.innerHTML='<span style="color:var(--bad)">Invalid TLE — please paste both lines (starting with "1 " and "2 ").</span>';return;}
+  if(!rec||rec.error){status.innerHTML='<span style="color:var(--bad)">'+t('Invalid TLE — please paste both lines (starting with "1 " and "2 ").','TLE 无效 —— 请粘贴两行(分别以 "1 " 和 "2 " 开头)。')+'</span>';return;}
 
   const gs={longitude:satellite.degreesToRadians(num('lon')),latitude:satellite.degreesToRadians(num('lat')),height:num('hgt')/1000};
   const minEl=num('minel'), hours=Math.min(Math.max(num('hours'),1),168);
@@ -170,26 +174,26 @@ function predict(){
       if(n>=60)break; }
   }
   const tb=$('out').querySelector('tbody'); tb.innerHTML='';
-  if(!rows.length){ status.innerHTML='No passes above '+minEl+'° in the next '+hours+' h for this TLE / location.'; $('out').style.display='none'; return; }
+  if(!rows.length){ status.innerHTML=t('No passes above '+minEl+'° in the next '+hours+' h for this TLE / location.','未来 '+hours+' 小时内,该 TLE / 位置无高于 '+minEl+'° 的过境。'); $('out').style.display='none'; return; }
   rows.forEach(r=>{
     const m=Math.floor(r.dur/60), ss=r.dur%60;
     tb.insertAdjacentHTML('beforeend',
       `<tr><td>${r.n}</td><td>${fmtLocal(r.aos)}</td><td class="num">${r.maxEl.toFixed(1)}° (${fmtTime(r.maxT)})</td><td>${fmtTime(r.los)}</td><td class="num">${m}m ${ss}s</td></tr>`);
   });
-  status.textContent=rows.length+' pass(es) above '+minEl+'° in the next '+hours+' h (local time). TLE epoch age affects accuracy.';
+  status.textContent=t(rows.length+' pass(es) above '+minEl+'° in the next '+hours+' h (local time). TLE epoch age affects accuracy.','未来 '+hours+' 小时内有 '+rows.length+' 次高于 '+minEl+'° 的过境(本地时间)。TLE 历元越旧越不准。');
   $('out').style.display='';
 }
 
 $('go').addEventListener('click',predict);
 $('geo').addEventListener('click',()=>{
-  if(!navigator.geolocation){status.textContent='Geolocation not supported by this browser.';return;}
-  status.textContent='Requesting location…';
+  if(!navigator.geolocation){status.textContent=t('Geolocation not supported by this browser.','此浏览器不支持定位。');return;}
+  status.textContent=t('Requesting location…','正在请求定位…');
   navigator.geolocation.getCurrentPosition(p=>{
     $('lat').value=p.coords.latitude.toFixed(4);
     $('lon').value=p.coords.longitude.toFixed(4);
     if(p.coords.altitude!=null)$('hgt').value=Math.round(p.coords.altitude);
-    status.textContent='Location set — click "Predict passes".';
-  },()=>{status.textContent='Could not get location (permission denied).';});
+    status.textContent=t('Location set — click "Predict passes".','已设置位置 —— 点"预测过境"。');
+  },()=>{status.textContent=t('Could not get location (permission denied).','无法获取位置(权限被拒绝)。');});
 });
 
 if(window.ShareTool){ const shared = ShareTool.apply(); ShareTool.initButton();

@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=6">
-<script src="i18n.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="i18n.js?v=7"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Frequency Band Reference","applicationCategory":"ReferenceApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -107,7 +107,7 @@
   </div>
 
   <div class="card">
-    <div class="article">
+    <div class="article en-only">
       <h2>Choosing a satellite frequency band</h2>
       <p>Lower bands (VHF/UHF/S) are easy to work with — cheap hardware, wide beams, forgiving pointing —
       but offer limited bandwidth and are congested, so they suit telemetry and small CubeSats.
@@ -119,6 +119,13 @@
       <p>Need numbers? Use the <a href="link-budget.html" style="color:var(--accent)">link budget calculator</a>,
       <a href="doppler.html" style="color:var(--accent)">Doppler calculator</a> and
       <a href="antenna.html" style="color:var(--accent)">antenna gain calculator</a> on this site.</p>
+    </div>
+    <div class="article zh-only">
+      <h2>如何选择卫星频段</h2>
+      <p>低频段(VHF/UHF/S)易于使用——硬件便宜、波束宽、指向宽松——但带宽有限且拥挤,适合遥测和小型立方星。
+      高频段(X/Ku/Ka)为高速载荷和宽带提供大得多的带宽,代价是更严的指向、更小的波束和更大的雨衰(尤其 Ka 及以上)。</p>
+      <p>C 波段在抗雨的 GEO 链路上处于甜点,而 Ku 和 Ka 主导现代宽带星座。一般规律:<strong>在你的雨衰余量、硬件和指向精度允许的范围内,尽量用高频段</strong>以最大化吞吐。</p>
+      <p>需要具体数值?用本站的<a href="link-budget.html" style="color:var(--accent)">链路预算计算器</a>、<a href="doppler.html" style="color:var(--accent)">多普勒计算器</a>和<a href="antenna.html" style="color:var(--accent)">天线增益计算器</a>。</p>
     </div>
   </div>
 </div>

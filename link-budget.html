@@ -12,8 +12,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=6">
-<script src="i18n.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="i18n.js?v=7"></script>
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="Compute EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin for satellite links instantly.">
 <meta property="og:type" content="website">
@@ -215,10 +215,14 @@
         <label>Orbit altitude<span class="hint">km — sets slant range vs elevation</span></label>
         <input type="number" id="altitude" value="550" step="any">
       </div>
-      <p style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
+      <p class="en-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
         Sweeps a satellite pass from horizon (0°) to zenith (90°). Slant range is derived from the
         orbit altitude, so closer to overhead = shorter range = more margin. Other parameters use the
         values above. (Atmospheric loss is held constant; real low-elevation passes see extra fade.)
+      </p>
+      <p class="zh-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
+        扫描一次从地平线(0°)到天顶(90°)的卫星过境。斜距由轨道高度推得,越接近过顶 = 斜距越短 = 余量越大。
+        其它参数沿用上方取值。(大气损耗按常数处理;真实低仰角过境会有额外衰落。)
       </p>
       <canvas id="chart" width="1000" height="420" style="width:100%;height:auto;display:block"></canvas>
       <div id="elevSummary" style="margin-top:10px;font-size:.9rem;color:var(--txt)"></div>
@@ -236,7 +240,6 @@
       <li><span class="en-only">Choose a <b>Modulation / coding</b> scheme; the required Eb/N₀ fills in automatically (or pick "Custom" to type your own).</span><span class="zh-only">选择<b>调制 / 编码</b>方式,所需 Eb/N₀ 会自动填入(或选 "Custom" 手动输入)。</span></li>
       <li><span class="en-only">Read the <b>Link margin</b> box: green = closes comfortably, amber = tight, red = does not close. Open the breakdown to see every term.</span><span class="zh-only">看<b>链路余量</b>框:绿=余量充足、黄=偏紧、红=链路不通;展开明细可看每一项。</span></li>
       <li><span class="en-only">Set the <b>orbit altitude</b> to see the margin-vs-elevation curve and your minimum usable elevation angle.</span><span class="zh-only">设置<b>轨道高度</b>,查看"余量-仰角"曲线和最低可用仰角。</span></li>
-      <li><span class="en-only">Click <b>🔗 Share</b> in the top bar to copy a link to this exact configuration.</span><span class="zh-only">点顶栏 <b>🔗 Share</b> 复制这条配置的链接。</span></li>
     </ol>
   </div>
 
@@ -294,7 +297,7 @@
   Free satellite link budget calculator · Computes EIRP, FSPL, G/T, C/N₀, Eb/N₀ and margin · No data leaves your browser.
 </footer>
 
-<script src="share.js?v=6"></script>
+<script src="share.js?v=7"></script>
 <script>
 const $ = id => document.getElementById(id);
 const K_BOLTZMANN_DBW = -228.6; // dBW/K/Hz
@@ -379,28 +382,28 @@ function compute(){
   box.innerHTML = `${t('Link margin','链路余量')}: <span>${f1(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
 
   const rows = [
-    ['Transmit power', f1(txP)+' dBW'],
-    ['Tx antenna gain', '+'+f1(txG)+' dBi'],
-    ['Tx line loss', '−'+f1(txL)+' dB'],
-    ['= EIRP', f1(eirp)+' dBW'],
-    ['Free space path loss', '−'+f1(fspl)+' dB'],
-    ['Atmospheric / rain / pol / pointing', '−'+f1(extra)+' dB'],
-    ['Rx antenna gain', '+'+f1(rxG)+' dBi'],
-    ['Rx line loss', '−'+f1(rxL)+' dB'],
-    ['System noise temp', f1(Tsys)+' K ('+f1(10*Math.log10(Tsys||1))+' dB)'],
-    ['= G/T', f1(gt)+' dB/K'],
-    ['Boltzmann constant', f1(K_BOLTZMANN_DBW)+' dBW/K/Hz'],
-    ['= C/N₀', f1(cn0)+' dB-Hz'],
-    ['Data rate', (Rb/1e6).toFixed(3)+' Mbps ('+f1(10*Math.log10(Rb||1))+' dB)'],
-    ['Modulation / coding', isCustom ? 'custom' : sel.textContent.trim()+' ('+bps+' bit/sym × '+cr+')'],
-    ['Spectral efficiency', fd(specEff)+' bit/s/Hz'],
-    ['Occupied bandwidth', isFinite(bwHz) ? f1(bwHz/1e6)+' MHz' : '–'],
-    ['C/N received', fd(cnRx)+' dB'],
-    ['C/N required', fd(cnReq)+' dB'],
-    ['= Eb/N₀ received', f1(ebn0)+' dB'],
-    ['Required Eb/N₀', '−'+f1(reqEb)+' dB'],
-    ['Implementation loss', '−'+f1(impl)+' dB'],
-    ['= LINK MARGIN', f1(margin)+' dB'],
+    [t('Transmit power','发射功率'), f1(txP)+' dBW'],
+    [t('Tx antenna gain','发射天线增益'), '+'+f1(txG)+' dBi'],
+    [t('Tx line loss','发射线损'), '−'+f1(txL)+' dB'],
+    [t('= EIRP','= EIRP'), f1(eirp)+' dBW'],
+    [t('Free space path loss','自由空间路径损耗'), '−'+f1(fspl)+' dB'],
+    [t('Atmospheric / rain / pol / pointing','大气/雨/极化/指向'), '−'+f1(extra)+' dB'],
+    [t('Rx antenna gain','接收天线增益'), '+'+f1(rxG)+' dBi'],
+    [t('Rx line loss','接收线损'), '−'+f1(rxL)+' dB'],
+    [t('System noise temp','系统噪温'), f1(Tsys)+' K ('+f1(10*Math.log10(Tsys||1))+' dB)'],
+    [t('= G/T','= G/T'), f1(gt)+' dB/K'],
+    [t('Boltzmann constant','玻尔兹曼常数'), f1(K_BOLTZMANN_DBW)+' dBW/K/Hz'],
+    [t('= C/N₀','= C/N₀'), f1(cn0)+' dB-Hz'],
+    [t('Data rate','数据率'), (Rb/1e6).toFixed(3)+' Mbps ('+f1(10*Math.log10(Rb||1))+' dB)'],
+    [t('Modulation / coding','调制/编码'), isCustom ? 'custom' : sel.textContent.trim()+' ('+bps+' bit/sym × '+cr+')'],
+    [t('Spectral efficiency','频谱效率'), fd(specEff)+' bit/s/Hz'],
+    [t('Occupied bandwidth','占用带宽'), isFinite(bwHz) ? f1(bwHz/1e6)+' MHz' : '–'],
+    [t('C/N received','接收 C/N'), fd(cnRx)+' dB'],
+    [t('C/N required','所需 C/N'), fd(cnReq)+' dB'],
+    [t('= Eb/N₀ received','= 接收 Eb/N₀'), f1(ebn0)+' dB'],
+    [t('Required Eb/N₀','所需 Eb/N₀'), '−'+f1(reqEb)+' dB'],
+    [t('Implementation loss','实现损耗'), '−'+f1(impl)+' dB'],
+    [t('= LINK MARGIN','= 链路余量'), f1(margin)+' dB'],
   ];
   $('breakdown').innerHTML = rows.map(r =>
     `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');

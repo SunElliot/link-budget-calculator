@@ -140,7 +140,30 @@
     "Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation & slant-path fade · runs in your browser.":"免费雨衰计算器 · ITU-R P.838 + P.618 · 比衰减与斜路径衰减 · 在浏览器中运行。",
     "Free atmospheric gaseous attenuation calculator · ITU-R P.676 · oxygen + water vapour · runs in your browser.":"免费大气气体衰减计算器 · ITU-R P.676 · 氧气 + 水汽 · 在浏览器中运行。",
     "Free BER vs Eb/N₀ curve plotter · BPSK/QPSK/PSK/QAM/FSK over AWGN · runs entirely in your browser.":"免费 BER vs Eb/N₀ 曲线绘制 · AWGN 下 BPSK/QPSK/PSK/QAM/FSK · 完全在浏览器中运行。",
-    "Satellite frequency band reference · VHF to W-band · IEEE designations & typical uses.":"卫星频段速查 · VHF 到 W 波段 · IEEE 划分与典型用途。"
+    "Satellite frequency band reference · VHF to W-band · IEEE designations & typical uses.":"卫星频段速查 · VHF 到 W 波段 · IEEE 划分与典型用途。",
+    // ---- misc static ----
+    "Show modulations:":"显示调制方式:",
+    "Example above is the ISS — replace with a current TLE for accurate results.":"上方示例为空间站(ISS)——请替换为最新 TLE 以获得准确结果。",
+    "Loading orbit library…":"正在加载轨道库…",
+    // ---- bands table ----
+    "CubeSat TT&C, APRS, weather sat (137 MHz APT), beacons":"立方星 TT&C、APRS、气象卫星(137 MHz APT)、信标",
+    "CubeSat up/downlink (435–438 MHz amateur), TT&C, IoT":"立方星上/下行(435–438 MHz 业余)、TT&C、物联网",
+    "GNSS (GPS/Galileo), Iridium, Inmarsat, mobile sat phones":"GNSS(GPS/伽利略)、铱星、Inmarsat、卫星电话",
+    "LEO TT&C & downlink, ISS, weather, some payloads (2.0–2.3 GHz)":"LEO TT&C 与下行、空间站、气象、部分载荷(2.0–2.3 GHz)",
+    "GEO comms (rain-robust), VSAT, TV distribution":"GEO 通信(抗雨)、VSAT、电视分发",
+    "EO payload downlink (8–8.4 GHz), military & deep-space, radar":"对地观测载荷下行(8–8.4 GHz)、军用与深空、雷达",
+    "DTH TV, VSAT, broadband (Starlink user 10.7–12.7 GHz)":"直播卫星电视、VSAT、宽带(Starlink 用户 10.7–12.7 GHz)",
+    "High-throughput sat (HTS), inter-satellite links":"高通量卫星(HTS)、星间链路",
+    "HTS broadband, Starlink/OneWeb gateways, high data rate":"HTS 宽带、Starlink/OneWeb 信关站、高数据率",
+    "Next-gen HTS, inter-satellite links, feeder links":"下一代 HTS、星间链路、馈电链路",
+    "Experimental, ISL, automotive radar (terrestrial)":"实验、星间链路、车载雷达(地面)",
+    "C-band FSS":"C 波段 FSS",
+    "X-band (gov/EO)":"X 波段(政府/对地观测)",
+    "Ku-band FSS":"Ku 波段 FSS",
+    "Ka-band":"Ka 波段",
+    "Amateur UHF/VHF":"业余 UHF/VHF",
+    "Wavelength":"波长",
+    "Frequency":"频率"
   };
 
   let nodes = [];

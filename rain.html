@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=6">
-<script src="i18n.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=7">
+<script src="i18n.js?v=7"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Rain Attenuation Calculator (ITU-R P.618/P.838)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -115,12 +115,11 @@
       <li><span class="en-only">Choose your <b>target availability</b> (e.g. 99.99%).</span><span class="zh-only">选择<b>目标可用度</b>(如 99.99%)。</span></li>
       <li><span class="en-only">Read the <b>rain fade (dB)</b> at that availability, plus the fade-vs-availability table.</span><span class="zh-only">读取该可用度下的<b>雨衰(dB)</b>,以及"雨衰-可用度"对照表。</span></li>
       <li><span class="en-only">Add the fade as the <b>"Rain loss"</b> term in your link budget.</span><span class="zh-only">把该雨衰作为链路预算里的 <b>"Rain loss"</b> 项加入。</span></li>
-      <li><span class="en-only">Click <b>🔗 Share</b> to copy this case as a link.</span><span class="zh-only">点 <b>🔗 Share</b> 复制这个算例的链接。</span></li>
     </ol>
   </div>
 
   <div class="card">
-    <div class="article">
+    <div class="article en-only">
       <h2>About this rain attenuation model</h2>
       <p>This tool implements the standard <strong>ITU-R P.838-3</strong> (specific rain attenuation
       coefficients k and α) combined with the <strong>ITU-R P.618-13</strong> slant-path prediction method,
@@ -135,6 +134,13 @@
       <a href="link-budget.html" style="color:var(--accent)">link budget calculator</a> as your rain-loss term.
       All computation runs locally in your browser.</p>
     </div>
+    <div class="article zh-only">
+      <h2>关于本雨衰模型</h2>
+      <p>本工具实现标准的 <strong>ITU-R P.838-3</strong>(降雨比衰减系数 k 与 α),并结合 <strong>ITU-R P.618-13</strong> 斜路径预测方法,包含水平与垂直路径缩减因子以及可用度换算。</p>
+      <p><strong>比衰减:</strong> <code>γ_R = k · R<sup>α</sup></code>(dB/km),其中 k 与 α 取决于频率、极化和仰角。</p>
+      <p>一年中 0.01% 时间被超过的衰减 <code>A₀.₀₁ = γ_R · L_E</code> 随后被换算到你的目标可用度。雨衰随频率急剧上升——在 C 波段可忽略,在 Ku 波段显著,到 Ka 波段及以上成为主导设计因素。</p>
+      <p>要得到准确的站点数值,请使用来自 ITU-R P.837 的当地 <code>R₀.₀₁</code> 降雨率和来自 ITU-R P.839 的雨高。把得到的雨衰作为雨衰损耗项填进<a href="link-budget.html" style="color:var(--accent)">链路预算计算器</a>。全部计算在你的浏览器本地完成。</p>
+    </div>
   </div>
 </div>
 
@@ -143,7 +149,7 @@
 
 <footer>Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation &amp; slant-path fade · runs in your browser.</footer>
 
-<script src="share.js?v=6"></script>
+<script src="share.js?v=7"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
