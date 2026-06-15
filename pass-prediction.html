@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=3">
-<script src="i18n.js?v=3"></script>
+<link rel="stylesheet" href="styles.css?v=4">
+<script src="i18n.js?v=4"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Pass Predictor","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -37,6 +37,28 @@
     <a href="bands.html">Bands</a>
   </div>
 </nav>
+
+<div class="page">
+<aside class="sidebar">
+  <a class="home" href="index.html" style="display:block;text-decoration:none">← All tools</a>
+  <ul class="toolnav">
+    <li class="grp">Link Analysis</li>
+    <li><a href="link-budget.html">Link Budget</a></li>
+    <li><a href="rain.html">Rain Fade</a></li>
+    <li><a href="gas.html">Gaseous Attenuation</a></li>
+    <li class="grp">Orbit &amp; Tracking</li>
+    <li><a href="doppler.html">Doppler Shift</a></li>
+    <li><a href="pass-prediction.html" class="active">Pass Predictor</a></li>
+    <li class="grp">Hardware</li>
+    <li><a href="antenna.html">Antenna Gain</a></li>
+    <li><a href="gt.html">G/T Figure of Merit</a></li>
+    <li class="grp">Modulation</li>
+    <li><a href="ber.html">BER Curves</a></li>
+    <li class="grp">Reference</li>
+    <li><a href="bands.html">Frequency Bands</a></li>
+  </ul>
+</aside>
+<div class="pagemain">
 
 <header>
   <h1>🛰️ Satellite Pass Predictor (TLE)</h1>
@@ -113,10 +135,13 @@
   </div>
 </div>
 
+</div>
+</div>
+
 <footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/satellite.js@5/dist/satellite.min.js"></script>
-<script src="share.js?v=3"></script>
+<script src="share.js?v=4"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
