@@ -71,6 +71,10 @@ footer{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 20px;bo
 .article h2{color:var(--txt);font-size:1.1rem;margin-top:22px}
 .article code{background:#eef0f4;padding:2px 6px;border-radius:5px;color:var(--txt)}
 .note{background:#eef4ff;border:1px solid #cfe0ff;color:#1d4ed8;border-radius:10px;padding:10px 14px;font-size:.85rem;margin:12px 0}
+.howto{margin:4px 0 0;padding-left:24px;color:#454c5e;font-size:.92rem;line-height:1.7}
+.howto li{margin:8px 0}
+.howto li::marker{color:var(--accent);font-weight:700}
+.howto b{color:var(--txt)}
 
 /* ---- hub home page ---- */
 .hero{text-align:center;padding:62px 20px 34px;background:radial-gradient(900px 360px at 50% -40px,rgba(34,160,90,.14),transparent)}
