@@ -541,7 +541,6 @@ function compute(){
   $('r_gt').textContent      = f2(gt);
   $('r_cn0').textContent     = f2(cn0);
   $('r_ebn0').textContent    = f2(ebn0);
-  $('r_margin').textContent  = f2(margin);
   $('r_speceff').textContent = fd(specEff);
   $('r_bw').textContent      = isFinite(bwHz) ? f2(bwHz/1e6) : '–';
   $('r_cn').textContent      = fd(cnRx);
@@ -552,7 +551,7 @@ function compute(){
   const verdict = margin>=3 ? t('✓ Link closes with comfortable margin','✓ 链路闭合，余量充足')
                 : margin>=0 ? t('⚠ Link closes but margin is tight','⚠ 链路勉强闭合，余量偏紧')
                 : t('✗ Link does NOT close','✗ 链路无法闭合');
-  box.innerHTML = `${t('Link margin','链路余量')}: <span>${f2(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
+  box.innerHTML = `${t('Link margin','链路余量')}: <span id="r_margin">${f2(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
 
   const rows = [
     [t('Transmit power','发射功率'),               f2(txP)+' dBW'],
@@ -893,7 +892,7 @@ function exportPDF(){
       [T('Occupied bandwidth','占用带宽'), rv('r_bw')+' MHz'],
       [T('Link margin','链路余量'),        rv('r_margin')+' dB'],
     ];
-    const m=parseFloat(rv('r_margin'))||−99;
+    const m=parseFloat(rv('r_margin'))||-99;
     const vcls=m>=3?'good':m>=0?'warn':'bad';
     const vtxt=m>=3?T('✓ Link closes — comfortable margin','✓ 链路闭合，余量充足')
                :m>=0?T('⚠ Link closes — margin tight','⚠ 链路勉强闭合，余量偏紧')
