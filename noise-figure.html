@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cascaded Noise Figure Calculator — Friis RF Chain NF &amp; Noise Temperature</title>
+<meta name="description" content="Free Friis cascade calculator for satellite RF receiver chains. Build a chain of amplifiers and loss elements to get cascaded noise figure (dB), system noise temperature (K), and per-stage noise contribution breakdown.">
+<meta name="keywords" content="cascaded noise figure calculator, Friis formula, RF chain noise temperature, LNA noise figure, satellite receiver NF, noise figure cascade, system noise temperature">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/noise-figure.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cascaded Noise Figure Calculator">
+<meta property="og:description" content="Friis cascade: build an RF chain of amps and losses to get cascaded NF (dB), system noise temperature (K), and per-stage noise contribution.">
+<meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<link rel="stylesheet" href="styles.css?v=8">
+<script src="i18n.js?v=8"></script>
+<style>
+.stage-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.stage-tbl{width:100%;border-collapse:collapse;font-size:.87rem}
+.stage-tbl th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;
+  letter-spacing:.03em;padding:7px 5px;border-bottom:2px solid var(--line);white-space:nowrap}
+.stage-tbl td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+.stage-tbl tr:last-child td{border-bottom:none}
+.stage-tbl input,.stage-tbl select{padding:5px 7px;border:1px solid var(--line);border-radius:7px;
+  font-size:.85rem;background:#fff;color:var(--txt);font-family:inherit}
+.stage-tbl input[type=number]{width:72px;text-align:right}
+.stage-tbl input[type=text]{width:112px;text-align:left}
+.stage-tbl input:focus,.stage-tbl select:focus{outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 2px var(--accent-soft)}
+.auto-val{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;
+  background:#f5f7fa;border:1px solid var(--line);border-radius:7px;
+  display:inline-block;padding:5px 8px;min-width:62px;text-align:right}
+.dim-val{color:#bbb;font-size:.85rem;padding:0 8px}
+.del-btn{background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;
+  padding:2px 8px;border-radius:6px;line-height:1}
+.del-btn:hover{background:rgba(220,38,38,.10);color:var(--bad)}
+.add-btn{margin-top:14px;background:var(--accent-soft);border:1px solid rgba(37,99,235,.35);
+  color:var(--accent);padding:7px 16px;border-radius:9px;font-size:.85rem;cursor:pointer;
+  font-weight:600;font-family:inherit}
+.add-btn:hover{background:var(--accent);color:#fff}
+.bar-wrap{display:flex;align-items:center;gap:6px;min-width:110px}
+.bar-bg{flex:1;height:8px;background:#eef0f4;border-radius:4px;overflow:hidden;min-width:44px}
+.bar-fill{height:100%;border-radius:4px;background:var(--accent);transition:width .2s}
+.bar-fill.hi{background:var(--bad)}
+.bar-fill.med{background:var(--warn)}
+.bar-pct{min-width:40px;text-align:right;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Cascaded Noise Figure Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html">🛰 SatTools</a>
+</nav>
+
+<div class="page">
+<aside class="sidebar">
+  <a class="home" href="index.html" style="display:block;text-decoration:none">← All tools</a>
+  <ul class="toolnav">
+    <li class="grp">Link Analysis</li>
+    <li><a href="link-budget.html">Link Budget</a></li>
+    <li><a href="rain.html">Rain Fade</a></li>
+    <li><a href="gas.html">Gaseous Attenuation</a></li>
+    <li class="grp">Orbit &amp; Tracking</li>
+    <li><a href="doppler.html">Doppler Shift</a></li>
+    <li><a href="pass-prediction.html">Pass Predictor</a></li>
+    <li class="grp">Hardware</li>
+    <li><a href="antenna.html">Antenna Gain</a></li>
+    <li><a href="phased-array.html">Phased Array Gain</a></li>
+    <li><a href="gt.html">G/T Figure of Merit</a></li>
+    <li><a href="noise-figure.html" class="active">Noise Figure Chain</a></li>
+    <li class="grp">Modulation</li>
+    <li><a href="ber.html">BER Curves</a></li>
+    <li class="grp">Reference</li>
+    <li><a href="bands.html">Frequency Bands</a></li>
+  </ul>
+</aside>
+<div class="pagemain">
+
+<header>
+  <h1>🔗 Cascaded Noise Figure Calculator</h1>
+  <p>Friis cascade — NF, noise temperature &amp; gain through an RF chain</p>
+</header>
+
+<div class="wrap">
+  <div class="preset-bar">
+    <button data-preset="sband">Ground Stn S-band</button>
+    <button data-preset="cubesat">CubeSat UHF Rx</button>
+    <button data-preset="ka">Ka-band VSAT Rx</button>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card" style="grid-column:1/-1">
+    <h2><span class="dot"></span>RF Chain Stages</h2>
+    <p style="color:var(--muted);font-size:.88rem;margin:0 0 14px">
+      <span class="en-only">Add stages in order from antenna port to demodulator input. Order matters — loss before the LNA hurts most.</span>
+      <span class="zh-only">按天线端口到解调器输入的顺序添加各级。顺序很重要——LNA 之前的损耗影响最大。</span>
+    </p>
+    <div class="stage-wrap">
+      <table class="stage-tbl">
+        <thead>
+          <tr>
+            <th style="width:28px">#</th>
+            <th>Stage</th>
+            <th>Type</th>
+            <th>NF / Loss (dB)</th>
+            <th>Gain (dB)</th>
+            <th>T<sub>phys</sub> (K)</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="chain"></tbody>
+      </table>
+    </div>
+    <button class="add-btn" id="addStage">+ Add stage</button>
+  </div>
+
+  <div class="card results">
+    <h2><span class="dot"></span>Results</h2>
+    <div class="resgrid">
+      <div class="metric">
+        <div class="k">Cascaded NF</div>
+        <div class="v"><span id="r_nf">–</span> <span class="u">dB</span></div>
+      </div>
+      <div class="metric">
+        <div class="k">System noise temp T<sub>e</sub></div>
+        <div class="v"><span id="r_te">–</span> <span class="u">K</span></div>
+      </div>
+      <div class="metric">
+        <div class="k">Total chain gain</div>
+        <div class="v"><span id="r_gain">–</span> <span class="u">dB</span></div>
+      </div>
+      <div class="metric">
+        <div class="k">Stages</div>
+        <div class="v"><span id="r_n">–</span></div>
+      </div>
+    </div>
+    <div class="note" id="r_note" style="display:none"></div>
+    <details>
+      <summary>Show per-stage noise breakdown</summary>
+      <div style="overflow-x:auto;margin-top:4px">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Stage</th>
+              <th>NF / Loss</th>
+              <th>Gain</th>
+              <th>Device T<sub>e</sub></th>
+              <th>T<sub>e</sub> at input</th>
+              <th style="min-width:130px">Contribution</th>
+              <th>Cum. NF</th>
+            </tr>
+          </thead>
+          <tbody id="bdbody"></tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <h2><span class="dot"></span>📖 How to use</h2>
+    <ol class="howto">
+      <li>
+        <span class="en-only">Start with a <b>preset</b> that matches your system, or build from scratch with <b>+ Add stage</b>.</span>
+        <span class="zh-only">选择一个与你系统匹配的<b>预设</b>,或点击 <b>+ 添加级</b> 从头构建。</span>
+      </li>
+      <li>
+        <span class="en-only">Set each stage <b>Type</b>: <em>Amplifier</em> (enter NF + Gain) or <em>Loss / Filter</em> (enter loss in dB; gain and effective NF are auto-computed using the given physical temperature).</span>
+        <span class="zh-only">设置每级的<b>类型</b>:<em>放大器</em>(填 NF + 增益)或<em>损耗 / 滤波器</em>(填损耗 dB;增益与等效 NF 按物理温度自动计算)。</span>
+      </li>
+      <li>
+        <span class="en-only">Watch the <b>Contribution</b> bar — the tallest bar is your noise bottleneck. Moving a low-NF amplifier <em>earlier</em> in the chain will reduce it most effectively.</span>
+        <span class="zh-only">关注<b>贡献</b>条——最长的条是噪声瓶颈。将低 NF 放大器<em>前移</em>到链路更前端,可最有效地降低整体噪声。</span>
+      </li>
+      <li>
+        <span class="en-only">Copy <b>T<sub>e</sub></b> straight into the <a href="gt.html" style="color:var(--accent)">G/T calculator</a> or the link budget's system noise temperature field.</span>
+        <span class="zh-only">将 <b>T<sub>e</sub></b> 直接填入 <a href="gt.html" style="color:var(--accent)">G/T 计算器</a>或链路预算的系统噪温输入框。</span>
+      </li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div class="article en-only">
+      <h2>What is cascaded noise figure?</h2>
+      <p>Every stage in an RF receiver chain — waveguide, amplifier, filter, mixer — adds its own noise.
+      The <strong>Friis formula</strong> combines them into a single cascaded noise figure referred to the chain input:</p>
+      <p><code>F_total = F₁ + (F₂−1)/G₁ + (F₃−1)/(G₁·G₂) + …</code></p>
+      <p>where F<sub>i</sub> = 10<sup>NF<sub>i</sub>/10</sup> is the linear noise factor and G<sub>i</sub> = 10<sup>Gain<sub>i</sub>/10</sup>
+      is the linear gain. In terms of equivalent noise temperature (T₀ = 290 K):</p>
+      <p><code>T_e = T₁ + T₂/G₁ + T₃/(G₁·G₂) + …</code></p>
+      <p>For an amplifier: T<sub>i</sub> = (F<sub>i</sub>−1)·290 K.
+      For a lossy element at physical temperature T<sub>phys</sub>: T<sub>i</sub> = (L−1)·T<sub>phys</sub>,
+      where L = 10<sup>loss/10</sup>.</p>
+      <h2>Why the first stage dominates</h2>
+      <p>Stage 2's noise contribution is divided by G₁, stage 3's by G₁·G₂, and so on. A first stage with
+      high gain suppresses all subsequent stages. This is why real receivers put the
+      <strong>lowest-NF LNA as close to the antenna as possible</strong> — even 0.3 dB of feed loss
+      before a 0.8 dB LNA raises the system NF to ≈ 1.1 dB.</p>
+      <h2>Loss at non-ambient temperature</h2>
+      <p>Losses at temperatures other than 290 K are modelled by T<sub>i</sub> = (L−1)·T<sub>phys</sub>.
+      A cryogenic feed cooled to 20 K with 0.3 dB loss contributes only ≈ 1.4 K instead of ≈ 20 K at
+      room temperature — a big deal for radio astronomy and deep-space ground stations.</p>
+      <p>Use the resulting T<sub>e</sub> in the <a href="gt.html" style="color:var(--accent)">G/T calculator</a>
+      or the <a href="link-budget.html" style="color:var(--accent)">link budget</a>. All computation runs locally in your browser.</p>
+    </div>
+    <div class="article zh-only">
+      <h2>什么是级联噪声系数?</h2>
+      <p>射频接收链中的每一级——波导、放大器、滤波器、混频器——都会引入自身噪声。
+      <strong>Friis 公式</strong>将它们合并为折算到链路输入端的总噪声系数:</p>
+      <p><code>F_total = F₁ + (F₂−1)/G₁ + (F₃−1)/(G₁·G₂) + …</code></p>
+      <p>其中 F<sub>i</sub> = 10<sup>NF<sub>i</sub>/10</sup> 为线性噪声因子,G<sub>i</sub> = 10<sup>增益<sub>i</sub>/10</sup> 为线性增益。等价的噪声温度形式(T₀ = 290 K):</p>
+      <p><code>T_e = T₁ + T₂/G₁ + T₃/(G₁·G₂) + …</code></p>
+      <p>对于放大器:T<sub>i</sub> = (F<sub>i</sub>−1)·290 K。对于物理温度 T<sub>phys</sub> 下的损耗元件:T<sub>i</sub> = (L−1)·T<sub>phys</sub>,其中 L = 10<sup>损耗/10</sup>。</p>
+      <h2>为什么第一级最重要</h2>
+      <p>第 2 级噪声贡献被 G₁ 除,第 3 级被 G₁·G₂ 除,以此类推。若第一级增益高,后续各级的噪声均被压低。这正是真实接收机总是将<strong>最低 NF 的 LNA 尽量靠近天线放置</strong>的原因——LNA 前仅 0.3 dB 馈线损耗就会使系统 NF 从 0.8 dB 升至约 1.1 dB。</p>
+      <h2>非常温下的损耗</h2>
+      <p>温度不同于 290 K 的损耗通过 T<sub>i</sub> = (L−1)·T<sub>phys</sub> 建模。降温至 20 K 的深冷馈线(0.3 dB 损耗)仅贡献约 1.4 K,而常温下同样损耗会贡献约 20 K——对射电天文和深空地面站影响显著。</p>
+      <p>将得到的 T<sub>e</sub> 填入 <a href="gt.html" style="color:var(--accent)">G/T 计算器</a>或<a href="link-budget.html" style="color:var(--accent)">链路预算</a>。全部计算在浏览器本地完成。</p>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<footer>Free cascaded noise figure calculator · Friis formula · RF chain noise temperature breakdown · runs entirely in your browser.</footer>
+
+<script src="share.js?v=8"></script>
+<script>
+const $ = id => document.getElementById(id);
+const T0 = 290;
+let stages = [];
+let nextId = 0;
+
+function mkStage(cfg) {
+  return {
+    id: nextId++,
+    name:  cfg.name  ?? '',
+    type:  cfg.type  ?? 'amp',
+    nf:    cfg.nf    ?? 3,
+    gain:  cfg.gain  ?? 20,
+    tphys: cfg.tphys ?? T0,
+  };
+}
+
+function syncFromDOM() {
+  document.querySelectorAll('#chain tr[data-id]').forEach(row => {
+    const id = parseInt(row.dataset.id);
+    const s  = stages.find(x => x.id === id);
+    if (!s) return;
+    s.name  = row.querySelector('.s-name').value;
+    s.type  = row.querySelector('.s-type').value;
+    s.nf    = parseFloat(row.querySelector('.s-nf').value)  || 0;
+    if (s.type === 'amp') {
+      const gi = row.querySelector('.s-gain');
+      s.gain  = gi ? (parseFloat(gi.value) || 0) : s.gain;
+      s.tphys = T0;
+    } else {
+      s.gain  = -s.nf;
+      const ti = row.querySelector('.s-tp');
+      s.tphys = ti ? (parseFloat(ti.value) || T0) : T0;
+    }
+  });
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderTable() {
+  $('chain').innerHTML = stages.map((s, i) => {
+    const isLoss = s.type === 'loss';
+    return `<tr data-id="${s.id}">
+      <td style="color:var(--muted);font-size:.8rem;text-align:center;padding-right:8px">${i + 1}</td>
+      <td><input type="text" class="s-name" value="${esc(s.name)}" placeholder="Stage ${i + 1}"></td>
+      <td>
+        <select class="s-type">
+          <option value="amp"  ${!isLoss ? 'selected' : ''}>Amplifier</option>
+          <option value="loss" ${ isLoss ? 'selected' : ''}>Loss / Filter</option>
+        </select>
+      </td>
+      <td><input type="number" class="s-nf" value="${s.nf}" step="any" min="0"></td>
+      <td>${isLoss
+        ? `<span class="auto-val">${(-s.nf).toFixed(2)}</span>`
+        : `<input type="number" class="s-gain" value="${s.gain}" step="any">`
+      }</td>
+      <td>${isLoss
+        ? `<input type="number" class="s-tp" value="${s.tphys}" step="any" min="0">`
+        : `<span class="dim-val">T₀</span>`
+      }</td>
+      <td><button class="del-btn" data-delid="${s.id}" title="Remove stage">×</button></td>
+    </tr>`;
+  }).join('');
+
+  const tbody = $('chain');
+  tbody.querySelectorAll('.s-type').forEach(sel => sel.addEventListener('change', () => {
+    syncFromDOM(); renderTable(); compute();
+  }));
+  tbody.querySelectorAll('.s-name,.s-nf,.s-gain,.s-tp').forEach(inp => inp.addEventListener('input', () => {
+    syncFromDOM(); compute();
+  }));
+  tbody.querySelectorAll('.del-btn').forEach(btn => btn.addEventListener('click', () => {
+    stages = stages.filter(x => x.id !== parseInt(btn.dataset.delid));
+    renderTable(); compute();
+  }));
+}
+
+function compute() {
+  if (!stages.length) {
+    ['r_nf','r_te','r_gain'].forEach(id => $(id).textContent = '–');
+    $('r_n').textContent = '0';
+    $('r_note').style.display = 'none';
+    $('bdbody').innerHTML = '';
+    return;
+  }
+
+  let cumGain = 1, teSys = 0;
+  const bd = [];
+
+  stages.forEach((s, i) => {
+    let F, G, Te;
+    if (s.type === 'loss') {
+      const L = Math.pow(10, s.nf / 10);
+      Te = (L - 1) * s.tphys;
+      F  = 1 + Te / T0;
+      G  = 1 / L;
+    } else {
+      F  = Math.pow(10, s.nf / 10);
+      Te = (F - 1) * T0;
+      G  = Math.pow(10, s.gain / 10);
+    }
+    const teRef = Te / cumGain;
+    teSys  += teRef;
+    cumGain *= G;
+    bd.push({
+      name:   s.name || `Stage ${i + 1}`,
+      nf:     s.nf,
+      gain:   s.type === 'loss' ? -s.nf : s.gain,
+      Te, teRef,
+      cumNF:  10 * Math.log10(1 + teSys / T0),
+      cumGdb: 10 * Math.log10(cumGain),
+    });
+  });
+
+  const cascNF  = 10 * Math.log10(1 + teSys / T0);
+  const totGain = 10 * Math.log10(cumGain);
+  const f1 = x => x.toFixed(1);
+  const f2 = x => x.toFixed(2);
+
+  $('r_nf').textContent   = f2(cascNF);
+  $('r_te').textContent   = f1(teSys);
+  $('r_gain').textContent = f2(totGain);
+  $('r_n').textContent    = stages.length;
+
+  const dom  = bd.reduce((a, b) => a.teRef > b.teRef ? a : b, bd[0]);
+  const domP = (dom.teRef / teSys * 100).toFixed(0);
+  const note = $('r_note');
+  note.style.display = '';
+  note.textContent = t(
+    `Dominant noise source: "${dom.name}" contributes ${domP}% of system Te (${f1(dom.teRef)} K referred to chain input). Place the lowest-NF amplifier as early as possible.`,
+    `主要噪声源:"${dom.name}" 贡献系统噪温的 ${domP}%(折算到输入端 ${f1(dom.teRef)} K)。将最低 NF 放大器尽量前置于链路中。`
+  );
+
+  $('bdbody').innerHTML = bd.map((r, i) => {
+    const pct = teSys > 0 ? r.teRef / teSys : 0;
+    const cls = pct > 0.5 ? 'hi' : pct > 0.2 ? 'med' : '';
+    const barW = Math.max(2, Math.round(pct * 100));
+    return `<tr>
+      <td style="color:var(--muted);font-size:.8rem">${i + 1}</td>
+      <td>${esc(r.name)}</td>
+      <td class="num">${f2(r.nf)} dB</td>
+      <td class="num">${f2(r.gain)} dB</td>
+      <td class="num">${f1(r.Te)} K</td>
+      <td class="num">${f1(r.teRef)} K</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar-bg"><div class="bar-fill ${cls}" style="width:${barW}%"></div></div>
+          <span class="bar-pct">${(pct * 100).toFixed(1)}%</span>
+        </div>
+      </td>
+      <td class="num">${f2(r.cumNF)} dB</td>
+    </tr>`;
+  }).join('');
+}
+
+const PRESETS = {
+  sband: [
+    { name:'Waveguide feed', type:'loss', nf:0.4,  tphys:290 },
+    { name:'LNA',            type:'amp',  nf:0.8,  gain:35   },
+    { name:'Cable',          type:'loss', nf:1.5,  tphys:290 },
+    { name:'BPF',            type:'loss', nf:0.5,  tphys:290 },
+    { name:'Receiver',       type:'amp',  nf:8.0,  gain:20   },
+  ],
+  cubesat: [
+    { name:'RF connector',   type:'loss', nf:0.2,  tphys:290 },
+    { name:'LNA',            type:'amp',  nf:1.2,  gain:25   },
+    { name:'IF amplifier',   type:'amp',  nf:5.0,  gain:20   },
+  ],
+  ka: [
+    { name:'Feed / OMT',     type:'loss', nf:0.3,  tphys:290 },
+    { name:'LNA',            type:'amp',  nf:1.5,  gain:40   },
+    { name:'Down-conv loss', type:'loss', nf:6.0,  tphys:290 },
+    { name:'IF amplifier',   type:'amp',  nf:3.0,  gain:30   },
+    { name:'IF filter',      type:'loss', nf:1.0,  tphys:290 },
+  ],
+};
+
+document.querySelectorAll('.preset-bar button').forEach(btn => btn.addEventListener('click', () => {
+  const key = btn.dataset.preset;
+  if (!PRESETS[key]) return;
+  stages = []; nextId = 0;
+  PRESETS[key].forEach(p => stages.push(mkStage(p)));
+  renderTable(); compute();
+}));
+
+$('addStage').addEventListener('click', () => {
+  stages.push(mkStage({ name:'', type:'amp', nf:3, gain:20, tphys:T0 }));
+  renderTable(); compute();
+});
+
+// Init with S-band ground station preset
+PRESETS.sband.forEach(p => stages.push(mkStage(p)));
+renderTable();
+compute();
+
+if (window.ShareTool) ShareTool.apply();
+if (window.ShareTool) ShareTool.initButton();
+if (window.onLang) window.onLang(compute);
+</script>
+</body>
+</html>
