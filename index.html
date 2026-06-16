@@ -38,10 +38,10 @@
   <aside class="sidebar">
     <h3>Categories</h3>
     <ul class="cat-list">
-      <li><button data-cat="all" class="active">All tools <span class="ct">10</span></button></li>
+      <li><button data-cat="all" class="active">All tools <span class="ct">11</span></button></li>
       <li><button data-cat="link">Link Analysis <span class="ct">3</span></button></li>
       <li><button data-cat="orbit">Orbit &amp; Tracking <span class="ct">2</span></button></li>
-      <li><button data-cat="hw">Hardware <span class="ct">3</span></button></li>
+      <li><button data-cat="hw">Hardware <span class="ct">4</span></button></li>
       <li><button data-cat="mod">Modulation <span class="ct">1</span></button></li>
       <li><button data-cat="ref">Reference <span class="ct">1</span></button></li>
     </ul>
@@ -50,7 +50,7 @@
   <!-- main -->
   <div class="main">
     <div class="main-head">
-      <span class="count" id="count">10 tools</span>
+      <span class="count" id="count">11 tools</span>
       <div class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#697086" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
         <input id="q" type="search" placeholder="Search tools…" data-ph-en="Search tools…" data-ph-zh="搜索工具…" autocomplete="off">
@@ -130,6 +130,33 @@
         </svg>
         <div class="body"><span class="tag">Hardware</span><h3>G/T Figure of Merit</h3>
           <p>Build system noise temperature from antenna, feed, LNA & receiver → G/T in dB/K.</p></div>
+      </a>
+
+      <a class="tcard" href="noise-figure.html" data-cat="hw" data-search="cascaded noise figure friis rf chain lna nf noise temperature cascade 级联噪声系数 噪温">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#eef4ff"/>
+          <!-- stage boxes -->
+          <rect x="18" y="52" width="36" height="28" rx="4" fill="#fff" stroke="#c9d8f5" stroke-width="1.5"/>
+          <text x="36" y="70" font-size="9" fill="#697086" text-anchor="middle" font-family="sans-serif">Loss</text>
+          <line x1="54" y1="66" x2="66" y2="66" stroke="#9bb8ef" stroke-width="1.5"/>
+          <rect x="66" y="44" width="44" height="44" rx="4" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+          <text x="88" y="63" font-size="9" fill="#2563eb" text-anchor="middle" font-family="sans-serif" font-weight="700">LNA</text>
+          <text x="88" y="76" font-size="8" fill="#697086" text-anchor="middle" font-family="sans-serif">0.8 dB</text>
+          <line x1="110" y1="66" x2="122" y2="66" stroke="#9bb8ef" stroke-width="1.5"/>
+          <rect x="122" y="52" width="36" height="28" rx="4" fill="#fff" stroke="#c9d8f5" stroke-width="1.5"/>
+          <text x="140" y="70" font-size="9" fill="#697086" text-anchor="middle" font-family="sans-serif">Loss</text>
+          <line x1="158" y1="66" x2="170" y2="66" stroke="#9bb8ef" stroke-width="1.5"/>
+          <rect x="170" y="52" width="44" height="28" rx="4" fill="#fff" stroke="#c9d8f5" stroke-width="1.5"/>
+          <text x="192" y="70" font-size="9" fill="#697086" text-anchor="middle" font-family="sans-serif">Rx</text>
+          <!-- contribution bars -->
+          <rect x="18" y="96" width="36" height="8" rx="2" fill="#2563eb" opacity=".25"/>
+          <rect x="66" y="88" width="44" height="16" rx="2" fill="#dc2626" opacity=".6"/>
+          <rect x="122" y="99" width="36" height="5" rx="2" fill="#2563eb" opacity=".25"/>
+          <rect x="170" y="100" width="44" height="4" rx="2" fill="#2563eb" opacity=".15"/>
+          <text x="130" y="122" font-size="10" fill="#16a34a" text-anchor="middle" font-family="sans-serif" font-weight="700">NF cascade</text>
+        </svg>
+        <div class="body"><span class="tag">Hardware</span><h3>Noise Figure Chain</h3>
+          <p>Friis cascade: NF, noise temperature &amp; per-stage contribution for any RF receiver chain.</p></div>
       </a>
 
       <a class="tcard" href="rain.html" data-cat="link" data-search="rain attenuation fade itu p618 p838 雨衰">
