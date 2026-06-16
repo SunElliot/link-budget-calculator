@@ -4,22 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Satellite Link Budget Calculator (LEO / Smallsat) — Free Online Tool</title>
-<meta name="description" content="Free online satellite link budget calculator for LEO smallsats and ground stations. Compute EIRP, free space path loss (FSPL), G/T, C/N0, Eb/N0 and link margin instantly.">
-<meta name="keywords" content="link budget calculator, satellite link budget, EIRP calculator, free space path loss, FSPL, Eb/N0, C/N0, G/T, LEO satellite, smallsat, cubesat communication, ground station">
+<meta name="description" content="Free satellite link budget calculator with TT&C uplink/downlink analysis, payload data downlink and PDF export. Compute EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin.">
+<meta name="keywords" content="link budget calculator, satellite link budget, TT&C analysis, uplink downlink, EIRP, FSPL, Eb/N0, C/N0, G/T, LEO satellite">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/link-budget.html">
 <meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
+<meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
+<meta property="og:type" content="website">
 <link rel="stylesheet" href="styles.css?v=8">
 <script src="i18n.js?v=8"></script>
-<meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
-<meta property="og:description" content="Compute EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin for satellite links instantly.">
-<meta property="og:type" content="website">
-<!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
+<style>
+/* ── Mode bar ────────────────────────────────── */
+.mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.mode-pills{display:flex;gap:3px;background:#dcead9;padding:4px;border-radius:11px}
+.mode-tab{background:none;border:none;padding:7px 16px;border-radius:8px;font-size:.86rem;
+  cursor:pointer;font-family:inherit;color:var(--muted);font-weight:500}
+.mode-tab.active{background:#fff;color:var(--accent);font-weight:700;box-shadow:var(--shadow)}
+.pdf-btn{margin-left:auto;background:var(--accent);color:#fff;border:none;padding:7px 16px;
+  border-radius:9px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;gap:5px;box-shadow:var(--shadow)}
+.pdf-btn:hover{filter:brightness(1.1)}
+
+/* ── TT&C dual layout ────────────────────────── */
+.ttc-dual{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:860px){.ttc-dual{grid-template-columns:1fr}}
+.ttc-col{display:flex;flex-direction:column;gap:14px}
+.ttc-col-head{margin:0 0 2px;padding:8px 14px;border-radius:10px;font-size:.9rem;
+  font-weight:700;text-align:center}
+.ttc-up{background:rgba(22,163,74,.10);border:1px solid rgba(22,163,74,.35);color:#15803d}
+.ttc-dn{background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.30);color:#1d4ed8}
+.dot-up{background:#16a34a}
+.dot-dn{background:#2563eb}
+
+/* ── Pass budget ─────────────────────────────── */
+.pass-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
+</style>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Link Budget Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Free online satellite link budget calculator for LEO smallsats: EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin."}
+{"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Link Budget Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
 </head>
 <body>
@@ -57,273 +82,419 @@
 
 <div class="wrap">
 
-  <div class="preset-bar">
-    <button data-preset="leo-s">LEO S-band downlink</button>
-    <button data-preset="cubesat-uhf">CubeSat UHF</button>
-    <button data-preset="leo-x">LEO X-band payload</button>
-    <button data-preset="geo-ku">GEO Ku-band</button>
+  <!-- MODE BAR -->
+  <div class="mode-bar">
+    <div class="mode-pills">
+      <button class="mode-tab active" id="tab-single" onclick="switchMode('single')">Single Link</button>
+      <button class="mode-tab" id="tab-ttc" onclick="switchMode('ttc')">TT&amp;C Analysis</button>
+    </div>
+    <button class="pdf-btn" onclick="exportPDF()">↓ Export PDF</button>
   </div>
 
-  <div class="adslot">Ad placeholder — paste your AdSense ad unit here</div>
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL A: SINGLE LINK (existing + pass budget)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="panel-single">
 
-  <div class="grid">
+    <div class="preset-bar">
+      <button data-preset="leo-s">LEO S-band downlink</button>
+      <button data-preset="cubesat-uhf">CubeSat UHF</button>
+      <button data-preset="leo-x">LEO X-band payload</button>
+      <button data-preset="geo-ku">GEO Ku-band</button>
+    </div>
 
-    <!-- TRANSMITTER -->
+    <div class="adslot">Ad placeholder</div>
+
+    <div class="grid">
+
+      <!-- TRANSMITTER -->
+      <div class="card">
+        <h2><span class="dot"></span>Transmitter</h2>
+        <div class="row">
+          <label>Transmit power<span class="hint">RF output power</span></label>
+          <div class="ig">
+            <input type="number" id="txPower" value="2" step="any">
+            <select id="txPowerUnit"><option value="W">W</option><option value="dBW">dBW</option><option value="dBm">dBm</option></select>
+          </div>
+        </div>
+        <div class="row"><label>Tx antenna gain<span class="hint">dBi</span></label><input type="number" id="txGain" value="6" step="any"></div>
+        <div class="row"><label>Tx line / feeder loss<span class="hint">dB</span></label><input type="number" id="txLoss" value="1" step="any"></div>
+      </div>
+
+      <!-- PATH -->
+      <div class="card">
+        <h2><span class="dot"></span>Propagation Path</h2>
+        <div class="row">
+          <label>Frequency</label>
+          <div class="ig">
+            <input type="number" id="freq" value="2200" step="any">
+            <select id="freqUnit"><option value="MHz">MHz</option><option value="GHz">GHz</option><option value="kHz">kHz</option></select>
+          </div>
+        </div>
+        <div class="row"><label>Slant range / distance<span class="hint">km</span></label><input type="number" id="dist" value="2000" step="any"></div>
+        <div class="row"><label>Atmospheric loss<span class="hint">dB</span></label><input type="number" id="atmLoss" value="0.5" step="any"></div>
+        <div class="row"><label>Rain loss<span class="hint">dB</span></label><input type="number" id="rainLoss" value="0" step="any"></div>
+        <div class="row"><label>Polarization loss<span class="hint">dB</span></label><input type="number" id="polLoss" value="0.5" step="any"></div>
+        <div class="row"><label>Pointing loss<span class="hint">dB</span></label><input type="number" id="pointLoss" value="0.5" step="any"></div>
+      </div>
+
+      <!-- RECEIVER -->
+      <div class="card">
+        <h2><span class="dot"></span>Receiver</h2>
+        <div class="row"><label>Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="rxGain" value="30" step="any"></div>
+        <div class="row"><label>System noise temperature<span class="hint">Kelvin (incl. LNA, sky, feed)</span></label><input type="number" id="sysTemp" value="200" step="any"></div>
+        <div class="row"><label>Rx line loss before LNA<span class="hint">dB</span></label><input type="number" id="rxLoss" value="0.5" step="any"></div>
+      </div>
+
+      <!-- MODEM -->
+      <div class="card">
+        <h2><span class="dot"></span>Data Link / Modem</h2>
+        <div class="row">
+          <label>Data rate</label>
+          <div class="ig">
+            <input type="number" id="rate" value="1" step="any">
+            <select id="rateUnit"><option value="Mbps">Mbps</option><option value="kbps">kbps</option><option value="bps">bps</option></select>
+          </div>
+        </div>
+        <div class="row">
+          <label>Modulation / coding<span class="hint">auto-sets required Eb/N₀</span></label>
+          <select id="modcod" style="width:160px;text-align:left">
+            <optgroup label="Uncoded (BER 1e-5)">
+              <option value="u-bpsk"  data-bps="1" data-cr="1" data-ebn0="9.6">BPSK (uncoded)</option>
+              <option value="u-qpsk"  data-bps="2" data-cr="1" data-ebn0="9.6">QPSK (uncoded)</option>
+              <option value="u-8psk"  data-bps="3" data-cr="1" data-ebn0="13.0">8PSK (uncoded)</option>
+              <option value="u-16qam" data-bps="4" data-cr="1" data-ebn0="13.4">16QAM (uncoded)</option>
+              <option value="u-32qam" data-bps="5" data-cr="1" data-ebn0="16.5">32QAM (uncoded)</option>
+              <option value="u-64qam" data-bps="6" data-cr="1" data-ebn0="17.8">64QAM (uncoded)</option>
+            </optgroup>
+            <optgroup label="DVB-S2 LDPC+BCH (QEF)">
+              <option value="s2-qpsk12"  data-bps="2" data-cr="0.5"   data-ebn0="1.0">QPSK 1/2</option>
+              <option value="s2-qpsk34"  data-bps="2" data-cr="0.75"  data-ebn0="2.27">QPSK 3/4</option>
+              <option value="s2-qpsk56"  data-bps="2" data-cr="0.833" data-ebn0="2.96">QPSK 5/6</option>
+              <option value="s2-8psk23"  data-bps="3" data-cr="0.667" data-ebn0="3.61">8PSK 2/3</option>
+              <option value="s2-8psk34"  data-bps="3" data-cr="0.75"  data-ebn0="4.39" selected>8PSK 3/4</option>
+              <option value="s2-8psk56"  data-bps="3" data-cr="0.833" data-ebn0="5.37">8PSK 5/6</option>
+              <option value="s2-16a34"   data-bps="4" data-cr="0.75"  data-ebn0="5.44">16APSK 3/4</option>
+              <option value="s2-16a56"   data-bps="4" data-cr="0.833" data-ebn0="6.38">16APSK 5/6</option>
+              <option value="s2-32a34"   data-bps="5" data-cr="0.75"  data-ebn0="6.99">32APSK 3/4</option>
+              <option value="s2-32a56"   data-bps="5" data-cr="0.833" data-ebn0="8.08">32APSK 5/6</option>
+            </optgroup>
+            <option value="custom">Custom (set Eb/N₀ below)</option>
+          </select>
+        </div>
+        <div class="row"><label>Required Eb/N₀<span class="hint">dB, for target BER incl. FEC</span></label><input type="number" id="reqEbN0" value="4.4" step="any"></div>
+        <div class="row"><label>Roll-off factor (α)<span class="hint">filter excess bandwidth, e.g. 0.20–0.35</span></label><input type="number" id="rolloff" value="0.2" step="any"></div>
+        <div class="row"><label>Implementation loss<span class="hint">dB</span></label><input type="number" id="implLoss" value="1" step="any"></div>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="card results">
+        <h2><span class="dot"></span>Results</h2>
+        <div class="resgrid">
+          <div class="metric"><div class="k">EIRP</div><div class="v"><span id="r_eirp">–</span> <span class="u">dBW</span></div></div>
+          <div class="metric"><div class="k">Free space path loss</div><div class="v"><span id="r_fspl">–</span> <span class="u">dB</span></div></div>
+          <div class="metric"><div class="k">Total path loss</div><div class="v"><span id="r_totloss">–</span> <span class="u">dB</span></div></div>
+          <div class="metric"><div class="k">G/T</div><div class="v"><span id="r_gt">–</span> <span class="u">dB/K</span></div></div>
+          <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
+          <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="r_ebn0">–</span> <span class="u">dB</span></div></div>
+          <div class="metric"><div class="k">Spectral efficiency</div><div class="v"><span id="r_speceff">–</span> <span class="u">bit/s/Hz</span></div></div>
+          <div class="metric"><div class="k">Occupied bandwidth</div><div class="v"><span id="r_bw">–</span> <span class="u">MHz</span></div></div>
+          <div class="metric"><div class="k">C/N (received)</div><div class="v"><span id="r_cn">–</span> <span class="u">dB</span></div></div>
+          <div class="metric"><div class="k">C/N (required)</div><div class="v"><span id="r_cnreq">–</span> <span class="u">dB</span></div></div>
+        </div>
+        <div id="marginBox" class="margin-box margin-good">–</div>
+        <details>
+          <summary>Show full calculation breakdown</summary>
+          <table id="breakdown"></table>
+        </details>
+      </div>
+
+      <!-- ELEVATION CHART -->
+      <div class="card results">
+        <h2><span class="dot"></span>Link Margin vs Elevation Angle</h2>
+        <div class="row" style="max-width:360px">
+          <label>Orbit altitude<span class="hint">km — sets slant range vs elevation</span></label>
+          <input type="number" id="altitude" value="550" step="any">
+        </div>
+        <p class="en-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">Sweeps from horizon (0°) to zenith (90°). Slant range is derived from altitude.</p>
+        <p class="zh-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">扫描从地平线(0°)到天顶(90°),斜距由轨道高度推得。</p>
+        <canvas id="chart" width="1000" height="420" style="width:100%;height:auto;display:block"></canvas>
+        <div id="elevSummary" style="margin-top:10px;font-size:.9rem;color:var(--txt)"></div>
+      </div>
+
+      <!-- PASS DATA BUDGET -->
+      <div class="card results">
+        <h2><span class="dot"></span>Pass Data Budget</h2>
+        <p class="en-only" style="color:var(--muted);font-size:.85rem;margin:0 0 10px">
+          Estimates contact time per pass based on orbit altitude and minimum working elevation,
+          then computes data volume per pass at the current data rate.
+        </p>
+        <p class="zh-only" style="color:var(--muted);font-size:.85rem;margin:0 0 10px">
+          根据轨道高度和最低工作仰角估算每次过境接触时长，按当前数据率计算每次过境数据量。
+        </p>
+        <div class="row" style="max-width:360px">
+          <label>Min working elevation<span class="hint">deg — link-closes elevation</span></label>
+          <input type="number" id="minElev" value="5" step="any">
+        </div>
+        <div id="passBudgetResult"></div>
+      </div>
+
+    </div><!-- /.grid -->
+
+    <div class="adslot">Ad placeholder</div>
+
     <div class="card">
-      <h2><span class="dot"></span>Transmitter</h2>
-      <div class="row">
-        <label>Transmit power<span class="hint">RF output power</span></label>
-        <div class="ig">
-          <input type="number" id="txPower" value="2" step="any">
-          <select id="txPowerUnit"><option value="W">W</option><option value="dBW">dBW</option><option value="dBm">dBm</option></select>
+      <h2><span class="dot"></span>📖 How to use</h2>
+      <ol class="howto">
+        <li><span class="en-only">Pick a <b>preset</b> or use <b>Single Link / TT&amp;C</b> tabs for different analysis modes.</span><span class="zh-only">选一个<b>预设</b>,或用上方标签切换<b>单链路 / 测控分析</b>模式。</span></li>
+        <li><span class="en-only">Fill in Transmitter, Path, Receiver and Modem — power, gains, frequency, slant range, data rate.</span><span class="zh-only">填写发射机、路径、接收机和调制解调器参数——功率、增益、频率、斜距、数据率。</span></li>
+        <li><span class="en-only">Choose a <b>Modulation / coding</b> scheme; required Eb/N₀ fills automatically.</span><span class="zh-only">选择<b>调制/编码</b>方式,所需 Eb/N₀ 自动填入。</span></li>
+        <li><span class="en-only">Read the <b>Link margin</b>: green ≥ 3 dB, amber 0–3 dB, red = link fails.</span><span class="zh-only">看<b>链路余量</b>:绿 ≥ 3 dB、黄 0–3 dB、红 = 链路不通。</span></li>
+        <li><span class="en-only">Check <b>Pass Data Budget</b> for contact time and data-per-pass at your data rate.</span><span class="zh-only">查看<b>过境数据预算</b>——当前数据率下每次过境的接触时长与数据量。</span></li>
+        <li><span class="en-only">Click <b>↓ Export PDF</b> to save a formatted calculation report.</span><span class="zh-only">点击 <b>↓ 导出 PDF</b> 保存格式化计算报告。</span></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <div class="article en-only">
+        <h2>What is a satellite link budget?</h2>
+        <p>A <strong>link budget</strong> accounts for all gains and losses from transmitter to receiver. It tells you whether a satellite link will close — whether the received signal is strong enough to be demodulated at your target BER — and how much <strong>margin</strong> you have against fades.</p>
+        <h2>The equations used by this calculator</h2>
+        <p><strong>EIRP</strong> = P<sub>tx</sub>(dBW) + G<sub>tx</sub>(dBi) − L<sub>tx</sub>(dB)</p>
+        <p><strong>FSPL</strong> = 32.44 + 20·log₁₀(d<sub>km</sub>) + 20·log₁₀(f<sub>MHz</sub>) dB</p>
+        <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
+        <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k &nbsp; (k = −228.6 dBW/K/Hz)</p>
+        <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
+        <p><strong>Link margin</strong> = Eb/N₀<sub>rx</sub> − Eb/N₀<sub>req</sub> − implementation loss</p>
+        <h2>Typical LEO smallsat values</h2>
+        <p>CubeSat S-band downlink: ~2 W TX, 6 dBi patch, 3 m ground dish (~30 dBi), 1500–2500 km slant range, 150–250 K noise temp. Keep at least <strong>3 dB margin</strong> at the minimum operating elevation.</p>
+      </div>
+      <div class="article zh-only">
+        <h2>什么是卫星链路预算?</h2>
+        <p><strong>链路预算</strong>把无线信号从发射机到接收机所经历的全部增益与损耗逐项累加。它告诉你链路能否"闭合"，以及针对衰落留有多少<strong>余量</strong>。</p>
+        <h2>本计算器使用的公式</h2>
+        <p><strong>EIRP</strong> = P<sub>tx</sub>(dBW) + G<sub>tx</sub>(dBi) − L<sub>tx</sub>(dB)</p>
+        <p><strong>FSPL</strong> = 32.44 + 20·log₁₀(d<sub>km</sub>) + 20·log₁₀(f<sub>MHz</sub>) dB</p>
+        <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
+        <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k &nbsp; (k = −228.6 dBW/K/Hz)</p>
+        <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
+        <p><strong>链路余量</strong> = Eb/N₀<sub>接收</sub> − Eb/N₀<sub>所需</sub> − 实现损耗</p>
+        <h2>典型 LEO 小卫星取值</h2>
+        <p>立方星 S 波段下行：~2 W、6 dBi 贴片、3 m 地面站碟(~30 dBi)、斜距 1500–2500 km、噪温 150–250 K。最低工作仰角处至少保留 <strong>3 dB 余量</strong>。</p>
+      </div>
+    </div>
+
+  </div><!-- /#panel-single -->
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL B: TT&C ANALYSIS
+       ═══════════════════════════════════════════════════════ -->
+  <div id="panel-ttc" style="display:none">
+
+    <div class="preset-bar">
+      <button data-ttc-preset="leo-s-ttc">LEO S-band TT&amp;C</button>
+      <button data-ttc-preset="cubesat-uhf-ttc">CubeSat UHF TT&amp;C</button>
+      <button data-ttc-preset="leo-xs-ttc">LEO X/S Mixed</button>
+    </div>
+
+    <div class="adslot">Ad placeholder</div>
+
+    <!-- Shared orbit card -->
+    <div class="card" style="margin-bottom:18px">
+      <h2><span class="dot"></span>Orbit / Elevation</h2>
+      <div style="display:flex;gap:30px;flex-wrap:wrap">
+        <div class="row" style="flex:1;min-width:200px">
+          <label>Orbit altitude<span class="hint">km</span></label>
+          <input type="number" id="ttc_alt" value="550" step="any">
+        </div>
+        <div class="row" style="flex:1;min-width:200px">
+          <label>Elevation angle<span class="hint">deg — working elevation</span></label>
+          <input type="number" id="ttc_elev" value="10" step="any">
         </div>
       </div>
-      <div class="row">
-        <label>Tx antenna gain<span class="hint">dBi</span></label>
-        <input type="number" id="txGain" value="6" step="any">
-      </div>
-      <div class="row">
-        <label>Tx line / feeder loss<span class="hint">dB</span></label>
-        <input type="number" id="txLoss" value="1" step="any">
-      </div>
+      <div id="ttc_slant" style="margin-top:8px;font-size:.85rem;color:var(--muted)"></div>
     </div>
 
-    <!-- PATH -->
-    <div class="card">
-      <h2><span class="dot"></span>Propagation Path</h2>
-      <div class="row">
-        <label>Frequency</label>
-        <div class="ig">
-          <input type="number" id="freq" value="2200" step="any">
-          <select id="freqUnit"><option value="MHz">MHz</option><option value="GHz">GHz</option><option value="kHz">kHz</option></select>
+    <!-- Dual column -->
+    <div class="ttc-dual">
+
+      <!-- ── TC UPLINK (Ground → Satellite) ── -->
+      <div class="ttc-col">
+        <h3 class="ttc-col-head ttc-up">↑ TC Uplink (Ground → Satellite)</h3>
+
+        <div class="card">
+          <h2><span class="dot dot-up"></span>Ground Transmitter</h2>
+          <div class="row">
+            <label>Transmit power</label>
+            <div class="ig">
+              <input type="number" id="ul_txPower" value="50" step="any">
+              <select id="ul_txPowerUnit"><option value="W">W</option><option value="dBW">dBW</option><option value="dBm">dBm</option></select>
+            </div>
+          </div>
+          <div class="row"><label>Tx antenna gain<span class="hint">dBi</span></label><input type="number" id="ul_txGain" value="30" step="any"></div>
+          <div class="row"><label>Tx line loss<span class="hint">dB</span></label><input type="number" id="ul_txLoss" value="1" step="any"></div>
         </div>
-      </div>
-      <div class="row">
-        <label>Slant range / distance<span class="hint">km</span></label>
-        <input type="number" id="dist" value="2000" step="any">
-      </div>
-      <div class="row">
-        <label>Atmospheric loss<span class="hint">dB</span></label>
-        <input type="number" id="atmLoss" value="0.5" step="any">
-      </div>
-      <div class="row">
-        <label>Rain loss<span class="hint">dB</span></label>
-        <input type="number" id="rainLoss" value="0" step="any">
-      </div>
-      <div class="row">
-        <label>Polarization loss<span class="hint">dB</span></label>
-        <input type="number" id="polLoss" value="0.5" step="any">
-      </div>
-      <div class="row">
-        <label>Pointing loss<span class="hint">dB</span></label>
-        <input type="number" id="pointLoss" value="0.5" step="any">
-      </div>
-    </div>
 
-    <!-- RECEIVER -->
-    <div class="card">
-      <h2><span class="dot"></span>Receiver</h2>
-      <div class="row">
-        <label>Rx antenna gain<span class="hint">dBi</span></label>
-        <input type="number" id="rxGain" value="30" step="any">
-      </div>
-      <div class="row">
-        <label>System noise temperature<span class="hint">Kelvin (incl. LNA, sky, feed)</span></label>
-        <input type="number" id="sysTemp" value="200" step="any">
-      </div>
-      <div class="row">
-        <label>Rx line loss before LNA<span class="hint">dB</span></label>
-        <input type="number" id="rxLoss" value="0.5" step="any">
-      </div>
-    </div>
-
-    <!-- LINK / MODEM -->
-    <div class="card">
-      <h2><span class="dot"></span>Data Link / Modem</h2>
-      <div class="row">
-        <label>Data rate</label>
-        <div class="ig">
-          <input type="number" id="rate" value="1" step="any">
-          <select id="rateUnit"><option value="Mbps">Mbps</option><option value="kbps">kbps</option><option value="bps">bps</option></select>
+        <div class="card">
+          <h2><span class="dot dot-up"></span>TC Path + Satellite Receiver</h2>
+          <div class="row">
+            <label>TC frequency</label>
+            <div class="ig">
+              <input type="number" id="ul_freq" value="2025" step="any">
+              <select id="ul_freqUnit"><option value="MHz" selected>MHz</option><option value="GHz">GHz</option></select>
+            </div>
+          </div>
+          <div class="row"><label>Additional losses<span class="hint">dB (atm+rain+pol+pointing)</span></label><input type="number" id="ul_addLoss" value="2" step="any"></div>
+          <div class="row"><label>Sat Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="ul_rxGain" value="3" step="any"></div>
+          <div class="row"><label>Sat noise temperature<span class="hint">K</span></label><input type="number" id="ul_sysTemp" value="500" step="any"></div>
+          <div class="row"><label>Rx line loss<span class="hint">dB</span></label><input type="number" id="ul_rxLoss" value="2" step="any"></div>
         </div>
-      </div>
-      <div class="row">
-        <label>Modulation / coding<span class="hint">auto-sets required Eb/N₀</span></label>
-        <select id="modcod" style="width:160px;text-align:left">
-          <optgroup label="Uncoded (BER 1e-5)">
-            <option value="u-bpsk"  data-bps="1" data-cr="1" data-ebn0="9.6">BPSK (uncoded)</option>
-            <option value="u-qpsk"  data-bps="2" data-cr="1" data-ebn0="9.6">QPSK (uncoded)</option>
-            <option value="u-8psk"  data-bps="3" data-cr="1" data-ebn0="13.0">8PSK (uncoded)</option>
-            <option value="u-16qam" data-bps="4" data-cr="1" data-ebn0="13.4">16QAM (uncoded)</option>
-            <option value="u-32qam" data-bps="5" data-cr="1" data-ebn0="16.5">32QAM (uncoded)</option>
-            <option value="u-64qam" data-bps="6" data-cr="1" data-ebn0="17.8">64QAM (uncoded)</option>
-          </optgroup>
-          <optgroup label="DVB-S2 LDPC+BCH (QEF)">
-            <option value="s2-qpsk12"  data-bps="2" data-cr="0.5"   data-ebn0="1.0">QPSK 1/2</option>
-            <option value="s2-qpsk34"  data-bps="2" data-cr="0.75"  data-ebn0="2.27">QPSK 3/4</option>
-            <option value="s2-qpsk56"  data-bps="2" data-cr="0.833" data-ebn0="2.96">QPSK 5/6</option>
-            <option value="s2-8psk23"  data-bps="3" data-cr="0.667" data-ebn0="3.61">8PSK 2/3</option>
-            <option value="s2-8psk34"  data-bps="3" data-cr="0.75"  data-ebn0="4.39" selected>8PSK 3/4</option>
-            <option value="s2-8psk56"  data-bps="3" data-cr="0.833" data-ebn0="5.37">8PSK 5/6</option>
-            <option value="s2-16a34"   data-bps="4" data-cr="0.75"  data-ebn0="5.44">16APSK 3/4</option>
-            <option value="s2-16a56"   data-bps="4" data-cr="0.833" data-ebn0="6.38">16APSK 5/6</option>
-            <option value="s2-32a34"   data-bps="5" data-cr="0.75"  data-ebn0="6.99">32APSK 3/4</option>
-            <option value="s2-32a56"   data-bps="5" data-cr="0.833" data-ebn0="8.08">32APSK 5/6</option>
-          </optgroup>
-          <option value="custom">Custom (set Eb/N₀ below)</option>
-        </select>
-      </div>
-      <div class="row">
-        <label>Required Eb/N₀<span class="hint">dB, for target BER incl. FEC</span></label>
-        <input type="number" id="reqEbN0" value="4.4" step="any">
-      </div>
-      <div class="row">
-        <label>Roll-off factor (α)<span class="hint">filter excess bandwidth, e.g. 0.20–0.35</span></label>
-        <input type="number" id="rolloff" value="0.2" step="any">
-      </div>
-      <div class="row">
-        <label>Implementation loss<span class="hint">dB</span></label>
-        <input type="number" id="implLoss" value="1" step="any">
-      </div>
+
+        <div class="card">
+          <h2><span class="dot dot-up"></span>TC Modem</h2>
+          <div class="row">
+            <label>TC data rate</label>
+            <div class="ig">
+              <input type="number" id="ul_rate" value="4" step="any">
+              <select id="ul_rateUnit"><option value="kbps">kbps</option><option value="bps">bps</option><option value="Mbps">Mbps</option></select>
+            </div>
+          </div>
+          <div class="row"><label>Required Eb/N₀<span class="hint">dB</span></label><input type="number" id="ul_reqEbN0" value="9.6" step="any"></div>
+          <div class="row"><label>Implementation loss<span class="hint">dB</span></label><input type="number" id="ul_implLoss" value="2" step="any"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="dot dot-up"></span>TC Uplink Results</h2>
+          <div class="resgrid">
+            <div class="metric"><div class="k">EIRP</div><div class="v"><span id="ul_r_eirp">–</span> <span class="u">dBW</span></div></div>
+            <div class="metric"><div class="k">FSPL</div><div class="v"><span id="ul_r_fspl">–</span> <span class="u">dB</span></div></div>
+            <div class="metric"><div class="k">G/T</div><div class="v"><span id="ul_r_gt">–</span> <span class="u">dB/K</span></div></div>
+            <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="ul_r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
+            <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="ul_r_ebn0">–</span> <span class="u">dB</span></div></div>
+          </div>
+          <div id="ul_marginBox" class="margin-box margin-good" style="margin-top:12px">–</div>
+        </div>
+      </div><!-- /.ttc-col uplink -->
+
+      <!-- ── TM DOWNLINK (Satellite → Ground) ── -->
+      <div class="ttc-col">
+        <h3 class="ttc-col-head ttc-dn">↓ TM Downlink (Satellite → Ground)</h3>
+
+        <div class="card">
+          <h2><span class="dot dot-dn"></span>Satellite Transmitter</h2>
+          <div class="row">
+            <label>Transmit power</label>
+            <div class="ig">
+              <input type="number" id="dl_txPower" value="2" step="any">
+              <select id="dl_txPowerUnit"><option value="W">W</option><option value="dBW">dBW</option><option value="dBm">dBm</option></select>
+            </div>
+          </div>
+          <div class="row"><label>Tx antenna gain<span class="hint">dBi</span></label><input type="number" id="dl_txGain" value="5" step="any"></div>
+          <div class="row"><label>Tx line loss<span class="hint">dB</span></label><input type="number" id="dl_txLoss" value="1.5" step="any"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="dot dot-dn"></span>TM Path + Ground Receiver</h2>
+          <div class="row">
+            <label>TM frequency</label>
+            <div class="ig">
+              <input type="number" id="dl_freq" value="2200" step="any">
+              <select id="dl_freqUnit"><option value="MHz" selected>MHz</option><option value="GHz">GHz</option></select>
+            </div>
+          </div>
+          <div class="row"><label>Additional losses<span class="hint">dB (atm+rain+pol+pointing)</span></label><input type="number" id="dl_addLoss" value="2" step="any"></div>
+          <div class="row"><label>Ground Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="dl_rxGain" value="30" step="any"></div>
+          <div class="row"><label>Ground noise temperature<span class="hint">K</span></label><input type="number" id="dl_sysTemp" value="150" step="any"></div>
+          <div class="row"><label>Rx line loss<span class="hint">dB</span></label><input type="number" id="dl_rxLoss" value="0.5" step="any"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="dot dot-dn"></span>TM Modem</h2>
+          <div class="row">
+            <label>TM data rate</label>
+            <div class="ig">
+              <input type="number" id="dl_rate" value="64" step="any">
+              <select id="dl_rateUnit"><option value="kbps">kbps</option><option value="bps">bps</option><option value="Mbps">Mbps</option></select>
+            </div>
+          </div>
+          <div class="row"><label>Required Eb/N₀<span class="hint">dB</span></label><input type="number" id="dl_reqEbN0" value="9.6" step="any"></div>
+          <div class="row"><label>Implementation loss<span class="hint">dB</span></label><input type="number" id="dl_implLoss" value="2" step="any"></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="dot dot-dn"></span>TM Downlink Results</h2>
+          <div class="resgrid">
+            <div class="metric"><div class="k">EIRP</div><div class="v"><span id="dl_r_eirp">–</span> <span class="u">dBW</span></div></div>
+            <div class="metric"><div class="k">FSPL</div><div class="v"><span id="dl_r_fspl">–</span> <span class="u">dB</span></div></div>
+            <div class="metric"><div class="k">G/T</div><div class="v"><span id="dl_r_gt">–</span> <span class="u">dB/K</span></div></div>
+            <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="dl_r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
+            <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="dl_r_ebn0">–</span> <span class="u">dB</span></div></div>
+          </div>
+          <div id="dl_marginBox" class="margin-box margin-good" style="margin-top:12px">–</div>
+        </div>
+      </div><!-- /.ttc-col downlink -->
+
+    </div><!-- /.ttc-dual -->
+
+    <!-- TT&C summary -->
+    <div class="card results" style="margin-top:18px">
+      <h2><span class="dot"></span>TT&amp;C Summary</h2>
+      <div id="ttc_summary_grid"></div>
+      <div id="ttc_summary_box" class="margin-box margin-good" style="margin-top:14px">–</div>
     </div>
 
-    <!-- RESULTS -->
+    <!-- TT&C elevation chart -->
     <div class="card results">
-      <h2><span class="dot"></span>Results</h2>
-      <div class="resgrid">
-        <div class="metric"><div class="k">EIRP</div><div class="v"><span id="r_eirp">–</span> <span class="u">dBW</span></div></div>
-        <div class="metric"><div class="k">Free space path loss</div><div class="v"><span id="r_fspl">–</span> <span class="u">dB</span></div></div>
-        <div class="metric"><div class="k">Total path loss</div><div class="v"><span id="r_totloss">–</span> <span class="u">dB</span></div></div>
-        <div class="metric"><div class="k">G/T</div><div class="v"><span id="r_gt">–</span> <span class="u">dB/K</span></div></div>
-        <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
-        <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="r_ebn0">–</span> <span class="u">dB</span></div></div>
-        <div class="metric"><div class="k">Spectral efficiency</div><div class="v"><span id="r_speceff">–</span> <span class="u">bit/s/Hz</span></div></div>
-        <div class="metric"><div class="k">Occupied bandwidth</div><div class="v"><span id="r_bw">–</span> <span class="u">MHz</span></div></div>
-        <div class="metric"><div class="k">C/N (received)</div><div class="v"><span id="r_cn">–</span> <span class="u">dB</span></div></div>
-        <div class="metric"><div class="k">C/N (required)</div><div class="v"><span id="r_cnreq">–</span> <span class="u">dB</span></div></div>
-      </div>
-      <div id="marginBox" class="margin-box margin-good">Link margin: <span id="r_margin">–</span> dB</div>
-
-      <details>
-        <summary>Show full calculation breakdown</summary>
-        <table id="breakdown"></table>
-      </details>
+      <h2><span class="dot"></span>Link Margin vs Elevation — TC (green) &amp; TM (blue)</h2>
+      <canvas id="ttc-chart" width="1000" height="420" style="width:100%;height:auto;display:block"></canvas>
+      <div id="ttc-elev-summary" style="margin-top:10px;font-size:.9rem;color:var(--txt)"></div>
     </div>
 
-    <!-- ELEVATION CHART -->
-    <div class="card results">
-      <h2><span class="dot"></span>Link Margin vs Elevation Angle</h2>
-      <div class="row" style="max-width:360px">
-        <label>Orbit altitude<span class="hint">km — sets slant range vs elevation</span></label>
-        <input type="number" id="altitude" value="550" step="any">
-      </div>
-      <p class="en-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
-        Sweeps a satellite pass from horizon (0°) to zenith (90°). Slant range is derived from the
-        orbit altitude, so closer to overhead = shorter range = more margin. Other parameters use the
-        values above. (Atmospheric loss is held constant; real low-elevation passes see extra fade.)
-      </p>
-      <p class="zh-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">
-        扫描一次从地平线(0°)到天顶(90°)的卫星过境。斜距由轨道高度推得,越接近过顶 = 斜距越短 = 余量越大。
-        其它参数沿用上方取值。(大气损耗按常数处理;真实低仰角过境会有额外衰落。)
-      </p>
-      <canvas id="chart" width="1000" height="420" style="width:100%;height:auto;display:block"></canvas>
-      <div id="elevSummary" style="margin-top:10px;font-size:.9rem;color:var(--txt)"></div>
+    <div class="card">
+      <h2><span class="dot"></span>📖 How to use (TT&amp;C)</h2>
+      <ol class="howto">
+        <li><span class="en-only">Select a <b>TT&amp;C preset</b> (LEO S-band / CubeSat UHF / X/S Mixed) as a starting point.</span><span class="zh-only">选一个<b>测控预设</b>（LEO S 波段 / 立方星 UHF / X/S 混合）作为起点。</span></li>
+        <li><span class="en-only">Set <b>Orbit altitude</b> and <b>Elevation angle</b> — the slant range is computed automatically for both links.</span><span class="zh-only">设置<b>轨道高度</b>和<b>工作仰角</b>——两条链路的斜距自动计算。</span></li>
+        <li><span class="en-only">Fill the TC Uplink (Ground → Satellite) and TM Downlink (Satellite → Ground) columns independently.</span><span class="zh-only">分别填写 TC 上行（地面→卫星）和 TM 下行（卫星→地面）各列参数。</span></li>
+        <li><span class="en-only">Check the <b>TT&amp;C Summary</b> for the limiting direction and the dual-link elevation chart.</span><span class="zh-only">在<b>测控汇总</b>中查看瓶颈方向，以及两路链路的余量-仰角曲线。</span></li>
+        <li><span class="en-only">Click <b>↓ Export PDF</b> to download a side-by-side TT&amp;C calculation report.</span><span class="zh-only">点击 <b>↓ 导出 PDF</b> 下载并排展示的测控计算报告。</span></li>
+      </ol>
     </div>
 
-  </div>
+  </div><!-- /#panel-ttc -->
 
-  <div class="adslot">Ad placeholder — in-content ad unit</div>
+</div><!-- /.wrap -->
+</div><!-- /.pagemain -->
+</div><!-- /.page -->
 
-  <div class="card">
-    <h2><span class="dot"></span>📖 How to use</h2>
-    <ol class="howto">
-      <li><span class="en-only">Pick a <b>preset</b> (e.g. "LEO S-band downlink") as a starting point, or enter your own values.</span><span class="zh-only">选一个<b>预设</b>(如 "LEO S-band downlink")作为起点,或直接输入自己的参数。</span></li>
-      <li><span class="en-only">Fill in the <b>Transmitter, Path, Receiver and Data-Link</b> cards — power, gains, frequency, slant range, data rate.</span><span class="zh-only">填写<b>发射机 / 路径 / 接收机 / 数据链路</b>四张卡片——功率、增益、频率、斜距、数据率。</span></li>
-      <li><span class="en-only">Choose a <b>Modulation / coding</b> scheme; the required Eb/N₀ fills in automatically (or pick "Custom" to type your own).</span><span class="zh-only">选择<b>调制 / 编码</b>方式,所需 Eb/N₀ 会自动填入(或选 "Custom" 手动输入)。</span></li>
-      <li><span class="en-only">Read the <b>Link margin</b> box: green = closes comfortably, amber = tight, red = does not close. Open the breakdown to see every term.</span><span class="zh-only">看<b>链路余量</b>框:绿=余量充足、黄=偏紧、红=链路不通;展开明细可看每一项。</span></li>
-      <li><span class="en-only">Set the <b>orbit altitude</b> to see the margin-vs-elevation curve and your minimum usable elevation angle.</span><span class="zh-only">设置<b>轨道高度</b>,查看"余量-仰角"曲线和最低可用仰角。</span></li>
-    </ol>
-  </div>
-
-  <!-- SEO article content -->
-  <div class="card">
-    <div class="article en-only">
-      <h2>What is a satellite link budget?</h2>
-      <p>A <strong>link budget</strong> accounts for all the gains and losses a radio signal experiences
-      from the transmitter, through the propagation path, to the receiver. It tells you whether a
-      satellite link will close — i.e. whether the received signal is strong enough to be demodulated
-      at your target bit error rate (BER) — and how much <strong>margin</strong> you have against fades
-      and uncertainties.</p>
-
-      <h2>The equations used by this calculator</h2>
-      <p><strong>EIRP</strong> = P<sub>tx</sub>(dBW) + G<sub>tx</sub>(dBi) − L<sub>tx</sub>(dB)</p>
-      <p><strong>Free space path loss</strong> (FSPL) = 32.44 + 20·log₁₀(d<sub>km</sub>) + 20·log₁₀(f<sub>MHz</sub>) dB</p>
-      <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
-      <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k, where k = −228.6 dBW/K/Hz (Boltzmann)</p>
-      <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
-      <p><strong>Link margin</strong> = Eb/N₀<sub>received</sub> − Eb/N₀<sub>required</sub> − implementation loss</p>
-
-      <h2>Typical LEO smallsat values</h2>
-      <p>For a CubeSat S-band downlink you might use ~2 W transmit power, a 6 dBi patch antenna,
-      a 3 m ground-station dish (~30 dBi at S-band), a slant range around 1500–2500 km, and a
-      system noise temperature of 150–250 K. A healthy design keeps at least <strong>3 dB of margin</strong>
-      at the lowest elevation angle you plan to operate.</p>
-      <p>All computation runs locally in your browser — nothing is uploaded.</p>
-    </div>
-    <div class="article zh-only">
-      <h2>什么是卫星链路预算?</h2>
-      <p><strong>链路预算</strong>把无线信号从发射机、经过传播路径、到接收机所经历的全部增益与损耗逐项累加。
-      它告诉你这条卫星链路能否"闭合"——即接收信号是否强到能在目标误码率(BER)下被解调——
-      以及你针对衰落和各种不确定性留有多少<strong>余量</strong>。</p>
-      <h2>本计算器使用的公式</h2>
-      <p><strong>EIRP</strong> = P<sub>tx</sub>(dBW) + G<sub>tx</sub>(dBi) − L<sub>tx</sub>(dB)</p>
-      <p><strong>自由空间路径损耗</strong> (FSPL) = 32.44 + 20·log₁₀(d<sub>km</sub>) + 20·log₁₀(f<sub>MHz</sub>) dB</p>
-      <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
-      <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k,其中 k = −228.6 dBW/K/Hz(玻尔兹曼)</p>
-      <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
-      <p><strong>链路余量</strong> = Eb/N₀<sub>接收</sub> − Eb/N₀<sub>所需</sub> − 实现损耗</p>
-      <h2>典型 LEO 小卫星取值</h2>
-      <p>对于一条立方星 S 波段下行,可取 ~2 W 发射功率、6 dBi 贴片天线、3 m 地面站碟(S 波段约 30 dBi)、
-      斜距约 1500–2500 km、系统噪温 150–250 K。良好的设计应在你计划使用的最低仰角处至少保留
-      <strong>3 dB 余量</strong>。</p>
-      <p>全部计算在你的浏览器本地完成——不会上传任何数据。</p>
-    </div>
-  </div>
-
-</div>
-
-</div>
-</div>
-
-<footer>
-  Free satellite link budget calculator · Computes EIRP, FSPL, G/T, C/N₀, Eb/N₀ and margin · No data leaves your browser.
-</footer>
+<footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
 <script src="share.js?v=8"></script>
 <script>
-const $ = id => document.getElementById(id);
-const K_BOLTZMANN_DBW = -228.6; // dBW/K/Hz
+const $  = id => document.getElementById(id);
+const K_BOLTZMANN_DBW = -228.6;
 
 function toDBW(val, unit){
-  if(unit === 'dBW') return val;
-  if(unit === 'dBm') return val - 30;
-  if(unit === 'W')   return 10 * Math.log10(val); // W -> dBW
+  if(unit==='dBW') return val;
+  if(unit==='dBm') return val-30;
+  if(unit==='W')   return 10*Math.log10(Math.max(val,1e-12));
   return val;
 }
-function freqMHz(val, unit){
-  if(unit === 'MHz') return val;
-  if(unit === 'GHz') return val * 1000;
-  if(unit === 'kHz') return val / 1000;
+function freqMHz(val,unit){
+  if(unit==='MHz') return val;
+  if(unit==='GHz') return val*1000;
+  if(unit==='kHz') return val/1000;
   return val;
 }
-function rateBps(val, unit){
-  if(unit === 'bps')  return val;
-  if(unit === 'kbps') return val * 1e3;
-  if(unit === 'Mbps') return val * 1e6;
+function rateBps(val,unit){
+  if(unit==='bps')  return val;
+  if(unit==='kbps') return val*1e3;
+  if(unit==='Mbps') return val*1e6;
   return val;
 }
-const num = id => parseFloat($(id).value) || 0;
+const num = id => parseFloat($(id)?.value) || 0;
 
+/* ── Single-link compute ───────────────────────────── */
 function compute(){
   const txP   = toDBW(num('txPower'), $('txPowerUnit').value);
   const txG   = num('txGain');
@@ -342,207 +513,528 @@ function compute(){
   const impl  = num('implLoss');
   const alpha = num('rolloff');
   const sel   = $('modcod').selectedOptions[0];
-  const bps   = parseFloat(sel.dataset.bps);   // bits per symbol
-  const cr    = parseFloat(sel.dataset.cr);    // code rate
+  const bps   = parseFloat(sel.dataset.bps);
+  const cr    = parseFloat(sel.dataset.cr);
   const isCustom = $('modcod').value === 'custom';
 
-  const eirp  = txP + txG - txL;
-  const fspl  = (f > 0 && d > 0) ? 32.44 + 20*Math.log10(d) + 20*Math.log10(f) : 0;
-  const extra = atm + rain + pol + point;
-  const totLoss = fspl + extra;
-  const gt    = rxG - rxL - (Tsys > 0 ? 10*Math.log10(Tsys) : 0);
-  const cn0   = eirp - totLoss + gt - K_BOLTZMANN_DBW;
-  const ebn0  = Rb > 0 ? cn0 - 10*Math.log10(Rb) : 0;
-  const margin = ebn0 - reqEb - impl;
+  const eirp   = txP + txG - txL;
+  const fspl   = (f>0&&d>0) ? 32.44+20*Math.log10(d)+20*Math.log10(f) : 0;
+  const extra  = atm+rain+pol+point;
+  const totL   = fspl+extra;
+  const gt     = rxG-rxL-(Tsys>0 ? 10*Math.log10(Tsys) : 0);
+  const cn0    = eirp-totL+gt-K_BOLTZMANN_DBW;
+  const ebn0   = Rb>0 ? cn0-10*Math.log10(Rb) : 0;
+  const margin = ebn0-reqEb-impl;
 
-  // Modulation / bandwidth derived metrics
-  const specEff   = (!isCustom && bps && cr) ? bps * cr : NaN;        // info bit/s/Hz
-  const symRate   = specEff > 0 ? Rb / specEff : NaN;                 // symbols/s
-  const bwHz      = symRate > 0 ? symRate * (1 + alpha) : NaN;        // occupied BW
-  const cnRx      = bwHz > 0 ? cn0 - 10*Math.log10(bwHz) : NaN;       // received C/N
-  const cnReq     = (specEff > 0) ? reqEb + 10*Math.log10(specEff/(1+alpha)) : NaN; // required C/N
+  const specEff = (!isCustom&&bps&&cr) ? bps*cr : NaN;
+  const symRate = specEff>0 ? Rb/specEff : NaN;
+  const bwHz    = symRate>0 ? symRate*(1+alpha) : NaN;
+  const cnRx    = bwHz>0 ? cn0-10*Math.log10(bwHz) : NaN;
+  const cnReq   = specEff>0 ? reqEb+10*Math.log10(specEff/(1+alpha)) : NaN;
 
-  const f1 = x => (Math.round(x*100)/100).toFixed(2);
-  const fd = (x,u) => isFinite(x) ? f1(x) : '–';
-  $('r_eirp').textContent   = f1(eirp);
-  $('r_fspl').textContent   = f1(fspl);
-  $('r_totloss').textContent= f1(totLoss);
-  $('r_gt').textContent     = f1(gt);
-  $('r_cn0').textContent    = f1(cn0);
-  $('r_ebn0').textContent   = f1(ebn0);
-  $('r_margin').textContent = f1(margin);
-  $('r_speceff').textContent= fd(specEff);
-  $('r_bw').textContent     = isFinite(bwHz) ? f1(bwHz/1e6) : '–';
-  $('r_cn').textContent     = fd(cnRx);
-  $('r_cnreq').textContent  = fd(cnReq);
+  const f2 = x => (Math.round(x*100)/100).toFixed(2);
+  const fd = x  => isFinite(x) ? f2(x) : '–';
+
+  $('r_eirp').textContent    = f2(eirp);
+  $('r_fspl').textContent    = f2(fspl);
+  $('r_totloss').textContent = f2(totL);
+  $('r_gt').textContent      = f2(gt);
+  $('r_cn0').textContent     = f2(cn0);
+  $('r_ebn0').textContent    = f2(ebn0);
+  $('r_margin').textContent  = f2(margin);
+  $('r_speceff').textContent = fd(specEff);
+  $('r_bw').textContent      = isFinite(bwHz) ? f2(bwHz/1e6) : '–';
+  $('r_cn').textContent      = fd(cnRx);
+  $('r_cnreq').textContent   = fd(cnReq);
 
   const box = $('marginBox');
-  box.className = 'margin-box ' + (margin >= 3 ? 'margin-good' : margin >= 0 ? 'margin-warn' : 'margin-bad');
-  const verdict = margin >= 3 ? t('✓ Link closes with comfortable margin','✓ 链路闭合,余量充足')
-                : margin >= 0 ? t('⚠ Link closes but margin is tight','⚠ 链路勉强闭合,余量偏紧')
+  box.className = 'margin-box '+(margin>=3?'margin-good':margin>=0?'margin-warn':'margin-bad');
+  const verdict = margin>=3 ? t('✓ Link closes with comfortable margin','✓ 链路闭合，余量充足')
+                : margin>=0 ? t('⚠ Link closes but margin is tight','⚠ 链路勉强闭合，余量偏紧')
                 : t('✗ Link does NOT close','✗ 链路无法闭合');
-  box.innerHTML = `${t('Link margin','链路余量')}: <span>${f1(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
+  box.innerHTML = `${t('Link margin','链路余量')}: <span>${f2(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
 
   const rows = [
-    [t('Transmit power','发射功率'), f1(txP)+' dBW'],
-    [t('Tx antenna gain','发射天线增益'), '+'+f1(txG)+' dBi'],
-    [t('Tx line loss','发射线损'), '−'+f1(txL)+' dB'],
-    [t('= EIRP','= EIRP'), f1(eirp)+' dBW'],
-    [t('Free space path loss','自由空间路径损耗'), '−'+f1(fspl)+' dB'],
-    [t('Atmospheric / rain / pol / pointing','大气/雨/极化/指向'), '−'+f1(extra)+' dB'],
-    [t('Rx antenna gain','接收天线增益'), '+'+f1(rxG)+' dBi'],
-    [t('Rx line loss','接收线损'), '−'+f1(rxL)+' dB'],
-    [t('System noise temp','系统噪温'), f1(Tsys)+' K ('+f1(10*Math.log10(Tsys||1))+' dB)'],
-    [t('= G/T','= G/T'), f1(gt)+' dB/K'],
-    [t('Boltzmann constant','玻尔兹曼常数'), f1(K_BOLTZMANN_DBW)+' dBW/K/Hz'],
-    [t('= C/N₀','= C/N₀'), f1(cn0)+' dB-Hz'],
-    [t('Data rate','数据率'), (Rb/1e6).toFixed(3)+' Mbps ('+f1(10*Math.log10(Rb||1))+' dB)'],
-    [t('Modulation / coding','调制/编码'), isCustom ? 'custom' : sel.textContent.trim()+' ('+bps+' bit/sym × '+cr+')'],
-    [t('Spectral efficiency','频谱效率'), fd(specEff)+' bit/s/Hz'],
-    [t('Occupied bandwidth','占用带宽'), isFinite(bwHz) ? f1(bwHz/1e6)+' MHz' : '–'],
-    [t('C/N received','接收 C/N'), fd(cnRx)+' dB'],
-    [t('C/N required','所需 C/N'), fd(cnReq)+' dB'],
-    [t('= Eb/N₀ received','= 接收 Eb/N₀'), f1(ebn0)+' dB'],
-    [t('Required Eb/N₀','所需 Eb/N₀'), '−'+f1(reqEb)+' dB'],
-    [t('Implementation loss','实现损耗'), '−'+f1(impl)+' dB'],
-    [t('= LINK MARGIN','= 链路余量'), f1(margin)+' dB'],
+    [t('Transmit power','发射功率'),               f2(txP)+' dBW'],
+    [t('Tx antenna gain','发射天线增益'),           '+'+f2(txG)+' dBi'],
+    [t('Tx line loss','发射线损'),                  '−'+f2(txL)+' dB'],
+    [t('= EIRP','= EIRP'),                         f2(eirp)+' dBW'],
+    [t('Free space path loss','自由空间路径损耗'),  '−'+f2(fspl)+' dB'],
+    [t('Atmospheric / rain / pol / pointing','大气/雨/极化/指向'), '−'+f2(extra)+' dB'],
+    [t('Rx antenna gain','接收天线增益'),           '+'+f2(rxG)+' dBi'],
+    [t('Rx line loss','接收线损'),                  '−'+f2(rxL)+' dB'],
+    [t('System noise temp','系统噪温'),             f2(Tsys)+' K ('+f2(10*Math.log10(Tsys||1))+' dB)'],
+    [t('= G/T','= G/T'),                           f2(gt)+' dB/K'],
+    [t('Boltzmann constant','玻尔兹曼常数'),        f2(K_BOLTZMANN_DBW)+' dBW/K/Hz'],
+    [t('= C/N₀','= C/N₀'),                        f2(cn0)+' dB-Hz'],
+    [t('Data rate','数据率'),                       (Rb/1e6).toFixed(3)+' Mbps ('+f2(10*Math.log10(Rb||1))+' dB)'],
+    [t('Modulation / coding','调制/编码'),          isCustom?'custom':sel.textContent.trim()+' ('+bps+' bit/sym × '+cr+')'],
+    [t('Spectral efficiency','频谱效率'),           fd(specEff)+' bit/s/Hz'],
+    [t('Occupied bandwidth','占用带宽'),            isFinite(bwHz)?f2(bwHz/1e6)+' MHz':'–'],
+    [t('C/N received','接收 C/N'),                 fd(cnRx)+' dB'],
+    [t('C/N required','所需 C/N'),                 fd(cnReq)+' dB'],
+    [t('= Eb/N₀ received','= 接收 Eb/N₀'),        f2(ebn0)+' dB'],
+    [t('Required Eb/N₀','所需 Eb/N₀'),            '−'+f2(reqEb)+' dB'],
+    [t('Implementation loss','实现损耗'),           '−'+f2(impl)+' dB'],
+    [t('= LINK MARGIN','= 链路余量'),              f2(margin)+' dB'],
   ];
-  $('breakdown').innerHTML = rows.map(r =>
-    `<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  $('breakdown').innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
 
   drawChart();
+  computePassBudget();
 }
 
-const RE = 6371; // Earth mean radius, km
-
-// Slant range (km) to a satellite at altitude h (km) seen at elevation E (deg).
+/* ── Orbit geometry ────────────────────────────────── */
+const RE = 6371;
 function slantRange(h, elevDeg){
-  const E = elevDeg * Math.PI / 180;
-  const Rs = RE + h;
-  return Math.sqrt(Rs*Rs - (RE*Math.cos(E))**2) - RE*Math.sin(E);
+  const E = Math.max(elevDeg,0.1)*Math.PI/180;
+  const Rs = RE+h;
+  return Math.sqrt(Rs*Rs-(RE*Math.cos(E))**2)-RE*Math.sin(E);
 }
 
-// Link margin (dB) for an arbitrary slant range, reusing all current inputs.
+/* ── Single-link elevation chart ──────────────────── */
 function marginForDistance(d){
-  const txP   = toDBW(num('txPower'), $('txPowerUnit').value);
-  const eirp  = txP + num('txGain') - num('txLoss');
-  const f     = freqMHz(num('freq'), $('freqUnit').value);
-  const fspl  = (f>0 && d>0) ? 32.44 + 20*Math.log10(d) + 20*Math.log10(f) : 0;
-  const extra = num('atmLoss')+num('rainLoss')+num('polLoss')+num('pointLoss');
-  const gt    = num('rxGain') - num('rxLoss') - (num('sysTemp')>0 ? 10*Math.log10(num('sysTemp')) : 0);
-  const cn0   = eirp - (fspl+extra) + gt - K_BOLTZMANN_DBW;
-  const Rb    = rateBps(num('rate'), $('rateUnit').value);
-  const ebn0  = Rb>0 ? cn0 - 10*Math.log10(Rb) : 0;
-  return ebn0 - num('reqEbN0') - num('implLoss');
+  const txP  = toDBW(num('txPower'),$('txPowerUnit').value);
+  const eirp = txP+num('txGain')-num('txLoss');
+  const f    = freqMHz(num('freq'),$('freqUnit').value);
+  const fspl = (f>0&&d>0)?32.44+20*Math.log10(d)+20*Math.log10(f):0;
+  const extra= num('atmLoss')+num('rainLoss')+num('polLoss')+num('pointLoss');
+  const gt   = num('rxGain')-num('rxLoss')-(num('sysTemp')>0?10*Math.log10(num('sysTemp')):0);
+  const cn0  = eirp-(fspl+extra)+gt-K_BOLTZMANN_DBW;
+  const Rb   = rateBps(num('rate'),$('rateUnit').value);
+  const ebn0 = Rb>0?cn0-10*Math.log10(Rb):0;
+  return ebn0-num('reqEbN0')-num('implLoss');
 }
 
 function drawChart(){
-  const cv = $('chart'), ctx = cv.getContext('2d');
-  const W = cv.width, H = cv.height;
-  const padL = 56, padR = 20, padT = 16, padB = 40;
-  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const cv=$('chart'),ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height,padL=56,padR=20,padT=16,padB=40;
+  const plotW=W-padL-padR,plotH=H-padT-padB;
   ctx.clearRect(0,0,W,H);
-
-  const h = num('altitude');
-  // sample margin from 1° to 90°
-  const pts = [];
-  for(let e=1; e<=90; e++){ pts.push([e, marginForDistance(slantRange(h, e))]); }
-
-  let mins = Math.min(...pts.map(p=>p[1]), 0);
-  let maxs = Math.max(...pts.map(p=>p[1]), 3);
-  const pad = (maxs-mins)*0.1 || 1; mins -= pad; maxs += pad;
-
-  const x = e => padL + (e/90)*plotW;
-  const y = m => padT + (1-(m-mins)/(maxs-mins))*plotH;
-
-  // grid + axes
-  ctx.strokeStyle = '#e6e8ec'; ctx.fillStyle = '#697086'; ctx.lineWidth = 1;
-  ctx.font = '12px -apple-system,Segoe UI,Roboto,sans-serif';
-  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-  const yticks = 6;
-  for(let i=0;i<=yticks;i++){
-    const m = mins + (maxs-mins)*i/yticks, yy = y(m);
-    ctx.beginPath(); ctx.moveTo(padL,yy); ctx.lineTo(W-padR,yy); ctx.stroke();
-    ctx.fillText(m.toFixed(0), padL-8, yy);
-  }
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  for(let e=0;e<=90;e+=15){
-    ctx.beginPath(); ctx.moveTo(x(e),padT); ctx.lineTo(x(e),H-padB); ctx.stroke();
-    ctx.fillText(e+'°', x(e), H-padB+8);
-  }
-  ctx.fillText(t('Elevation angle','仰角'), padL+plotW/2, H-padB+22);
-
-  // zero margin line
-  if(0>=mins && 0<=maxs){
-    ctx.strokeStyle = '#dc2626'; ctx.setLineDash([5,4]);
-    ctx.beginPath(); ctx.moveTo(padL,y(0)); ctx.lineTo(W-padR,y(0)); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-  // 3 dB target line
-  if(3>=mins && 3<=maxs){
-    ctx.strokeStyle = '#d97706'; ctx.setLineDash([3,4]);
-    ctx.beginPath(); ctx.moveTo(padL,y(3)); ctx.lineTo(W-padR,y(3)); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  // margin curve
-  ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2.5; ctx.beginPath();
-  pts.forEach((p,i)=>{ const xx=x(p[0]), yy=y(p[1]); i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy); });
-  ctx.stroke();
-
-  // find minimum elevation where margin crosses 0 and 3 dB
-  const cross = thr => { for(const p of pts){ if(p[1]>=thr) return p[0]; } return null; };
-  const e0 = cross(0), e3 = cross(3);
-  [['#dc2626',e0],['#d97706',e3]].forEach(([c,e])=>{
-    if(e==null) return;
-    ctx.strokeStyle=c; ctx.setLineDash([2,3]);
-    ctx.beginPath(); ctx.moveTo(x(e),padT); ctx.lineTo(x(e),H-padB); ctx.stroke();
-    ctx.setLineDash([]);
-  });
-
-  const fmt = e => e==null ? t('never (link never closes)','永不(链路始终不通)') : '≥ '+e+'°';
-  $('elevSummary').innerHTML =
-    `<span style="color:#dc2626">${t('Link closes (margin ≥ 0):','链路闭合(余量 ≥ 0):')}</span> ${fmt(e0)} &nbsp;·&nbsp; ` +
-    `<span style="color:#d97706">${t('Comfortable (margin ≥ 3 dB):','舒适(余量 ≥ 3 dB):')}</span> ${fmt(e3)} &nbsp;·&nbsp; ` +
+  const h=num('altitude');
+  const pts=[];
+  for(let e=1;e<=90;e++) pts.push([e,marginForDistance(slantRange(h,e))]);
+  let mins=Math.min(...pts.map(p=>p[1]),0),maxs=Math.max(...pts.map(p=>p[1]),3);
+  const pad=(maxs-mins)*0.1||1;mins-=pad;maxs+=pad;
+  const x=e=>padL+(e/90)*plotW;
+  const y=m=>padT+(1-(m-mins)/(maxs-mins))*plotH;
+  ctx.strokeStyle='#e6e8ec';ctx.fillStyle='#697086';ctx.lineWidth=1;
+  ctx.font='12px -apple-system,Segoe UI,Roboto,sans-serif';
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let i=0;i<=6;i++){const m=mins+(maxs-mins)*i/6,yy=y(m);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(W-padR,yy);ctx.stroke();ctx.fillText(m.toFixed(0),padL-8,yy);}
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let e=0;e<=90;e+=15){ctx.beginPath();ctx.moveTo(x(e),padT);ctx.lineTo(x(e),H-padB);ctx.stroke();ctx.fillText(e+'°',x(e),H-padB+8);}
+  ctx.fillText(t('Elevation angle','仰角'),padL+plotW/2,H-padB+22);
+  if(0>=mins&&0<=maxs){ctx.strokeStyle='#dc2626';ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(padL,y(0));ctx.lineTo(W-padR,y(0));ctx.stroke();ctx.setLineDash([]);}
+  if(3>=mins&&3<=maxs){ctx.strokeStyle='#d97706';ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(padL,y(3));ctx.lineTo(W-padR,y(3));ctx.stroke();ctx.setLineDash([]);}
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=2.5;ctx.beginPath();
+  pts.forEach((p,i)=>{const xx=x(p[0]),yy=y(p[1]);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.stroke();
+  const cross=thr=>{for(const p of pts){if(p[1]>=thr)return p[0];}return null;};
+  const e0=cross(0),e3=cross(3);
+  [['#dc2626',e0],['#d97706',e3]].forEach(([c,e])=>{if(e==null)return;ctx.strokeStyle=c;ctx.setLineDash([2,3]);ctx.beginPath();ctx.moveTo(x(e),padT);ctx.lineTo(x(e),H-padB);ctx.stroke();ctx.setLineDash([]);});
+  const fmt=e=>e==null?t('never (link never closes)','永不(链路始终不通)'):'≥ '+e+'°';
+  $('elevSummary').innerHTML=
+    `<span style="color:#dc2626">${t('Link closes (margin ≥ 0):','链路闭合(余量 ≥ 0):')}</span> ${fmt(e0)} &nbsp;·&nbsp; `+
+    `<span style="color:#d97706">${t('Comfortable (margin ≥ 3 dB):','舒适(余量 ≥ 3 dB):')}</span> ${fmt(e3)} &nbsp;·&nbsp; `+
     `<span style="color:#697086">${t('altitude','高度')} ${h} km, ${t('range','斜距')} ${slantRange(h,90).toFixed(0)}–${slantRange(h,1).toFixed(0)} km</span>`;
 }
 
-const presets = {
+/* ── Pass data budget ──────────────────────────────── */
+function passContactTime(altKm, minElevDeg){
+  const R=6371, mu=398600.44;
+  const r=R+altKm;
+  const E=Math.max(minElevDeg,0)*Math.PI/180;
+  const sinRho=R*Math.cos(E)/r;
+  if(sinRho>=1) return 0;
+  const rho=Math.asin(sinRho);
+  const eta=Math.PI/2-E-rho;
+  if(eta<=0) return 0;
+  const Torbit=2*Math.PI*Math.sqrt(r*r*r/mu);
+  return Torbit*(2*eta)/(2*Math.PI);
+}
+
+function computePassBudget(){
+  const alt    = num('altitude');
+  const minEl  = parseFloat($('minElev')?.value)||5;
+  const Rb     = rateBps(num('rate'),$('rateUnit').value);
+  const tc     = passContactTime(alt,minEl);
+  const dataBits = Rb*tc;
+  const dataMB   = dataBits/8/1e6;
+  const dataGB   = dataBits/8/1e9;
+  const n1gb     = dataGB>0 ? Math.ceil(1/dataGB) : Infinity;
+  const t1gb_min = Rb>0 ? (1e9*8/Rb/60) : Infinity;
+  const el = $('passBudgetResult');
+  if(!el) return;
+  const f1=x=>x.toFixed(1);
+  el.innerHTML=`<div class="pass-grid" style="margin-top:12px">
+    <div class="metric"><div class="k">${t('Contact time / pass','过境时长 / 次')}</div>
+      <div class="v">${f1(tc/60)} <span class="u">min</span></div></div>
+    <div class="metric"><div class="k">${t('Data per pass','每次过境数据量')}</div>
+      <div class="v">${dataMB>=1000?f1(dataGB)+' <span class="u">GB</span>':f1(dataMB)+' <span class="u">MB</span>'}</div></div>
+    <div class="metric"><div class="k">${t('Time to download 1 GB','下传 1 GB 所需')}</div>
+      <div class="v">${isFinite(t1gb_min)?(t1gb_min<60?f1(t1gb_min)+' <span class="u">min</span>':f1(t1gb_min/60)+' <span class="u">hr</span>'):'–'}</div></div>
+    <div class="metric"><div class="k">${t('Passes to download 1 GB','下传 1 GB 所需过境次数')}</div>
+      <div class="v">${isFinite(n1gb)&&n1gb<=9999?n1gb:'> 9999'}</div></div>
+  </div>`;
+}
+
+/* ── Mode switching ────────────────────────────────── */
+let currentMode = 'single';
+function switchMode(mode){
+  currentMode = mode;
+  $('panel-single').style.display = mode==='single' ? '' : 'none';
+  $('panel-ttc').style.display    = mode==='ttc'    ? '' : 'none';
+  $('tab-single').classList.toggle('active', mode==='single');
+  $('tab-ttc').classList.toggle('active',    mode==='ttc');
+  if(mode==='ttc') computeTTC();
+}
+
+/* ── TT&C link budget ──────────────────────────────── */
+function computeTTCLink(pre, distKm){
+  const n = id => parseFloat($(pre+id)?.value)||0;
+  const s = id => $(pre+id)?.value||'';
+  const txP  = toDBW(n('txPower'), s('txPowerUnit'));
+  const eirp = txP + n('txGain') - n('txLoss');
+  const freq = freqMHz(n('freq'), s('freqUnit'));
+  const addL = n('addLoss');
+  const fspl = (freq>0&&distKm>0) ? 32.44+20*Math.log10(distKm)+20*Math.log10(freq) : 0;
+  const totL = fspl+addL;
+  const Tsys = n('sysTemp');
+  const gt   = n('rxGain')-n('rxLoss')-(Tsys>0?10*Math.log10(Tsys):0);
+  const cn0  = eirp-totL+gt-K_BOLTZMANN_DBW;
+  const Rb   = rateBps(n('rate'), s('rateUnit'));
+  const ebn0 = Rb>0 ? cn0-10*Math.log10(Rb) : 0;
+  const margin = ebn0-n('reqEbN0')-n('implLoss');
+  return {eirp,fspl,totL,gt,cn0,ebn0,margin,Rb};
+}
+
+function computeTTC(){
+  const alt  = parseFloat($('ttc_alt')?.value)||550;
+  const elev = parseFloat($('ttc_elev')?.value)||10;
+  const dist = slantRange(alt, Math.max(elev,1));
+
+  $('ttc_slant').textContent = t(`Slant range at ${elev}°: ${dist.toFixed(0)} km`,`${elev}° 仰角斜距：${dist.toFixed(0)} km`);
+
+  const ul = computeTTCLink('ul_', dist);
+  const dl = computeTTCLink('dl_', dist);
+  const f2 = x => x.toFixed(2);
+
+  // UL result
+  $('ul_r_eirp').textContent = f2(ul.eirp);
+  $('ul_r_fspl').textContent = f2(ul.fspl);
+  $('ul_r_gt').textContent   = f2(ul.gt);
+  $('ul_r_cn0').textContent  = f2(ul.cn0);
+  $('ul_r_ebn0').textContent = f2(ul.ebn0);
+  const ulBox=$('ul_marginBox');
+  ulBox.className='margin-box '+(ul.margin>=3?'margin-good':ul.margin>=0?'margin-warn':'margin-bad');
+  ulBox.innerHTML=`${t('TC Uplink margin','TC 上行余量')}: <span>${f2(ul.margin)}</span> dB`;
+
+  // DL result
+  $('dl_r_eirp').textContent = f2(dl.eirp);
+  $('dl_r_fspl').textContent = f2(dl.fspl);
+  $('dl_r_gt').textContent   = f2(dl.gt);
+  $('dl_r_cn0').textContent  = f2(dl.cn0);
+  $('dl_r_ebn0').textContent = f2(dl.ebn0);
+  const dlBox=$('dl_marginBox');
+  dlBox.className='margin-box '+(dl.margin>=3?'margin-good':dl.margin>=0?'margin-warn':'margin-bad');
+  dlBox.innerHTML=`${t('TM Downlink margin','TM 下行余量')}: <span>${f2(dl.margin)}</span> dB`;
+
+  // Summary
+  const minM = Math.min(ul.margin, dl.margin);
+  const lim  = ul.margin<=dl.margin ? t('TC Uplink ↑','TC 上行 ↑') : t('TM Downlink ↓','TM 下行 ↓');
+  const tc   = passContactTime(alt, elev);
+
+  $('ttc_summary_grid').innerHTML=`<div class="resgrid">
+    <div class="metric"><div class="k">${t('TC Uplink Margin','TC 上行余量')}</div>
+      <div class="v" style="color:${ul.margin>=3?'var(--good)':ul.margin>=0?'var(--warn)':'var(--bad)'}">${f2(ul.margin)} <span class="u">dB</span></div></div>
+    <div class="metric"><div class="k">${t('TM Downlink Margin','TM 下行余量')}</div>
+      <div class="v" style="color:${dl.margin>=3?'var(--good)':dl.margin>=0?'var(--warn)':'var(--bad)'}">${f2(dl.margin)} <span class="u">dB</span></div></div>
+    <div class="metric"><div class="k">${t('Limiting direction','链路瓶颈')}</div>
+      <div class="v" style="font-size:1rem">${lim}</div></div>
+    <div class="metric"><div class="k">${t('TC EIRP (Ground)','TC EIRP（地面）')}</div>
+      <div class="v">${f2(ul.eirp)} <span class="u">dBW</span></div></div>
+    <div class="metric"><div class="k">${t('TM EIRP (Satellite)','TM EIRP（卫星）')}</div>
+      <div class="v">${f2(dl.eirp)} <span class="u">dBW</span></div></div>
+    <div class="metric"><div class="k">${t('Contact time / pass','过境时长 / 次')}</div>
+      <div class="v">${(tc/60).toFixed(1)} <span class="u">min</span></div></div>
+  </div>`;
+
+  const sbox=$('ttc_summary_box');
+  sbox.className='margin-box '+(minM>=3?'margin-good':minM>=0?'margin-warn':'margin-bad');
+  sbox.innerHTML=t(
+    `TT&C system ${minM>=0?'closes':'does <b>not</b> close'} — min margin <span>${f2(minM)}</span> dB (${lim} limits) &nbsp;·&nbsp; slant range ${dist.toFixed(0)} km`,
+    `TT&C 系统${minM>=0?'链路闭合':'链路<b>不通</b>'} — 最小余量 <span>${f2(minM)}</span> dB（${lim} 为瓶颈）&nbsp;·&nbsp; 斜距 ${dist.toFixed(0)} km`
+  );
+
+  drawTTCChart(alt);
+}
+
+function drawTTCChart(alt){
+  const cv=$('ttc-chart');
+  if(!cv) return;
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height,padL=56,padR=20,padT=28,padB=40;
+  const plotW=W-padL-padR,plotH=H-padT-padB;
+  ctx.clearRect(0,0,W,H);
+
+  const ulPts=[],dlPts=[];
+  for(let e=1;e<=90;e++){
+    const d=slantRange(alt,e);
+    ulPts.push([e,computeTTCLink('ul_',d).margin]);
+    dlPts.push([e,computeTTCLink('dl_',d).margin]);
+  }
+  const all=[...ulPts.map(p=>p[1]),...dlPts.map(p=>p[1])];
+  let mins=Math.min(...all,0),maxs=Math.max(...all,3);
+  const pad=(maxs-mins)*0.1||1;mins-=pad;maxs+=pad;
+  const x=e=>padL+(e/90)*plotW;
+  const y=m=>padT+(1-(m-mins)/(maxs-mins))*plotH;
+
+  ctx.strokeStyle='#e6e8ec';ctx.lineWidth=1;
+  ctx.font='12px -apple-system,Segoe UI,Roboto,sans-serif';
+  for(let i=0;i<=6;i++){const m=mins+(maxs-mins)*i/6,yy=y(m);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(W-padR,yy);ctx.stroke();ctx.fillStyle='#697086';ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(m.toFixed(0),padL-8,yy);}
+  for(let e=0;e<=90;e+=15){ctx.beginPath();ctx.moveTo(x(e),padT);ctx.lineTo(x(e),H-padB);ctx.stroke();ctx.fillStyle='#697086';ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(e+'°',x(e),H-padB+8);}
+  ctx.fillStyle='#697086';ctx.textAlign='center';ctx.fillText(t('Elevation angle','仰角'),padL+plotW/2,H-padB+22);
+
+  [[0,'#dc2626'],[3,'#d97706']].forEach(([thr,col])=>{
+    if(thr<mins||thr>maxs)return;
+    ctx.strokeStyle=col;ctx.setLineDash([5,4]);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(padL,y(thr));ctx.lineTo(W-padR,y(thr));ctx.stroke();ctx.setLineDash([]);
+  });
+
+  // Legend
+  const ly=padT-12;
+  [[t('TC Uplink ↑','TC 上行 ↑'),'#16a34a'],[t('TM Downlink ↓','TM 下行 ↓'),'#2563eb']].forEach(([lbl,c],i)=>{
+    const lx=padL+i*200+10;
+    ctx.strokeStyle=c;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+22,ly);ctx.stroke();
+    ctx.fillStyle=c;ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(lbl,lx+26,ly);
+  });
+
+  ctx.strokeStyle='#16a34a';ctx.lineWidth=2.5;ctx.beginPath();
+  ulPts.forEach((p,i)=>{const xx=x(p[0]),yy=y(p[1]);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.stroke();
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=2.5;ctx.beginPath();
+  dlPts.forEach((p,i)=>{const xx=x(p[0]),yy=y(p[1]);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.stroke();
+
+  const cross=pts=>{for(const p of pts){if(p[1]>=0)return p[0];}return null;};
+  const eUL=cross(ulPts),eDL=cross(dlPts);
+  [[eUL,'#16a34a'],[eDL,'#2563eb']].forEach(([e,c])=>{
+    if(!e)return;ctx.strokeStyle=c;ctx.setLineDash([2,3]);ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(x(e),padT);ctx.lineTo(x(e),H-padB);ctx.stroke();ctx.setLineDash([]);
+  });
+
+  const fmt=e=>e==null?t('never','永不'):'≥ '+e+'°';
+  $('ttc-elev-summary').innerHTML=
+    `<span style="color:#16a34a">${t('TC closes:','TC 闭合:')}</span> ${fmt(eUL)} &nbsp;·&nbsp; `+
+    `<span style="color:#2563eb">${t('TM closes:','TM 闭合:')}</span> ${fmt(eDL)} &nbsp;·&nbsp; `+
+    `<span style="color:#697086">${alt} km · ${t('range','斜距')} ${slantRange(alt,90).toFixed(0)}–${slantRange(alt,1).toFixed(0)} km</span>`;
+}
+
+/* ── PDF export ────────────────────────────────────── */
+function pdfCSS(){
+  return `@page{size:A4;margin:15mm}*{box-sizing:border-box}
+body{font-family:-apple-system,Helvetica,Arial,sans-serif;font-size:10pt;color:#1a1f2e;line-height:1.5}
+h1{font-size:15pt;color:#1e3a8a;border-bottom:2px solid #2563eb;padding-bottom:6px;margin:0 0 4px}
+h2{font-size:9.5pt;color:#2563eb;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 5px}
+table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:9pt}
+thead th{background:#eef4ff;color:#5f6b66;font-size:7.5pt;text-transform:uppercase;letter-spacing:.04em;padding:5px 8px;text-align:left;border-bottom:2px solid #c9d8f5}
+td{padding:4px 8px;border-bottom:1px solid #f0f0f0}td:last-child{font-variant-numeric:tabular-nums;font-weight:600;color:#1e3a8a}
+.verdict{padding:10px 14px;border-radius:8px;font-weight:700;font-size:11pt;margin:12px 0}
+.good{background:#f0fdf4;border:1.5px solid #16a34a;color:#15803d}
+.warn{background:#fffbeb;border:1.5px solid #d97706;color:#b45309}
+.bad{background:#fef2f2;border:1.5px solid #dc2626;color:#dc2626}
+.hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.meta{font-size:8pt;color:#888}.brand{font-size:9pt;color:#697086}
+img{max-width:100%;height:auto;margin:6px 0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12pt}
+hr{border:none;border-top:1px solid #ddd;margin:12px 0}
+@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}`;
+}
+
+function exportPDF(){
+  const lang=window.SATLANG||'en';
+  const T=(en,zh)=>lang==='zh'?zh:en;
+  const ts=new Date().toLocaleString();
+  const nv=id=>{const el=$(id);return el?el.value:''};
+  const rv=id=>{const el=$(id);return el?el.textContent:'–'};
+  const rows=arr=>arr.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('');
+  const tbl=(head,body)=>`<table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>`;
+
+  let body='';
+  if(currentMode==='single'){
+    const inputs=[
+      [T('Transmit power','发射功率'),      nv('txPower')+' '+nv('txPowerUnit')],
+      [T('Tx antenna gain','发射天线增益'),  nv('txGain')+' dBi'],
+      [T('Tx line loss','发射线损'),         nv('txLoss')+' dB'],
+      [T('Frequency','频率'),               nv('freq')+' '+nv('freqUnit')],
+      [T('Slant range','斜距'),             nv('dist')+' km'],
+      [T('Atmospheric loss','大气损耗'),     nv('atmLoss')+' dB'],
+      [T('Rain loss','雨衰'),               nv('rainLoss')+' dB'],
+      [T('Polarization loss','极化损耗'),   nv('polLoss')+' dB'],
+      [T('Pointing loss','指向损耗'),       nv('pointLoss')+' dB'],
+      [T('Rx antenna gain','接收天线增益'), nv('rxGain')+' dBi'],
+      [T('System noise temp','系统噪温'),   nv('sysTemp')+' K'],
+      [T('Rx line loss','接收线损'),        nv('rxLoss')+' dB'],
+      [T('Data rate','数据率'),             nv('rate')+' '+nv('rateUnit')],
+      [T('Modulation / coding','调制/编码'), $('modcod')?.selectedOptions[0]?.textContent.trim()||''],
+      [T('Required Eb/N₀','所需 Eb/N₀'),   nv('reqEbN0')+' dB'],
+      [T('Roll-off α','滚降系数 α'),        nv('rolloff')],
+      [T('Implementation loss','实现损耗'), nv('implLoss')+' dB'],
+    ];
+    const bdRows=[];
+    $('breakdown')?.querySelectorAll('tr').forEach(tr=>{
+      const c=tr.querySelectorAll('td');if(c.length>=2)bdRows.push([c[0].textContent,c[1].textContent]);
+    });
+    const results=[
+      ['EIRP',rv('r_eirp')+' dBW'],
+      [T('Free space path loss','FSPL'),   rv('r_fspl')+' dB'],
+      [T('Total path loss','总路径损耗'),  rv('r_totloss')+' dB'],
+      ['G/T',rv('r_gt')+' dB/K'],
+      ['C/N₀',rv('r_cn0')+' dB-Hz'],
+      ['Eb/N₀ '+T('(received)','(接收)'), rv('r_ebn0')+' dB'],
+      [T('Occupied bandwidth','占用带宽'), rv('r_bw')+' MHz'],
+      [T('Link margin','链路余量'),        rv('r_margin')+' dB'],
+    ];
+    const m=parseFloat(rv('r_margin'))||−99;
+    const vcls=m>=3?'good':m>=0?'warn':'bad';
+    const vtxt=m>=3?T('✓ Link closes — comfortable margin','✓ 链路闭合，余量充足')
+               :m>=0?T('⚠ Link closes — margin tight','⚠ 链路勉强闭合，余量偏紧')
+               :T('✗ Link does NOT close','✗ 链路无法闭合');
+    const chartEl=$('chart');
+    const chartImg=chartEl?`<img src="${chartEl.toDataURL('image/png')}" style="width:100%;max-height:220pt">`:''  ;
+    body=`<div class="hdr"><div>
+      <h1>${T('Satellite Link Budget Report','卫星链路预算报告')}</h1>
+      <div class="meta">${T('Single Link Analysis','单链路分析')}</div></div>
+      <div class="brand">🛰 SatTools <span class="meta">${ts}</span></div></div>
+      <h2>${T('Input Parameters','输入参数')}</h2>${tbl([T('Parameter','参数'),T('Value','数值')],rows(inputs))}
+      <h2>${T('Calculation Cascade','计算过程')}</h2>${tbl([T('Step','步骤'),T('Value','数值')],rows(bdRows))}
+      <h2>${T('Results','结果')}</h2>${tbl([T('Metric','指标'),T('Value','数值')],rows(results))}
+      <div class="verdict ${vcls}">${vtxt} — ${T('Link margin','链路余量')}: ${rv('r_margin')} dB</div>
+      <h2>${T('Link Margin vs Elevation','余量-仰角曲线')}</h2>${chartImg}`;
+  } else {
+    // TT&C PDF
+    const li=(pre,label)=>[[label,''],[T('Tx power','发射功率'),nv(pre+'txPower')+' '+nv(pre+'txPowerUnit')],[T('Tx gain','天线增益'),nv(pre+'txGain')+' dBi'],[T('Tx loss','线损'),nv(pre+'txLoss')+' dB'],[T('Frequency','频率'),nv(pre+'freq')+' '+nv(pre+'freqUnit')],[T('Additional losses','附加损耗'),nv(pre+'addLoss')+' dB'],[T('Rx gain','接收增益'),nv(pre+'rxGain')+' dBi'],[T('Noise temp','噪温'),nv(pre+'sysTemp')+' K'],[T('Rx loss','接收线损'),nv(pre+'rxLoss')+' dB'],[T('Data rate','数据率'),nv(pre+'rate')+' '+nv(pre+'rateUnit')],[T('Required Eb/N₀','所需 Eb/N₀'),nv(pre+'reqEbN0')+' dB'],[T('Impl. loss','实现损耗'),nv(pre+'implLoss')+' dB']];
+    const ulM=parseFloat(rv('ul_r_ebn0'))-parseFloat(nv('ul_reqEbN0'))-parseFloat(nv('ul_implLoss'));
+    const dlM=parseFloat(rv('dl_r_ebn0'))-parseFloat(nv('dl_reqEbN0'))-parseFloat(nv('dl_implLoss'));
+    const minM=Math.min(ulM,dlM);
+    const lim=ulM<=dlM?T('TC Uplink ↑','TC 上行 ↑'):T('TM Downlink ↓','TM 下行 ↓');
+    const vcls=minM>=3?'good':minM>=0?'warn':'bad';
+    const vtxt=minM>=3?T('✓ TT&C system closes','✓ TT&C 链路闭合'):minM>=0?T('⚠ TT&C margin tight','⚠ TT&C 余量偏紧'):T('✗ TT&C does NOT close','✗ TT&C 链路不通');
+    const resRows=(pre,m)=>[['EIRP',rv(pre+'r_eirp')+' dBW'],['FSPL',rv(pre+'r_fspl')+' dB'],['G/T',rv(pre+'r_gt')+' dB/K'],['C/N₀',rv(pre+'r_cn0')+' dB-Hz'],['Eb/N₀',rv(pre+'r_ebn0')+' dB'],[T('Link margin','链路余量'),(m||0).toFixed(2)+' dB']];
+    const cEl=$('ttc-chart');
+    const cImg=cEl?`<img src="${cEl.toDataURL('image/png')}" style="width:100%;max-height:220pt">`:''  ;
+    body=`<div class="hdr"><div>
+      <h1>${T('TT&C Link Budget Report','测控链路预算报告')}</h1>
+      <div class="meta">${T('TC Uplink + TM Downlink Analysis','TC 上行 + TM 下行分析')}</div></div>
+      <div class="brand">🛰 SatTools <span class="meta">${ts}</span></div></div>
+      <p><b>${T('Orbit altitude','轨道高度')}:</b> ${nv('ttc_alt')} km &nbsp;·&nbsp; <b>${T('Elevation','仰角')}:</b> ${nv('ttc_elev')}°</p>
+      <div class="two-col">
+        <div><h2 style="color:#15803d">${T('TC Uplink (Ground→Satellite)','TC 上行（地面→卫星）')}</h2>
+          ${tbl([T('Parameter','参数'),T('Value','数值')],rows(li('ul_',T('TC Uplink','TC 上行')).slice(1)))}
+          <h2 style="color:#15803d">${T('TC Uplink Results','TC 上行结果')}</h2>
+          ${tbl([T('Metric','指标'),T('Value','数值')],rows(resRows('ul_',ulM)))}</div>
+        <div><h2 style="color:#1d4ed8">${T('TM Downlink (Satellite→Ground)','TM 下行（卫星→地面）')}</h2>
+          ${tbl([T('Parameter','参数'),T('Value','数值')],rows(li('dl_',T('TM Downlink','TM 下行')).slice(1)))}
+          <h2 style="color:#1d4ed8">${T('TM Downlink Results','TM 下行结果')}</h2>
+          ${tbl([T('Metric','指标'),T('Value','数值')],rows(resRows('dl_',dlM)))}</div>
+      </div>
+      <div class="verdict ${vcls}">${vtxt} — ${T('Min margin','最小余量')}: ${minM.toFixed(2)} dB — ${T('Limiting','瓶颈')}: ${lim}</div>
+      <h2>${T('Link Margin vs Elevation','余量-仰角曲线')} — TC / TM</h2>${cImg}`;
+  }
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Link Budget Report</title>
+    <style>${pdfCSS()}</style></head><body>${body}
+    <hr><div class="meta" style="text-align:center">${T('Generated by','生成工具')}: SatTools · sunelliot.github.io/link-budget-calculator · ${ts}</div>
+  </body></html>`;
+  const win=window.open('','_blank');
+  if(!win){alert(T('Allow pop-ups for PDF export.','请允许弹出窗口以导出 PDF。'));return;}
+  win.document.write(html);win.document.close();win.focus();
+  setTimeout(()=>win.print(),600);
+}
+
+/* ── Single-link presets ───────────────────────────── */
+const presets={
   'leo-s':       {txPower:2,txPowerUnit:'W',txGain:6,txLoss:1,freq:2200,freqUnit:'MHz',dist:2000,atmLoss:0.5,rainLoss:0,polLoss:0.5,pointLoss:0.5,rxGain:30,sysTemp:200,rxLoss:0.5,rate:1,rateUnit:'Mbps',modcod:'s2-qpsk34',rolloff:0.2,implLoss:1},
   'cubesat-uhf': {txPower:1,txPowerUnit:'W',txGain:2,txLoss:0.5,freq:437,freqUnit:'MHz',dist:1500,atmLoss:0.3,rainLoss:0,polLoss:1,pointLoss:0.5,rxGain:15,sysTemp:300,rxLoss:1,rate:9.6,rateUnit:'kbps',modcod:'u-bpsk',rolloff:0.35,implLoss:2},
   'leo-x':       {txPower:5,txPowerUnit:'W',txGain:8,txLoss:1.5,freq:8200,freqUnit:'MHz',dist:2200,atmLoss:1,rainLoss:1,polLoss:0.5,pointLoss:0.5,rxGain:45,sysTemp:150,rxLoss:0.5,rate:150,rateUnit:'Mbps',modcod:'s2-8psk34',rolloff:0.2,implLoss:1.5},
   'geo-ku':      {txPower:20,txPowerUnit:'W',txGain:35,txLoss:1,freq:12000,freqUnit:'MHz',dist:38500,atmLoss:0.5,rainLoss:3,polLoss:0.5,pointLoss:0.5,rxGain:40,sysTemp:120,rxLoss:0.5,rate:36,rateUnit:'Mbps',modcod:'s2-16a34',rolloff:0.25,implLoss:1.5},
 };
 function applyPreset(p){
-  const c = presets[p]; if(!c) return;
-  for(const k in c){ const el = $(k); if(el) el.value = c[k]; }
-  fillReqEbN0();
-  compute();
+  const c=presets[p];if(!c)return;
+  for(const k in c){const el=$(k);if(el)el.value=c[k];}
+  fillReqEbN0();compute();
 }
 
-// When a defined MODCOD is picked, auto-fill the required Eb/N0 field.
+/* ── TT&C presets ──────────────────────────────────── */
+const ttcPresets={
+  'leo-s-ttc':{
+    ttc_alt:550,ttc_elev:10,
+    ul_txPower:50,ul_txPowerUnit:'W',ul_txGain:30,ul_txLoss:1,
+    ul_freq:2025,ul_freqUnit:'MHz',ul_addLoss:2,
+    ul_rxGain:3,ul_sysTemp:500,ul_rxLoss:2,
+    ul_rate:4,ul_rateUnit:'kbps',ul_reqEbN0:9.6,ul_implLoss:2,
+    dl_txPower:2,dl_txPowerUnit:'W',dl_txGain:5,dl_txLoss:1.5,
+    dl_freq:2200,dl_freqUnit:'MHz',dl_addLoss:2,
+    dl_rxGain:30,dl_sysTemp:150,dl_rxLoss:0.5,
+    dl_rate:64,dl_rateUnit:'kbps',dl_reqEbN0:9.6,dl_implLoss:2,
+  },
+  'cubesat-uhf-ttc':{
+    ttc_alt:400,ttc_elev:10,
+    ul_txPower:50,ul_txPowerUnit:'W',ul_txGain:10,ul_txLoss:1,
+    ul_freq:435,ul_freqUnit:'MHz',ul_addLoss:2.5,
+    ul_rxGain:0,ul_sysTemp:600,ul_rxLoss:2,
+    ul_rate:1.2,ul_rateUnit:'kbps',ul_reqEbN0:9.6,ul_implLoss:2,
+    dl_txPower:1,dl_txPowerUnit:'W',dl_txGain:2,dl_txLoss:1,
+    dl_freq:437,dl_freqUnit:'MHz',dl_addLoss:2.5,
+    dl_rxGain:10,dl_sysTemp:300,dl_rxLoss:1,
+    dl_rate:9.6,dl_rateUnit:'kbps',dl_reqEbN0:9.6,dl_implLoss:2,
+  },
+  'leo-xs-ttc':{
+    ttc_alt:500,ttc_elev:5,
+    ul_txPower:20,ul_txPowerUnit:'W',ul_txGain:24,ul_txLoss:1,
+    ul_freq:2025,ul_freqUnit:'MHz',ul_addLoss:2,
+    ul_rxGain:5,ul_sysTemp:400,ul_rxLoss:1.5,
+    ul_rate:4,ul_rateUnit:'kbps',ul_reqEbN0:9.6,ul_implLoss:2,
+    dl_txPower:5,dl_txPowerUnit:'W',dl_txGain:8,dl_txLoss:1.5,
+    dl_freq:8200,dl_freqUnit:'MHz',dl_addLoss:2.5,
+    dl_rxGain:45,dl_sysTemp:100,dl_rxLoss:0.5,
+    dl_rate:1,dl_rateUnit:'Mbps',dl_reqEbN0:9.6,dl_implLoss:1.5,
+  },
+};
+function applyTTCPreset(key){
+  const c=ttcPresets[key];if(!c)return;
+  for(const k in c){const el=$(k);if(el)el.value=c[k];}
+  computeTTC();
+}
+
+/* ── Auto-fill Eb/N₀ from MODCOD ──────────────────── */
 function fillReqEbN0(){
-  const sel = $('modcod').selectedOptions[0];
-  const ro = $('reqEbN0');
-  if($('modcod').value === 'custom'){ ro.removeAttribute('readonly'); ro.style.opacity = 1; return; }
-  const v = parseFloat(sel.dataset.ebn0);
-  if(isFinite(v)) ro.value = v;
-  ro.setAttribute('readonly','');     // value is driven by the scheme
-  ro.style.opacity = .7;
+  const sel=$('modcod').selectedOptions[0];
+  const ro=$('reqEbN0');
+  if($('modcod').value==='custom'){ro.removeAttribute('readonly');ro.style.opacity=1;return;}
+  const v=parseFloat(sel.dataset.ebn0);
+  if(isFinite(v))ro.value=v;
+  ro.setAttribute('readonly','');ro.style.opacity=.7;
 }
 
-document.querySelectorAll('.preset-bar button').forEach(b =>
-  b.addEventListener('click', () => applyPreset(b.dataset.preset)));
-$('modcod').addEventListener('change', () => { fillReqEbN0(); compute(); });
-document.querySelectorAll('input,select').forEach(el =>
-  el.addEventListener('input', compute));
+/* ── Event wiring ──────────────────────────────────── */
+document.querySelectorAll('.preset-bar button[data-preset]').forEach(b=>
+  b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
+document.querySelectorAll('[data-ttc-preset]').forEach(b=>
+  b.addEventListener('click',()=>applyTTCPreset(b.dataset.ttcPreset)));
+$('modcod').addEventListener('change',()=>{fillReqEbN0();compute();});
+document.querySelectorAll('#panel-single input, #panel-single select').forEach(el=>
+  el.addEventListener('input',compute));
+document.querySelectorAll('[id^="ul_"],[id^="dl_"],[id="ttc_alt"],[id="ttc_elev"]').forEach(el=>
+  el.addEventListener('input',()=>{if(currentMode==='ttc')computeTTC();}));
+$('minElev')?.addEventListener('input',computePassBudget);
 
+/* ── Init ──────────────────────────────────────────── */
 if(window.ShareTool) ShareTool.apply();
 fillReqEbN0();
-
 compute();
 if(window.ShareTool) ShareTool.initButton();
-if(window.onLang) window.onLang(compute);
+if(window.onLang) window.onLang(()=>{compute();if(currentMode==='ttc')computeTTC();});
+// Deep-link via ?mode=ttc (must be after all consts are initialized)
+if(new URLSearchParams(location.search).get('mode')==='ttc'){ switchMode('ttc'); applyTTCPreset('leo-s-ttc'); }
 </script>
 </body>
 </html>
