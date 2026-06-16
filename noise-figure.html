@@ -151,8 +151,8 @@
               <th>Stage</th>
               <th>NF / Loss</th>
               <th>Gain</th>
-              <th>Device T<sub>e</sub></th>
-              <th>T<sub>e</sub> at input</th>
+              <th data-en="Device T<sub>e</sub>" data-zh="器件噪温 T<sub>e</sub>">Device T<sub>e</sub></th>
+              <th data-en="T<sub>e</sub> at input" data-zh="T<sub>e</sub> 折算到输入端">T<sub>e</sub> at input</th>
               <th style="min-width:130px">Contribution</th>
               <th>Cum. NF</th>
             </tr>
@@ -280,11 +280,11 @@ function renderTable() {
     const isLoss = s.type === 'loss';
     return `<tr data-id="${s.id}">
       <td style="color:var(--muted);font-size:.8rem;text-align:center;padding-right:8px">${i + 1}</td>
-      <td><input type="text" class="s-name" value="${esc(s.name)}" placeholder="Stage ${i + 1}"></td>
+      <td><input type="text" class="s-name" value="${esc(s.name)}" placeholder="${t('Stage','级')} ${i + 1}"></td>
       <td>
         <select class="s-type">
-          <option value="amp"  ${!isLoss ? 'selected' : ''}>Amplifier</option>
-          <option value="loss" ${ isLoss ? 'selected' : ''}>Loss / Filter</option>
+          <option value="amp"  ${!isLoss ? 'selected' : ''}>${t('Amplifier','放大器')}</option>
+          <option value="loss" ${ isLoss ? 'selected' : ''}>${t('Loss / Filter','损耗 / 滤波器')}</option>
         </select>
       </td>
       <td><input type="number" class="s-nf" value="${s.nf}" step="any" min="0"></td>
@@ -296,7 +296,7 @@ function renderTable() {
         ? `<input type="number" class="s-tp" value="${s.tphys}" step="any" min="0">`
         : `<span class="dim-val">T₀</span>`
       }</td>
-      <td><button class="del-btn" data-delid="${s.id}" title="Remove stage">×</button></td>
+      <td><button class="del-btn" data-delid="${s.id}" title="${t('Remove stage','删除级')}">×</button></td>
     </tr>`;
   }).join('');
 
@@ -341,7 +341,7 @@ function compute() {
     teSys  += teRef;
     cumGain *= G;
     bd.push({
-      name:   s.name || `Stage ${i + 1}`,
+      name:   s.name || t(`Stage ${i + 1}`, `第 ${i + 1} 级`),
       nf:     s.nf,
       gain:   s.type === 'loss' ? -s.nf : s.gain,
       Te, teRef,
@@ -393,47 +393,49 @@ function compute() {
 
 const PRESETS = {
   sband: [
-    { name:'Waveguide feed', type:'loss', nf:0.4,  tphys:290 },
-    { name:'LNA',            type:'amp',  nf:0.8,  gain:35   },
-    { name:'Cable',          type:'loss', nf:1.5,  tphys:290 },
-    { name:'BPF',            type:'loss', nf:0.5,  tphys:290 },
-    { name:'Receiver',       type:'amp',  nf:8.0,  gain:20   },
+    { name:'Waveguide feed', namezh:'馈线波导',     type:'loss', nf:0.4, tphys:290 },
+    { name:'LNA',            namezh:'低噪放 (LNA)', type:'amp',  nf:0.8, gain:35   },
+    { name:'Cable',          namezh:'馈电电缆',     type:'loss', nf:1.5, tphys:290 },
+    { name:'BPF',            namezh:'带通滤波器',   type:'loss', nf:0.5, tphys:290 },
+    { name:'Receiver',       namezh:'接收机',       type:'amp',  nf:8.0, gain:20   },
   ],
   cubesat: [
-    { name:'RF connector',   type:'loss', nf:0.2,  tphys:290 },
-    { name:'LNA',            type:'amp',  nf:1.2,  gain:25   },
-    { name:'IF amplifier',   type:'amp',  nf:5.0,  gain:20   },
+    { name:'RF connector',   namezh:'射频接头',     type:'loss', nf:0.2, tphys:290 },
+    { name:'LNA',            namezh:'低噪放 (LNA)', type:'amp',  nf:1.2, gain:25   },
+    { name:'IF amplifier',   namezh:'中频放大器',   type:'amp',  nf:5.0, gain:20   },
   ],
   ka: [
-    { name:'Feed / OMT',     type:'loss', nf:0.3,  tphys:290 },
-    { name:'LNA',            type:'amp',  nf:1.5,  gain:40   },
-    { name:'Down-conv loss', type:'loss', nf:6.0,  tphys:290 },
-    { name:'IF amplifier',   type:'amp',  nf:3.0,  gain:30   },
-    { name:'IF filter',      type:'loss', nf:1.0,  tphys:290 },
+    { name:'Feed / OMT',     namezh:'馈源/正交模耦合器', type:'loss', nf:0.3, tphys:290 },
+    { name:'LNA',            namezh:'低噪放 (LNA)',       type:'amp',  nf:1.5, gain:40   },
+    { name:'Down-conv loss', namezh:'下变频损耗',         type:'loss', nf:6.0, tphys:290 },
+    { name:'IF amplifier',   namezh:'中频放大器',         type:'amp',  nf:3.0, gain:30   },
+    { name:'IF filter',      namezh:'中频滤波器',         type:'loss', nf:1.0, tphys:290 },
   ],
 };
 
-document.querySelectorAll('.preset-bar button').forEach(btn => btn.addEventListener('click', () => {
-  const key = btn.dataset.preset;
+function applyPreset(key) {
   if (!PRESETS[key]) return;
   stages = []; nextId = 0;
-  PRESETS[key].forEach(p => stages.push(mkStage(p)));
+  PRESETS[key].forEach(p => stages.push(mkStage({ ...p, name: t(p.name, p.namezh) })));
   renderTable(); compute();
-}));
+}
+
+document.querySelectorAll('.preset-bar button').forEach(btn =>
+  btn.addEventListener('click', () => applyPreset(btn.dataset.preset)));
 
 $('addStage').addEventListener('click', () => {
   stages.push(mkStage({ name:'', type:'amp', nf:3, gain:20, tphys:T0 }));
   renderTable(); compute();
 });
 
-// Init with S-band ground station preset
-PRESETS.sband.forEach(p => stages.push(mkStage(p)));
-renderTable();
-compute();
-
-if (window.ShareTool) ShareTool.apply();
-if (window.ShareTool) ShareTool.initButton();
-if (window.onLang) window.onLang(compute);
+// Init after i18n has set the language (i18n DOMContentLoaded fires first)
+document.addEventListener('DOMContentLoaded', () => {
+  applyPreset('sband');
+  if (window.ShareTool) ShareTool.apply();
+  if (window.ShareTool) ShareTool.initButton();
+  // Re-render on language switch so select options and dynamic text update
+  if (window.onLang) window.onLang(() => { renderTable(); compute(); });
+});
 </script>
 </body>
 </html>
