@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HPA Backoff Calculator — Transponder Saturation, IBO/OBO &amp; Intermodulation</title>
+<meta name="description" content="Free HPA backoff calculator for satellite transponders. Model TWTA (Saleh) and SSPA (Rapp) saturation curves, convert between input/output backoff (IBO/OBO), check gain compression, multicarrier per-carrier backoff and third-order intermodulation (C/I3).">
+<meta name="keywords" content="HPA backoff calculator, transponder saturation, input backoff, output backoff, IBO OBO, TWTA Saleh model, SSPA Rapp model, intermodulation C/I3, power amplifier compression, satellite transponder">
+<link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/hpa-backoff.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="HPA Backoff Calculator">
+<meta property="og:description" content="TWTA (Saleh) & SSPA (Rapp) saturation curves — IBO/OBO conversion, gain compression, multicarrier backoff and C/I3 intermodulation estimate.">
+<meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
+<link rel="stylesheet" href="styles.css?v=8">
+<script src="i18n.js?v=8"></script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"HPA Backoff Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<nav class="topnav">
+  <a class="brand" href="index.html">🛰 SatTools</a>
+</nav>
+
+<div class="page">
+<aside class="sidebar">
+  <a class="home" href="index.html" style="display:block;text-decoration:none">← All tools</a>
+  <ul class="toolnav">
+    <li class="grp">Link Analysis</li>
+    <li><a href="link-budget.html">Link Budget</a></li>
+    <li><a href="rain.html">Rain Fade</a></li>
+    <li><a href="gas.html">Gaseous Attenuation</a></li>
+    <li class="grp">Orbit &amp; Tracking</li>
+    <li><a href="doppler.html">Doppler Shift</a></li>
+    <li><a href="pass-prediction.html">Pass Predictor</a></li>
+    <li class="grp">Hardware</li>
+    <li><a href="antenna.html">Antenna Gain</a></li>
+    <li><a href="phased-array.html">Phased Array Gain</a></li>
+    <li><a href="gt.html">G/T Figure of Merit</a></li>
+    <li><a href="noise-figure.html">Noise Figure Chain</a></li>
+    <li><a href="hpa-backoff.html" class="active">HPA Backoff</a></li>
+    <li class="grp">Modulation</li>
+    <li><a href="ber.html">BER Curves</a></li>
+    <li class="grp">Reference</li>
+    <li><a href="bands.html">Frequency Bands</a></li>
+  </ul>
+</aside>
+<div class="pagemain">
+
+<header>
+  <h1>⚡ Transponder Saturation &amp; HPA Backoff Calculator</h1>
+  <p>TWTA / SSPA saturation curve — IBO/OBO conversion, gain compression &amp; multicarrier intermodulation</p>
+</header>
+
+<div class="wrap">
+  <div class="preset-bar">
+    <button data-preset="cubesat">CubeSat UHF SSPA</button>
+    <button data-preset="vsat">VSAT SSPA (4 carriers)</button>
+    <button data-preset="geo">GEO TWTA Transponder</button>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="dot"></span>Amplifier</h2>
+      <div class="row">
+        <label>Amplifier type<span class="hint">AM/AM model used</span></label>
+        <select id="hpaType" style="width:150px;text-align:left">
+          <option value="twta">TWTA (Saleh model)</option>
+          <option value="sspa">SSPA (Rapp model)</option>
+        </select>
+      </div>
+      <div class="row" id="rowP">
+        <label>Smoothness factor p<span class="hint">Rapp knee — 2≈smooth, 8+≈hard limiter</span></label>
+        <input type="number" id="rappP" value="2" step="any" min="0.5" max="50">
+      </div>
+      <div class="row">
+        <label>Saturated output power<span class="hint">Psat, single-carrier rating</span></label>
+        <div class="ig">
+          <input type="number" id="psat" value="100" step="any">
+          <select id="psatUnit"><option value="W">W</option><option value="dBW">dBW</option><option value="dBm">dBm</option></select>
+        </div>
+      </div>
+      <div class="row"><label>Small-signal gain G₀<span class="hint">dB — used only to report drive power</span></label><input type="number" id="g0" value="50" step="any"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="dot"></span>Operating Point</h2>
+      <div class="row">
+        <label>Set by<span class="hint">which backoff you are driving</span></label>
+        <select id="boMode" style="width:150px;text-align:left">
+          <option value="ibo">Input Backoff (IBO)</option>
+          <option value="obo">Output Backoff (OBO)</option>
+        </select>
+      </div>
+      <div class="row"><label>Backoff value<span class="hint">dB below saturation, composite/total</span></label><input type="number" id="boVal" value="3" step="any" min="0"></div>
+      <div class="row"><label>Carriers (FDMA)<span class="hint">equal-power carriers sharing this HPA</span></label><input type="number" id="nCarriers" value="1" step="1" min="1"></div>
+      <p style="color:var(--muted);font-size:.78rem;margin:14px 0 6px">
+        <span class="en-only">Third-order intermodulation reference (optional) — a known C/I₃ point from a datasheet or measurement:</span>
+        <span class="zh-only">三阶互调参考点(可选)——来自数据表或实测的已知 C/I₃ 数据点:</span>
+      </p>
+      <div class="row"><label>Reference C/I₃<span class="hint">dB, two-tone, at the OBO below</span></label><input type="number" id="ci3Ref" value="18" step="any"></div>
+      <div class="row"><label>…at reference OBO<span class="hint">dB</span></label><input type="number" id="oboRef" value="3" step="any" min="0"></div>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Results</h2>
+      <div class="resgrid">
+        <div class="metric"><div class="k">Input Backoff (IBO)</div><div class="v"><span id="r_ibo">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Output Backoff (OBO)</div><div class="v"><span id="r_obo">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Gain compression</div><div class="v"><span id="r_gc">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Total output power</div><div class="v"><span id="r_poutTotal">–</span> <span class="u">dBW</span></div></div>
+        <div class="metric"><div class="k">Per-carrier output power</div><div class="v"><span id="r_poutCarrier">–</span> <span class="u">dBW</span></div></div>
+        <div class="metric"><div class="k">Estimated C/I₃</div><div class="v"><span id="r_ci3">–</span> <span class="u">dB</span></div></div>
+      </div>
+      <div class="note" id="r_note"></div>
+      <details>
+        <summary>Show full breakdown</summary>
+        <table id="bd"></table>
+      </details>
+    </div>
+
+    <div class="card results">
+      <h2><span class="dot"></span>Saturation Curve (AM/AM)</h2>
+      <p style="color:var(--muted);font-size:.85rem;margin:0 0 10px" id="chartCaption"></p>
+      <canvas id="chart" width="1000" height="480" style="width:100%;height:auto;display:block"></canvas>
+    </div>
+  </div>
+
+  <div class="adslot">Ad placeholder</div>
+
+  <div class="card">
+    <h2><span class="dot"></span>📖 How to use</h2>
+    <ol class="howto">
+      <li>
+        <span class="en-only">Pick a <b>preset</b>, or choose the <b>amplifier type</b>: <em>TWTA</em> (smooth gain roll-off, can be over-driven past saturation) or <em>SSPA</em> (Rapp model, tune the <em>smoothness factor p</em> — higher p = sharper, more limiter-like knee).</span>
+        <span class="zh-only">选择一个<b>预设</b>,或设置<b>放大器类型</b>:<em>TWTA</em>(增益平滑滚降,可过驱动越过饱和点)或 <em>SSPA</em>(Rapp 模型,调节<em>平滑因子 p</em>——p 越大,膝点越陡、越接近硬限幅)。</span>
+      </li>
+      <li>
+        <span class="en-only">Enter the <b>saturated output power P<sub>sat</sub></b> and small-signal gain G₀ (G₀ only affects the reported drive power, not the backoff numbers).</span>
+        <span class="zh-only">输入<b>饱和输出功率 P<sub>sat</sub></b> 和小信号增益 G₀(G₀ 只影响所报告的驱动功率,不影响回退数值本身)。</span>
+      </li>
+      <li>
+        <span class="en-only">Choose whether you're setting <b>IBO</b> or <b>OBO</b> and enter the value — the other one is computed from the saturation curve, along with gain compression.</span>
+        <span class="zh-only">选择你要设定的是 <b>IBO</b> 还是 <b>OBO</b> 并填入数值——另一个值及增益压缩会按饱和曲线自动算出。</span>
+      </li>
+      <li>
+        <span class="en-only">Set <b>carriers (FDMA)</b> if several equal-power carriers share this HPA — backoff above is the total/composite value; per-carrier figures divide the power by N.</span>
+        <span class="zh-only">如果多个等功率载波共用同一只 HPA,填写<b>载波数(FDMA)</b>——上面的回退是总/合成值;各载波数值按 N 等分功率得到。</span>
+      </li>
+      <li>
+        <span class="en-only">Optionally calibrate the <b>C/I₃ reference</b> with a known datasheet or measured point; the tool extrapolates using the standard 2 dB-per-dB small-signal slope. This is approximate and breaks down near saturation.</span>
+        <span class="zh-only">可选地用数据表或实测的已知点校准<b>C/I₃ 参考值</b>;工具按标准的小信号 2 dB/dB 斜率外推。该估算仅为近似,在接近饱和时会失准。</span>
+      </li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div class="article en-only">
+      <h2>Why HPAs need backoff</h2>
+      <p>A satellite HPA — a TWTA or SSPA — is linear only at low drive levels. As input power rises toward
+      <strong>saturation (P<sub>sat</sub>)</strong>, the gain compresses and the output-vs-input curve bends over.
+      Operating with <strong>Input Backoff (IBO)</strong> and <strong>Output Backoff (OBO)</strong> — dB below the
+      saturation input/output reference — trades away some output power and EIRP in exchange for linearity, which
+      controls gain compression and limits the intermodulation products generated when several carriers (FDMA)
+      share one amplifier.</p>
+      <h2>Models used</h2>
+      <p><strong>TWTA — Saleh model</strong> (Saleh, 1981), normalised so the output reaches exactly P<sub>sat</sub>
+      at the saturation input reference and rolls over if over-driven, as real TWTs do:</p>
+      <p><code>P_out/P_sat = 4ρ / (1+ρ)²</code>, &nbsp; ρ = P_in / P_in,sat</p>
+      <p><strong>SSPA — Rapp model</strong> (Rapp, 1991), a smooth, monotonic soft limiter that never turns over
+      — a good fit for solid-state amplifiers and for OFDM/multicarrier nonlinearity studies:</p>
+      <p><code>P_out/P_sat = u / (1+u<sup>p</sup>)<sup>1/p</sup></code>, &nbsp; u = P_in / P_in,sat</p>
+      <p>where p is the knee "smoothness" factor (larger p → sharper knee, approaching an ideal limiter). Both
+      formulas are closed-form and invertible, so the calculator converts directly between IBO and OBO without
+      iteration. <strong>Gain compression</strong> is the operating-point gain minus the small-signal gain G₀ —
+      always ≤ 0 dB for a real compressive amplifier.</p>
+      <h2>Multicarrier (FDMA) backoff</h2>
+      <p>The backoff entered above is the <strong>total/composite</strong> value seen by the amplifier (the sum of
+      all carriers). For N equal-power carriers, the <strong>per-carrier</strong> backoff referenced to a single
+      carrier driving the amp alone is <code>IBO_carrier = IBO_total + 10·log₁₀(N)</code> (and likewise for OBO) —
+      adding carriers effectively pushes the amplifier closer to saturation for the same per-carrier power, which
+      is exactly why multicarrier transponders need more backoff than a single-carrier one.</p>
+      <h2>Third-order intermodulation (C/I₃)</h2>
+      <p>Near saturation, intermodulation products (IM3) generated by two or more carriers in the same HPA can fall
+      back into the desired channels. In the weakly-nonlinear (well-backed-off) regime, a cubic nonlinearity makes
+      the fundamental output grow 1 dB per dB of drive while IM3 grows 3 dB per dB of drive — so C/I₃ improves by
+      <strong>2 dB for every extra dB of backoff</strong>. The calculator extrapolates this standard slope from a
+      reference (C/I₃, OBO) point you supply (e.g. from a manufacturer's curve). It is only an approximation: the
+      real curve flattens out near saturation, where gain compression itself limits how bad IM3 can get.</p>
+      <p>Feed the resulting output power into the
+      <a href="link-budget.html" style="color:var(--accent)">link budget</a>'s transmit power / EIRP. All
+      computation runs locally in your browser.</p>
+    </div>
+    <div class="article zh-only">
+      <h2>为什么 HPA 需要回退(backoff)</h2>
+      <p>卫星功放(HPA)——无论是 TWTA 还是 SSPA——只在低驱动电平下近似线性。当输入功率逼近<strong>饱和点(P<sub>sat</sub>)</strong>时,增益被压缩,输出-输入曲线发生弯曲。以<strong>输入回退(IBO)</strong>与<strong>输出回退(OBO)</strong>——相对饱和输入/输出参考点的 dB 值——运行,是用部分输出功率与 EIRP 换取线性度,从而控制增益压缩,并限制多载波(FDMA)共用一只功放时产生的互调产物。</p>
+      <h2>使用的模型</h2>
+      <p><strong>TWTA——Saleh 模型</strong>(Saleh, 1981),归一化后输出在饱和输入参考点恰好达到 P<sub>sat</sub>,过驱动时会像真实 TWT 一样回落:</p>
+      <p><code>P_out/P_sat = 4ρ / (1+ρ)²</code>,&nbsp; ρ = P_in / P_in,sat</p>
+      <p><strong>SSPA——Rapp 模型</strong>(Rapp, 1991),平滑、单调的软限幅器,永不回落——适合固态放大器以及 OFDM/多载波非线性研究:</p>
+      <p><code>P_out/P_sat = u / (1+u<sup>p</sup>)<sup>1/p</sup></code>,&nbsp; u = P_in / P_in,sat</p>
+      <p>其中 p 为膝点"平滑度"因子(p 越大→膝点越陡,趋近理想限幅器)。两个公式都是闭式且可逆的,因此计算器无需迭代即可在 IBO 与 OBO 之间直接换算。<strong>增益压缩</strong>为工作点增益减去小信号增益 G₀——对真实的压缩型放大器恒 ≤ 0 dB。</p>
+      <h2>多载波(FDMA)回退</h2>
+      <p>上面填入的回退是放大器看到的<strong>总/合成</strong>值(所有载波之和)。对于 N 个等功率载波,折算到"单一载波单独驱动该功放"的<strong>单载波</strong>回退为 <code>IBO_单载波 = IBO_总 + 10·log₁₀(N)</code>(OBO 同理)——增加载波数会在相同单载波功率下使放大器更接近饱和,这正是多载波转发器比单载波需要更多回退的原因。</p>
+      <h2>三阶互调(C/I₃)</h2>
+      <p>接近饱和时,同一只 HPA 中两个或更多载波产生的互调产物(IM3)可能落回有用信道。在弱非线性(回退较深)区域,三次项非线性使基波输出每 dB 驱动增长 1 dB,而 IM3 每 dB 驱动增长 3 dB——因此每多 1 dB 回退,C/I₃ 改善 <strong>2 dB</strong>。计算器从你提供的参考点(C/I₃、OBO)按此标准斜率外推,这只是近似:实际曲线在接近饱和时会变平,因为增益压缩本身限制了 IM3 能恶化到多严重。</p>
+      <p>将得到的输出功率代入<a href="link-budget.html" style="color:var(--accent)">链路预算</a>的发射功率 / EIRP。全部计算在你的浏览器本地完成。</p>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<footer>Free HPA backoff calculator · TWTA (Saleh) / SSPA (Rapp) saturation curve · IBO/OBO, gain compression &amp; C/I₃ · runs entirely in your browser.</footer>
+
+<script src="share.js?v=8"></script>
+<script>
+const $=id=>document.getElementById(id);
+const num=id=>parseFloat($(id).value)||0;
+
+function toDBW(val,unit){
+  if(unit==='dBW') return val;
+  if(unit==='dBm') return val-30;
+  return 10*Math.log10(Math.max(val,1e-12)); // W
+}
+function dbwToW(dbw){ return Math.pow(10,dbw/10); }
+
+// Saleh (TWTA) AM/AM, normalised to peak at rho=1: Pout/Psat = 4*rho/(1+rho)^2
+function salehFwd(rho){ return 4*rho/Math.pow(1+rho,2); }
+function salehInv(y){ y=Math.min(Math.max(y,1e-12),1); return y/(2-y+2*Math.sqrt(Math.max(1-y,0))); }
+
+// Rapp (SSPA) AM/AM: Pout/Psat = u/(1+u^p)^(1/p)
+function rappFwd(u,p){ return u/Math.pow(1+Math.pow(u,p),1/p); }
+function rappInv(y,p){ y=Math.min(Math.max(y,1e-12),0.999999); return y/Math.pow(1-Math.pow(y,p),1/p); }
+
+function modelFwd(rho,type,p){ return type==='twta'?salehFwd(rho):rappFwd(rho,p); }
+function modelInv(y,type,p){ return type==='twta'?salehInv(y):rappInv(y,p); }
+
+function updateTypeUI(){
+  $('rowP').style.display = $('hpaType').value==='twta' ? 'none' : '';
+}
+
+function compute(){
+  const type=$('hpaType').value;
+  const p=Math.min(Math.max(num('rappP'),0.5),50);
+  const psatDBW=toDBW(num('psat'),$('psatUnit').value);
+  const g0=num('g0');
+  const N=Math.max(Math.round(num('nCarriers')),1);
+  const mode=$('boMode').value;
+  const boVal=Math.max(num('boVal'),0);
+
+  let IBO,OBO;
+  if(mode==='ibo'){
+    IBO=boVal;
+    const rho=Math.pow(10,-IBO/10);
+    OBO=-10*Math.log10(Math.max(modelFwd(rho,type,p),1e-15));
+  } else {
+    OBO=boVal;
+    const y=Math.pow(10,-OBO/10);
+    IBO=-10*Math.log10(Math.max(modelInv(y,type,p),1e-15));
+  }
+
+  // Pin,sat per model convention (Saleh peak vs Rapp small-signal extrapolation)
+  const pinsat = (type==='twta') ? (psatDBW-g0+10*Math.log10(4)) : (psatDBW-g0);
+  const pinOpTotal  = pinsat-IBO;
+  const poutOpTotal = psatDBW-OBO;
+  const gainComp    = (poutOpTotal-pinOpTotal)-g0;
+
+  const tenLogN = 10*Math.log10(N);
+  const poutCarrier = poutOpTotal-tenLogN;
+  const pinCarrier  = pinOpTotal-tenLogN;
+  const iboCarrier  = IBO+tenLogN;
+  const oboCarrier  = OBO+tenLogN;
+
+  const ci3 = num('ci3Ref') + 2*(OBO-num('oboRef'));
+
+  const f2=x=>x.toFixed(2);
+  $('r_ibo').textContent        = f2(IBO);
+  $('r_obo').textContent        = f2(OBO);
+  $('r_gc').textContent         = f2(gainComp);
+  $('r_poutTotal').textContent  = f2(poutOpTotal);
+  $('r_poutCarrier').textContent= f2(poutCarrier);
+  $('r_ci3').textContent        = f2(ci3);
+
+  $('r_note').textContent = t(
+    `At IBO ${f2(IBO)} dB / OBO ${f2(OBO)} dB the amplifier delivers ${f2(poutOpTotal)} dBW total (${(dbwToW(poutOpTotal)).toFixed(2)} W) across ${N} carrier(s) — ${f2(poutCarrier)} dBW per carrier — with ${f2(gainComp)} dB of gain compression.`,
+    `在 IBO ${f2(IBO)} dB / OBO ${f2(OBO)} dB 下,放大器在 ${N} 个载波上共输出 ${f2(poutOpTotal)} dBW(${(dbwToW(poutOpTotal)).toFixed(2)} W)——每载波 ${f2(poutCarrier)} dBW——增益压缩 ${f2(gainComp)} dB。`
+  );
+
+  const rows=[
+    [t('Saturated output power P_sat','饱和输出功率 P_sat'), f2(psatDBW)+' dBW'],
+    [t('Implied saturation input P_in,sat','折算饱和输入功率 P_in,sat'), f2(pinsat)+' dBW'],
+    [t('Total input drive power','总输入驱动功率'), f2(pinOpTotal)+' dBW'],
+    [t('Per-carrier input drive power','单载波输入驱动功率'), f2(pinCarrier)+' dBW'],
+    [t('Total output power','总输出功率'), f2(poutOpTotal)+' dBW'],
+    [t('Per-carrier output power','单载波输出功率'), f2(poutCarrier)+' dBW'],
+    [t('Per-carrier IBO (referenced)','单载波 IBO(折算)'), f2(iboCarrier)+' dB'],
+    [t('Per-carrier OBO (referenced)','单载波 OBO(折算)'), f2(oboCarrier)+' dB'],
+    [t('Estimated C/I₃','估算 C/I₃'), f2(ci3)+' dB'],
+  ];
+  $('bd').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('');
+
+  $('chartCaption').textContent = type==='twta'
+    ? t('TWTA (Saleh model) — solid curve; dashed line is ideal linear gain.','TWTA(Saleh 模型)——实线为曲线,虚线为理想线性增益参考。')
+    : t(`SSPA (Rapp model, p=${p}) — solid curve; dashed line is ideal linear gain.`,`SSPA(Rapp 模型,p=${p})——实线为曲线,虚线为理想线性增益参考。`);
+
+  drawChart(type,p,IBO,OBO);
+}
+
+function drawChart(type,p,IBO,OBO){
+  const cv=$('chart'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const pl=58,pr=18,pt=16,pb=42,pw=W-pl-pr,ph=H-pt-pb;
+  const xmin=-24,xmax=6,ymin=-24,ymax=6;
+  ctx.clearRect(0,0,W,H);
+  const x=v=>pl+(v-xmin)/(xmax-xmin)*pw;
+  const y=v=>pt+(ymax-v)/(ymax-ymin)*ph;
+
+  ctx.font='12px -apple-system,Segoe UI,Roboto,sans-serif';
+  ctx.strokeStyle='#e6e8ec';ctx.fillStyle='#697086';ctx.lineWidth=1;
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  for(let v=ymin;v<=ymax;v+=6){const yy=y(v);ctx.beginPath();ctx.moveTo(pl,yy);ctx.lineTo(W-pr,yy);ctx.stroke();ctx.fillText(v.toFixed(0),pl-8,yy);}
+  ctx.textAlign='center';ctx.textBaseline='top';
+  for(let v=xmin;v<=xmax;v+=6){const xx=x(v);ctx.beginPath();ctx.moveTo(xx,pt);ctx.lineTo(xx,H-pb);ctx.stroke();ctx.fillText(v.toFixed(0),xx,H-pb+8);}
+  ctx.fillText(t('Input level rel. P_in,sat (dB)','输入功率相对 P_in,sat(dB)'),pl+pw/2,H-pb+24);
+  ctx.save();ctx.translate(14,pt+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText(t('Output level rel. P_sat (dB)','输出功率相对 P_sat(dB)'),0,0);ctx.restore();
+
+  // ideal linear reference (slope 1)
+  ctx.strokeStyle='#cbd5e1';ctx.setLineDash([5,4]);ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(x(xmin),y(xmin));ctx.lineTo(x(xmax),y(xmax));ctx.stroke();ctx.setLineDash([]);
+
+  // saturation point
+  ctx.fillStyle='#94a3b8';
+  ctx.beginPath();ctx.moveTo(x(0),pt);ctx.lineTo(x(0),H-pb);ctx.strokeStyle='#eef0f4';ctx.lineWidth=1;ctx.stroke();
+
+  // AM/AM curve
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=2.5;ctx.beginPath();let started=false;
+  for(let v=xmin;v<=xmax+0.001;v+=(xmax-xmin)/400){
+    const rho=Math.pow(10,v/10);
+    const yv=10*Math.log10(Math.max(modelFwd(rho,type,p),1e-9));
+    const xx=x(v),yy=y(Math.max(yv,ymin));
+    if(!started){ctx.moveTo(xx,yy);started=true;}else ctx.lineTo(xx,yy);
+  }
+  ctx.stroke();
+
+  // operating point marker
+  const opX=-IBO, opY=-OBO;
+  if(opX>=xmin && opX<=xmax){
+    ctx.strokeStyle='#dc2626';ctx.setLineDash([4,3]);ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.moveTo(x(opX),y(opY));ctx.lineTo(x(opX),H-pb);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pl,y(opY));ctx.lineTo(x(opX),y(opY));ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#dc2626';
+    ctx.beginPath();ctx.arc(x(opX),y(opY),5,0,2*Math.PI);ctx.fill();
+  }
+}
+
+const PRESETS = {
+  cubesat:{hpaType:'sspa',rappP:3,psat:5,psatUnit:'W',g0:30,boMode:'ibo',boVal:3,nCarriers:1,ci3Ref:20,oboRef:3},
+  vsat:   {hpaType:'sspa',rappP:2,psat:100,psatUnit:'W',g0:45,boMode:'obo',boVal:4,nCarriers:4,ci3Ref:18,oboRef:4},
+  geo:    {hpaType:'twta',rappP:2,psat:120,psatUnit:'W',g0:50,boMode:'ibo',boVal:6,nCarriers:8,ci3Ref:15,oboRef:6},
+};
+function applyPreset(key){
+  const c=PRESETS[key]; if(!c) return;
+  for(const k in c) if($(k)) $(k).value=c[k];
+  updateTypeUI(); compute();
+}
+document.querySelectorAll('.preset-bar button').forEach((b,i)=>{
+  const keys=['cubesat','vsat','geo'];
+  b.addEventListener('click',()=>applyPreset(keys[i]));
+});
+
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{
+  if(el.id==='hpaType') updateTypeUI();
+  compute();
+}));
+
+if(window.ShareTool) ShareTool.apply();
+updateTypeUI();
+compute();
+if(window.ShareTool) ShareTool.initButton();
+if(window.onLang) window.onLang(compute);
+</script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
+</body>
+</html>

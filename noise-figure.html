@@ -51,6 +51,7 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Cascaded Noise Figure Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <nav class="topnav">
@@ -73,6 +74,7 @@
     <li><a href="phased-array.html">Phased Array Gain</a></li>
     <li><a href="gt.html">G/T Figure of Merit</a></li>
     <li><a href="noise-figure.html" class="active">Noise Figure Chain</a></li>
+    <li><a href="hpa-backoff.html">HPA Backoff</a></li>
     <li class="grp">Modulation</li>
     <li><a href="ber.html">BER Curves</a></li>
     <li class="grp">Reference</li>
@@ -437,5 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (window.onLang) window.onLang(() => { renderTable(); compute(); });
 });
 </script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
 </body>
 </html>

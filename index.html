@@ -22,6 +22,7 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"SatTools","url":"https://sunelliot.github.io/link-budget-calculator/","description":"Free satellite communication calculators for LEO smallsats and ground stations."}
 </script>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <nav class="topnav">
@@ -38,10 +39,10 @@
   <aside class="sidebar">
     <h3>Categories</h3>
     <ul class="cat-list">
-      <li><button data-cat="all" class="active">All tools <span class="ct">11</span></button></li>
+      <li><button data-cat="all" class="active">All tools <span class="ct">12</span></button></li>
       <li><button data-cat="link">Link Analysis <span class="ct">3</span></button></li>
       <li><button data-cat="orbit">Orbit &amp; Tracking <span class="ct">2</span></button></li>
-      <li><button data-cat="hw">Hardware <span class="ct">4</span></button></li>
+      <li><button data-cat="hw">Hardware <span class="ct">5</span></button></li>
       <li><button data-cat="mod">Modulation <span class="ct">1</span></button></li>
       <li><button data-cat="ref">Reference <span class="ct">1</span></button></li>
     </ul>
@@ -50,7 +51,7 @@
   <!-- main -->
   <div class="main">
     <div class="main-head">
-      <span class="count" id="count">11 tools</span>
+      <span class="count" id="count">12 tools</span>
       <div class="search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#697086" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
         <input id="q" type="search" placeholder="Search tools…" data-ph-en="Search tools…" data-ph-zh="搜索工具…" autocomplete="off">
@@ -159,6 +160,20 @@
           <p>Friis cascade: NF, noise temperature &amp; per-stage contribution for any RF receiver chain.</p></div>
       </a>
 
+      <a class="tcard" href="hpa-backoff.html" data-cat="hw" data-search="hpa backoff transponder saturation ibo obo twta sspa saleh rapp intermodulation ci3 功放回退 转发器饱和 互调">
+        <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="260" height="138" fill="#fdf2f8"/>
+          <line x1="34" y1="22" x2="34" y2="112" stroke="#c9d8f5" stroke-width="1.5"/>
+          <line x1="34" y1="112" x2="232" y2="112" stroke="#c9d8f5" stroke-width="1.5"/>
+          <line x1="34" y1="34" x2="232" y2="34" stroke="#dc2626" stroke-dasharray="4 4" stroke-width="1.5"/>
+          <text x="228" y="29" font-size="9" fill="#dc2626" text-anchor="end" font-family="sans-serif">Psat</text>
+          <path d="M40,104 C76,78 104,52 140,40 C170,33 200,31 226,30" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="118" cy="46" r="4.5" fill="#16a34a"/>
+        </svg>
+        <div class="body"><span class="tag">Hardware</span><h3>HPA Backoff</h3>
+          <p>TWTA &amp; SSPA saturation curve: IBO/OBO conversion, gain compression and multicarrier C/I₃.</p></div>
+      </a>
+
       <a class="tcard" href="rain.html" data-cat="link" data-search="rain attenuation fade itu p618 p838 雨衰">
         <svg class="thumb" viewBox="0 0 260 138" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="260" height="138" fill="#eaf1fb"/>
@@ -245,5 +260,6 @@ catBtns.forEach(b => b.addEventListener('click', ()=>{
 document.getElementById('q').addEventListener('input', e=>{ q = e.target.value.trim().toLowerCase(); refresh(); });
 refresh();
 </script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
 </body>
 </html>

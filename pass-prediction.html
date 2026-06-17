@@ -21,6 +21,7 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Pass Predictor","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <nav class="topnav">
@@ -43,6 +44,7 @@
     <li><a href="phased-array.html">Phased Array Gain</a></li>
     <li><a href="gt.html">G/T Figure of Merit</a></li>
     <li><a href="noise-figure.html">Noise Figure Chain</a></li>
+    <li><a href="hpa-backoff.html">HPA Backoff</a></li>
     <li class="grp">Modulation</li>
     <li><a href="ber.html">BER Curves</a></li>
     <li class="grp">Reference</li>
@@ -135,7 +137,7 @@
 
 <footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/satellite.js@5/dist/satellite.min.js"></script>
+<script src="vendor/satellite.min.js"></script>
 <script src="share.js?v=8"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -146,7 +148,7 @@ function libReady(){return typeof satellite!=='undefined'&&satellite.twoline2sat
 if(libReady()) status.textContent=t('Ready — click "Predict passes".','已就绪 —— 点"预测过境"。');
 else { status.textContent=t('Loading orbit library…','正在加载轨道库…');
   let n=0,iv=setInterval(()=>{ if(libReady()){clearInterval(iv);status.textContent=t('Ready — click "Predict passes".','已就绪 —— 点"预测过境"。');}
-    else if(++n>40){clearInterval(iv);status.innerHTML='<span style="color:var(--bad)">'+t('Could not load the orbit library (satellite.js). Check your internet connection and reload.','无法加载轨道库(satellite.js)。请检查网络连接后刷新。')+'</span>';}},250);}
+    else if(++n>40){clearInterval(iv);status.innerHTML='<span style="color:var(--bad)">'+t('Could not load the orbit library (satellite.js). Try reloading the page.','无法加载轨道库(satellite.js)。请刷新页面重试。')+'</span>';}},250);}
 
 function fmtLocal(d){return d.toLocaleString(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function fmtTime(d){return d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -201,5 +203,6 @@ $('geo').addEventListener('click',()=>{
 if(window.ShareTool){ const shared = ShareTool.apply(); ShareTool.initButton();
   if(shared && libReady()) predict(); }
 </script>
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
 </body>
 </html>
