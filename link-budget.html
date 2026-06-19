@@ -15,8 +15,8 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=9">
-<script src="i18n.js?v=9"></script>
+<link rel="stylesheet" href="styles.css?v=10">
+<script src="i18n.js?v=10"></script>
 <style>
 /* ── Mode bar ────────────────────────────────── */
 .mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
@@ -90,7 +90,28 @@
       <button class="mode-tab active" id="tab-single" onclick="switchMode('single')">Single Link</button>
       <button class="mode-tab" id="tab-ttc" onclick="switchMode('ttc')">TT&amp;C Analysis</button>
     </div>
+    <button class="pdf-btn" onclick="toggleScenarioPanel()">📑 <span class="en-only">Scenarios</span><span class="zh-only">场景</span></button>
     <button class="pdf-btn" onclick="exportPDF()">↓ Export PDF</button>
+  </div>
+
+  <!-- SCENARIOS PANEL -->
+  <div class="card scenario-panel" id="scenario-panel">
+    <h2><span class="dot"></span><span class="en-only">Saved Scenarios</span><span class="zh-only">已保存场景</span></h2>
+    <p class="en-only" style="color:var(--muted);font-size:.82rem;margin:0 0 12px">Save the current inputs as a named scenario, then compare two or more side by side (same-mode scenarios only).</p>
+    <p class="zh-only" style="color:var(--muted);font-size:.82rem;margin:0 0 12px">把当前输入保存为命名场景，再对比两个或更多场景(仅同模式之间可对比)。</p>
+    <div class="scenario-save-row">
+      <input type="text" id="scenarioName" maxlength="60" data-ph-en="Scenario name" data-ph-zh="场景名称" placeholder="Scenario name">
+      <button type="button" onclick="saveCurrentScenario()">💾 <span class="en-only">Save current</span><span class="zh-only">保存当前</span></button>
+    </div>
+    <div style="font-weight:700;font-size:.74rem;color:var(--muted);margin:12px 0 4px;text-transform:uppercase;letter-spacing:.04em">
+      <span class="en-only">Single Link</span><span class="zh-only">单链路</span>
+    </div>
+    <div id="scenarioListSingle"></div>
+    <div style="font-weight:700;font-size:.74rem;color:var(--muted);margin:16px 0 4px;text-transform:uppercase;letter-spacing:.04em">
+      <span class="en-only">TT&amp;C</span><span class="zh-only">测控</span>
+    </div>
+    <div id="scenarioListTTC"></div>
+    <div id="scenarioCompareResult"></div>
   </div>
 
   <!-- ═══════════════════════════════════════════════════════
@@ -471,9 +492,12 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
-<script src="share.js?v=9"></script>
+<script src="share.js?v=10"></script>
+<script src="workspace.js?v=1"></script>
 <script>
 const $  = id => document.getElementById(id);
+const nv = id => { const el=$(id); return el ? el.value : ''; };
+const rv = id => { const el=$(id); return el ? el.textContent : '–'; };
 const K_BOLTZMANN_DBW = -228.6;
 
 function toDBW(val, unit){
@@ -583,6 +607,45 @@ function compute(){
 
   drawChart();
   computePassBudget();
+  syncHints();
+}
+
+/* ── Cross-tool workspace sync (single-link panel) ─────────
+   Pushing only happens on a genuine user edit to the freq field
+   (see pushFreq below) — never from an automatic compute() call —
+   otherwise this page's own default would silently overwrite a
+   value another tool just offered, before syncHints() below ever
+   gets a chance to show it (compute() runs twice on load: once
+   inline, once via the onLang callback fired on DOMContentLoaded). */
+function pushFreq(){
+  if(window.Workspace) Workspace.set('freqMHz', freqMHz(num('freq'),$('freqUnit').value), t('Link Budget calculator','链路预算计算器'));
+}
+$('freq').addEventListener('input', pushFreq);
+$('freqUnit').addEventListener('input', pushFreq);
+
+function syncHints(){
+  if(!window.Workspace) return;
+  Workspace.hint($('freq'), 'freqMHz', freqMHz(num('freq'),$('freqUnit').value), entry => {
+    $('freqUnit').value = 'MHz'; $('freq').value = entry.value; compute();
+  });
+  Workspace.hint($('txGain'), 'antennaGainDBi', num('txGain'), entry => {
+    $('txGain').value = entry.value; compute();
+  });
+  Workspace.hint($('rxGain'), 'antennaGainDBi', num('rxGain'), entry => {
+    $('rxGain').value = entry.value; compute();
+  });
+  Workspace.hint($('sysTemp'), 'sysTempK', num('sysTemp'), entry => {
+    $('sysTemp').value = entry.value; compute();
+  });
+  Workspace.hint($('rainLoss'), 'rainLossDB', num('rainLoss'), entry => {
+    $('rainLoss').value = entry.value; compute();
+  });
+  Workspace.hint($('atmLoss'), 'atmLossDB', num('atmLoss'), entry => {
+    $('atmLoss').value = entry.value; compute();
+  });
+  Workspace.hint($('txPower'), 'txPowerDBW', toDBW(num('txPower'),$('txPowerUnit').value), entry => {
+    $('txPowerUnit').value = 'dBW'; $('txPower').value = entry.value; compute();
+  });
 }
 
 /* ── Orbit geometry ────────────────────────────────── */
@@ -854,8 +917,6 @@ function exportPDF(){
   const lang=window.SATLANG||'en';
   const T=(en,zh)=>lang==='zh'?zh:en;
   const ts=new Date().toLocaleString();
-  const nv=id=>{const el=$(id);return el?el.value:''};
-  const rv=id=>{const el=$(id);return el?el.textContent:'–'};
   const rows=arr=>arr.map(([a,b])=>`<tr><td>${a}</td><td>${b}</td></tr>`).join('');
   const tbl=(head,body)=>`<table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table>`;
 
@@ -950,6 +1011,129 @@ function exportPDF(){
   if(!win){alert(T('Allow pop-ups for PDF export.','请允许弹出窗口以导出 PDF。'));return;}
   win.document.write(html);win.document.close();win.focus();
   setTimeout(()=>win.print(),600);
+}
+
+/* ── Scenario save / load / compare ────────────────────── */
+const SCENARIOS_KEY = 'sattools_lb_scenarios_v1';
+function loadScenarios(){
+  try{
+    const v = JSON.parse(localStorage.getItem(SCENARIOS_KEY));
+    return Array.isArray(v) ? v : [];
+  }catch(e){ return []; }
+}
+function saveScenariosArr(arr){
+  try{ localStorage.setItem(SCENARIOS_KEY, JSON.stringify(arr)); }catch(e){}
+}
+function fieldsFor(mode){
+  return mode==='single'
+    ? document.querySelectorAll('#panel-single input, #panel-single select')
+    : document.querySelectorAll('[id^="ul_"],[id^="dl_"],[id="ttc_alt"],[id="ttc_elev"]');
+}
+function snapshotFields(mode){
+  const out={};
+  fieldsFor(mode).forEach(el=>{ out[el.id]=el.value; });
+  return out;
+}
+function applyFields(map){
+  for(const k in map){ const el=$(k); if(el) el.value=map[k]; }
+}
+function toggleScenarioPanel(){
+  const panel=$('scenario-panel');
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')) renderScenarioPanel();
+}
+function saveCurrentScenario(){
+  const nameInput=$('scenarioName');
+  const typed=(nameInput.value||'').trim();
+  const name = typed || (currentMode==='single'?t('Single Link','单链路'):t('TT&C','测控'))+' '+new Date().toLocaleString();
+  const arr=loadScenarios();
+  arr.push({id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7), name, mode:currentMode, ts:Date.now(), values:snapshotFields(currentMode)});
+  saveScenariosArr(arr);
+  nameInput.value='';
+  renderScenarioPanel();
+}
+function deleteScenario(id){
+  saveScenariosArr(loadScenarios().filter(s=>s.id!==id));
+  renderScenarioPanel();
+}
+function loadScenario(id){
+  const s=loadScenarios().find(s=>s.id===id);
+  if(!s) return;
+  if(s.mode!==currentMode) switchMode(s.mode);
+  applyFields(s.values);
+  if(s.mode==='single') compute(); else computeTTC();
+  $('scenarioCompareResult').innerHTML='';
+}
+function readSingleResults(){
+  return [['EIRP',rv('r_eirp')+' dBW'],['FSPL',rv('r_fspl')+' dB'],['G/T',rv('r_gt')+' dB/K'],
+    ['C/N₀',rv('r_cn0')+' dB-Hz'],['Eb/N₀',rv('r_ebn0')+' dB'],
+    [t('Link margin','链路余量'),rv('r_margin')+' dB']];
+}
+function readTTCResults(){
+  const ulM=parseFloat(rv('ul_r_ebn0'))-parseFloat(nv('ul_reqEbN0'))-parseFloat(nv('ul_implLoss'));
+  const dlM=parseFloat(rv('dl_r_ebn0'))-parseFloat(nv('dl_reqEbN0'))-parseFloat(nv('dl_implLoss'));
+  const minM=Math.min(ulM,dlM);
+  const lim=ulM<=dlM?t('TC Uplink ↑','TC 上行 ↑'):t('TM Downlink ↓','TM 下行 ↓');
+  return [[t('TC Uplink margin','TC 上行余量'),ulM.toFixed(2)+' dB'],[t('TM Downlink margin','TM 下行余量'),dlM.toFixed(2)+' dB'],
+    [t('Min margin','最小余量'),minM.toFixed(2)+' dB'],[t('Limiting','瓶颈'),lim]];
+}
+// Snapshot → apply each scenario → compute() → read result spans → restore.
+// Must stay fully synchronous (no await/setTimeout) so the intermediate
+// per-scenario DOM states never paint — the user only ever sees the
+// final, restored state.
+function compareScenarios(mode, ids){
+  if(ids.length<2){
+    alert(t('Select at least 2 scenarios to compare.','请至少选择 2 个场景进行对比。'));
+    return;
+  }
+  const scenarios=loadScenarios().filter(s=>ids.includes(s.id));
+  const before=snapshotFields(mode);
+  const rows=scenarios.map(s=>{
+    applyFields(s.values);
+    if(mode==='single'){ compute(); return readSingleResults(); }
+    computeTTC(); return readTTCResults();
+  });
+  applyFields(before);
+  if(mode==='single') compute(); else computeTTC();
+  renderCompareTable(scenarios, rows);
+}
+function renderCompareTable(scenarios, rows){
+  const esc = window.Workspace ? Workspace.escapeHtml : (s=>s);
+  const labels = rows[0].map(r=>r[0]);
+  let html = `<table><thead><tr><th>${t('Metric','指标')}</th>${scenarios.map(s=>`<th>${esc(s.name)}</th>`).join('')}</tr></thead><tbody>`;
+  labels.forEach((label,i)=>{
+    html += `<tr><td>${label}</td>${rows.map(r=>`<td class="num">${r[i][1]}</td>`).join('')}</tr>`;
+  });
+  html += '</tbody></table>';
+  $('scenarioCompareResult').innerHTML = html;
+}
+function renderScenarioList(mode){
+  const el = $(mode==='single' ? 'scenarioListSingle' : 'scenarioListTTC');
+  const esc = window.Workspace ? Workspace.escapeHtml : (s=>s);
+  const list = loadScenarios().filter(s=>s.mode===mode);
+  if(!list.length){
+    el.innerHTML = `<div class="scenario-empty">${t('No scenarios saved yet.','尚无已保存场景。')}</div>`;
+    return;
+  }
+  el.innerHTML = list.map(s=>`
+    <div class="scenario-row">
+      <input type="checkbox" class="scenario-chk" data-id="${esc(s.id)}">
+      <span class="name">${esc(s.name)}</span>
+      <span class="ts">${new Date(s.ts).toLocaleString()}</span>
+      <button type="button" data-act="load" data-id="${esc(s.id)}">${t('Load','加载')}</button>
+      <button type="button" class="danger" data-act="del" data-id="${esc(s.id)}">${t('Delete','删除')}</button>
+    </div>`).join('') +
+    `<div class="scenario-actions"><button type="button" data-act="compare">${t('Compare selected','对比所选')}</button></div>`;
+  el.querySelectorAll('button[data-act="load"]').forEach(b=>b.addEventListener('click',()=>loadScenario(b.dataset.id)));
+  el.querySelectorAll('button[data-act="del"]').forEach(b=>b.addEventListener('click',()=>deleteScenario(b.dataset.id)));
+  el.querySelector('button[data-act="compare"]').addEventListener('click',()=>{
+    const ids=[...el.querySelectorAll('.scenario-chk:checked')].map(c=>c.dataset.id);
+    compareScenarios(mode, ids);
+  });
+}
+function renderScenarioPanel(){
+  renderScenarioList('single');
+  renderScenarioList('ttc');
 }
 
 /* ── Single-link presets ───────────────────────────── */

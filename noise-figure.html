@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=9">
-<script src="i18n.js?v=9"></script>
+<link rel="stylesheet" href="styles.css?v=10">
+<script src="i18n.js?v=10"></script>
 <style>
 .stage-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .stage-tbl{width:100%;border-collapse:collapse;font-size:.87rem}
@@ -235,7 +235,8 @@
 
 <footer>Free cascaded noise figure calculator · Friis formula · RF chain noise temperature breakdown · runs entirely in your browser.</footer>
 
-<script src="share.js?v=9"></script>
+<script src="share.js?v=10"></script>
+<script src="workspace.js?v=1"></script>
 <script>
 const $ = id => document.getElementById(id);
 const T0 = 290;
@@ -361,6 +362,7 @@ function compute() {
   $('r_te').textContent   = f1(teSys);
   $('r_gain').textContent = f2(totGain);
   $('r_n').textContent    = stages.length;
+  if(window.Workspace) Workspace.set('sysTempK', teSys, t('Noise Figure Chain calculator','噪声系数链路计算器'));
 
   const dom  = bd.reduce((a, b) => a.teRef > b.teRef ? a : b, bd[0]);
   const domP = (dom.teRef / teSys * 100).toFixed(0);

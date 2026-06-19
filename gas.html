@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=9">
-<script src="i18n.js?v=9"></script>
+<link rel="stylesheet" href="styles.css?v=10">
+<script src="i18n.js?v=10"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Atmospheric Gaseous Attenuation Calculator (ITU-R P.676)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -143,7 +143,8 @@
 
 <footer>Free atmospheric gaseous attenuation calculator · ITU-R P.676 · oxygen + water vapour · runs in your browser.</footer>
 
-<script src="share.js?v=9"></script>
+<script src="share.js?v=10"></script>
+<script src="workspace.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -185,8 +186,8 @@ function heights(f,p,t){
 function compute(){
   const f=Math.min(Math.max(num('freq'),1),54);
   const th=Math.max(num('elev'),3);
-  const p=num('p'), t=num('t'), rho=Math.max(num('rho'),0);
-  const go=gammaO(f,p,t), gw=gammaW(f,p,t,rho), {ho,hw}=heights(f,p,t);
+  const p=num('p'), tempC=num('t'), rho=Math.max(num('rho'),0);
+  const go=gammaO(f,p,tempC), gw=gammaW(f,p,tempC,rho), {ho,hw}=heights(f,p,tempC);
   const zen=go*ho+gw*hw;
   const slant=zen/Math.sin(th*Math.PI/180);
   const f3=x=>x.toFixed(4), f2=x=>x.toFixed(3);
@@ -205,6 +206,23 @@ function compute(){
     [t('Slant-path (÷ sin θ)','斜路径(÷ sin θ)'),f2(slant)+' dB'],
   ];
   $('bd').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('');
+  syncHints();
+  if(window.Workspace) Workspace.set('atmLossDB', slant, t('Gaseous Attenuation calculator','气体衰减计算器'));
+}
+/* Pushing freq only happens on a genuine edit (see pushFreq) — never from
+   an automatic compute() call, since compute() also runs once via the
+   onLang callback on load, which would silently overwrite a value another
+   tool just offered before the hint below ever gets shown. */
+function pushFreq(){
+  if(window.Workspace) Workspace.set('freqMHz', num('freq')*1000, t('Gaseous Attenuation calculator','气体衰减计算器'));
+}
+$('freq').addEventListener('input', pushFreq);
+function syncHints(){
+  if(!window.Workspace) return;
+  Workspace.hint($('freq'), 'freqMHz', num('freq')*1000, entry => {
+    $('freq').value = entry.value/1000;
+    compute();
+  });
 }
 const presets={
   std:{freq:20,elev:30,p:1013.25,t:15,rho:7.5},

@@ -1,4 +1,4 @@
-const CACHE = 'sattools-v2';
+const CACHE = 'sattools-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -17,6 +17,7 @@ const ASSETS = [
   './styles.css',
   './i18n.js',
   './share.js',
+  './workspace.js',
   './vendor/satellite.min.js',
   './icons/icon-192.png',
   './icons/icon-512.png',

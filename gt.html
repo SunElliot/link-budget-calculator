@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=9">
-<script src="i18n.js?v=9"></script>
+<link rel="stylesheet" href="styles.css?v=10">
+<script src="i18n.js?v=10"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"G/T Figure of Merit Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -153,7 +153,8 @@
 
 <footer>Free G/T figure-of-merit calculator · system noise temperature cascade · runs entirely in your browser.</footer>
 
-<script src="share.js?v=9"></script>
+<script src="share.js?v=10"></script>
+<script src="workspace.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -190,6 +191,7 @@ function compute(){
     [t('= G/T','= G/T'),gt.toFixed(2)+' dB/K'],
   ];
   $('bd').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('');
+  if(window.Workspace) Workspace.set('sysTempK', Tsys, t('G/T calculator','G/T 计算器'));
 }
 const presets={
   s3m:{gain:34,ta:50,lfeed:0.4,tp:290,nflna:0.8,glna:35,nfrx:3},

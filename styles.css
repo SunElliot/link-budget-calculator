@@ -72,6 +72,33 @@ td:last-child{text-align:right;font-variant-numeric:tabular-nums}
 .preset-bar button{background:#fff;border:1px solid var(--line);color:var(--txt);
      padding:7px 13px;border-radius:20px;font-size:.83rem;cursor:pointer;box-shadow:var(--shadow)}
 .preset-bar button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ---- cross-tool workspace sync hint ---- */
+.sync-hint{display:none;align-items:center;justify-content:space-between;gap:8px;
+     margin:-3px 0 10px;padding:6px 10px;background:var(--accent-soft);border-radius:8px;font-size:.78rem;color:var(--accent)}
+.sync-hint b{font-variant-numeric:tabular-nums}
+.sync-hint button{background:var(--accent);color:#fff;border:none;padding:4px 11px;border-radius:14px;
+     font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.sync-hint button:hover{filter:brightness(1.1)}
+
+/* ---- scenario save/compare panel ---- */
+.scenario-panel{display:none;margin:0 0 18px}
+.scenario-panel.open{display:block}
+.scenario-save-row{display:flex;gap:8px;margin-bottom:14px}
+.scenario-save-row input{flex:1;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:.88rem;background:#fff;color:var(--txt)}
+.scenario-save-row button{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:9px;
+     font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.scenario-row{display:flex;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--line);font-size:.88rem}
+.scenario-row:last-child{border-bottom:none}
+.scenario-row .name{flex:1;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scenario-row .mode-badge{font-size:.7rem;padding:2px 8px;border-radius:20px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.scenario-row .ts{color:var(--muted);font-size:.76rem;white-space:nowrap}
+.scenario-row button{background:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:14px;
+     font-size:.76rem;cursor:pointer;font-family:inherit;white-space:nowrap}
+.scenario-row button:hover{border-color:var(--accent);color:var(--accent)}
+.scenario-row button.danger:hover{border-color:var(--bad);color:var(--bad)}
+.scenario-empty{color:var(--muted);font-size:.85rem;padding:10px 0;text-align:center}
+.scenario-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 footer{text-align:center;color:var(--muted);font-size:.8rem;padding:24px 20px;border-top:1px solid var(--line)}
 .article{color:#454c5e;font-size:.9rem;line-height:1.7;margin-top:8px}
 .article h2{color:var(--txt);font-size:1.1rem;margin-top:22px}

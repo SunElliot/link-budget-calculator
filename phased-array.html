@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=9">
-<script src="i18n.js?v=9"></script>
+<link rel="stylesheet" href="styles.css?v=10">
+<script src="i18n.js?v=10"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Phased Array Antenna Gain Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -151,7 +151,8 @@
 
 <footer>Free phased array gain calculator · array gain, scan loss, beamwidth, grating lobes · runs in your browser.</footer>
 
-<script src="share.js?v=9"></script>
+<script src="share.js?v=10"></script>
+<script src="workspace.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -184,6 +185,25 @@ function compute(){
         '⚠ 扫描角 '+f1(thDeg)+'° 超过无栅瓣极限 '+f1(gl)+'° —— 请把阵元间距减小到约 0.5 λ 以下。')
     : t('Use the Gain @ scan ('+f1(Gs)+' dBi) as the antenna gain in your link budget.',
         '把扫描角增益('+f1(Gs)+' dBi)作为链路预算里的天线增益。');
+  syncHints();
+  if(window.Workspace) Workspace.set('antennaGainDBi', Gs, t('Phased Array Gain calculator','相控阵增益计算器'));
+}
+/* Pushing freq only happens on a genuine edit (see pushFreq) — never from
+   an automatic compute() call, since compute() also runs once via the
+   onLang callback on load, which would silently overwrite a value another
+   tool just offered before the hint below ever gets shown. */
+function pushFreq(){
+  if(window.Workspace) Workspace.set('freqMHz', num('freq')*($('frequnit').value==='GHz'?1000:1), t('Phased Array Gain calculator','相控阵增益计算器'));
+}
+$('freq').addEventListener('input', pushFreq);
+$('frequnit').addEventListener('input', pushFreq);
+function syncHints(){
+  if(!window.Workspace) return;
+  Workspace.hint($('freq'), 'freqMHz', num('freq')*($('frequnit').value==='GHz'?1000:1), entry => {
+    $('frequnit').value='MHz';
+    $('freq').value = entry.value;
+    compute();
+  });
 }
 const presets={
   p88:{freq:10,frequnit:'GHz',nx:8,ny:8,dx:0.5,dy:0.5,ge:6,scan:0,taper:0},
