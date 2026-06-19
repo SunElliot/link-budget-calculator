@@ -183,6 +183,11 @@
           <label>Modulation / coding<span class="hint">auto-sets required Eb/N₀</span></label>
           <select id="modcod" style="width:160px;text-align:left">
             <optgroup label="Uncoded (BER 1e-5)">
+              <!-- data-ebn0 on u-bpsk/u-qpsk/u-8psk/u-16qam/u-64qam are fallback values only —
+                   syncUncodedThresholds() overwrites them from the shared modcod.js BER engine
+                   (the same formulas ber.html plots) so this page can't silently drift from that
+                   one. u-32qam has no closed-form entry in modcod.js's MODS list, so its value
+                   stays a hand-sourced reference constant. -->
               <option value="u-bpsk"  data-bps="1" data-cr="1" data-ebn0="9.6">BPSK (uncoded)</option>
               <option value="u-qpsk"  data-bps="2" data-cr="1" data-ebn0="9.6">QPSK (uncoded)</option>
               <option value="u-8psk"  data-bps="3" data-cr="1" data-ebn0="13.0">8PSK (uncoded)</option>
@@ -494,6 +499,7 @@
 
 <script src="share.js?v=10"></script>
 <script src="workspace.js?v=1"></script>
+<script src="modcod.js?v=1"></script>
 <script>
 const $  = id => document.getElementById(id);
 const nv = id => { const el=$(id); return el ? el.value : ''; };
@@ -1191,6 +1197,23 @@ function applyTTCPreset(key){
   computeTTC();
 }
 
+/* ── Keep "Uncoded" MODCOD thresholds in lockstep with ber.html ─────
+   Same BER-vs-Eb/N0 formulas, same modcod.js, same target BER (1e-5) —
+   so this dropdown can never quietly disagree with the BER Curves page
+   on what e.g. 16QAM uncoded actually requires. */
+const UNCODED_TO_MODS = {'u-bpsk':'bpsk','u-qpsk':'bpsk','u-8psk':'8psk','u-16qam':'16qam','u-64qam':'64qam'};
+const UNCODED_TARGET_BER = 1e-5;
+function syncUncodedThresholds(){
+  if(!window.Modcod) return;
+  for(const optVal in UNCODED_TO_MODS){
+    const opt = document.querySelector(`#modcod option[value="${optVal}"]`);
+    const mod = Modcod.MODS.find(m => m.id === UNCODED_TO_MODS[optVal]);
+    if(!opt || !mod) continue;
+    const eb = Modcod.reqEbN0(mod.f, UNCODED_TARGET_BER);
+    if(isFinite(eb)) opt.dataset.ebn0 = eb.toFixed(2);
+  }
+}
+
 /* ── Auto-fill Eb/N₀ from MODCOD ──────────────────── */
 function fillReqEbN0(){
   const sel=$('modcod').selectedOptions[0];
@@ -1215,6 +1238,7 @@ $('minElev')?.addEventListener('input',computePassBudget);
 
 /* ── Init ──────────────────────────────────────────── */
 if(window.ShareTool) ShareTool.apply();
+syncUncodedThresholds();
 fillReqEbN0();
 compute();
 if(window.ShareTool) ShareTool.initButton();
