@@ -10,7 +10,7 @@ a{color:var(--accent)}
 
 /* ---- shared top navigation: brand + pills ---- */
 .topnav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
-        padding:11px 24px;background:rgba(255,255,255,.82);backdrop-filter:blur(10px);
+        padding:11px 24px;background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
         border-bottom:1px solid var(--line)}
 .topnav .brand{font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--txt);white-space:nowrap}
 .topnav .pills{display:flex;gap:3px;flex-wrap:wrap;margin-left:auto;background:#dcead9;padding:4px;border-radius:11px}
