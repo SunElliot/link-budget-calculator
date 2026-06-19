@@ -154,7 +154,7 @@
 <footer>Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation &amp; slant-path fade · runs in your browser.</footer>
 
 <script src="share.js?v=10"></script>
-<script src="workspace.js?v=1"></script>
+<script src="workspace.js?v=2"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -232,6 +232,7 @@ function syncHints(){
     compute();
   });
 }
+if(window.Workspace) Workspace.onChange(syncHints);
 const presets={
   ku:{freq:12,elev:30,R:42,hR:3,lat:40,hs:0.1,avail:99.99},
   ka:{freq:20,elev:30,R:42,hR:3,lat:40,hs:0.1,avail:99.9},

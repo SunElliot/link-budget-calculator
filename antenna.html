@@ -146,7 +146,7 @@
 <footer>Free parabolic antenna calculator · gain, beamwidth, aperture, far-field · nothing leaves your browser.</footer>
 
 <script src="share.js?v=10"></script>
-<script src="workspace.js?v=1"></script>
+<script src="workspace.js?v=2"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -191,6 +191,7 @@ function syncHints(){
     compute();
   });
 }
+if(window.Workspace) Workspace.onChange(syncHints);
 const presets={
   s3m:{dia:3,freq:2.2,freqUnit:'GHz',eff:0.55},
   ku06:{dia:0.6,freq:12,freqUnit:'GHz',eff:0.6},

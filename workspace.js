@@ -30,6 +30,20 @@
     return readAll()[key] || null;
   }
 
+  // Registers fn to run whenever another tab/window writes a new value via
+  // set() — lets an already-open consumer page's hints refresh live instead
+  // of only on the consumer's own next input/compute(). The native `storage`
+  // event only fires in *other* tabs of the same origin, never the tab that
+  // made the write, so this can't loop back on itself.
+  const changeListeners = [];
+  function onChange(fn){
+    if(typeof fn === 'function') changeListeners.push(fn);
+  }
+  window.addEventListener('storage', e => {
+    if(e.key !== KEY) return;
+    changeListeners.forEach(fn => { try{ fn(); }catch(err){} });
+  });
+
   // Shows/hides a small hint right after inputEl's `.row` ancestor.
   // currentValue: inputEl's own current numeric value, so the hint can hide
   // itself once it matches (e.g. right after the user clicks "Use").
@@ -62,5 +76,5 @@
     el.appendChild(btn);
   }
 
-  window.Workspace = {set, get, hint, escapeHtml};
+  window.Workspace = {set, get, hint, escapeHtml, onChange};
 })();

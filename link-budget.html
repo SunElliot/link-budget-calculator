@@ -498,7 +498,7 @@
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
 <script src="share.js?v=10"></script>
-<script src="workspace.js?v=1"></script>
+<script src="workspace.js?v=2"></script>
 <script src="modcod.js?v=1"></script>
 <script>
 const $  = id => document.getElementById(id);
@@ -651,6 +651,32 @@ function syncHints(){
   });
   Workspace.hint($('txPower'), 'txPowerDBW', toDBW(num('txPower'),$('txPowerUnit').value), entry => {
     $('txPowerUnit').value = 'dBW'; $('txPower').value = entry.value; compute();
+  });
+}
+
+/* ── Cross-tool workspace sync (TT&C panel) ────────────────
+   Same hint set as the single-link panel above, applied to both the
+   ul_ and dl_ field prefixes. ul_/dl_ freq are consumers only — TT&C
+   has two independent frequencies (uplink/downlink), so neither should
+   be pushed out as "the" shared freqMHz value. */
+function syncHintsTTC(){
+  if(!window.Workspace) return;
+  ['ul_','dl_'].forEach(pre=>{
+    Workspace.hint($(pre+'freq'), 'freqMHz', freqMHz(num(pre+'freq'),$(pre+'freqUnit').value), entry => {
+      $(pre+'freqUnit').value = 'MHz'; $(pre+'freq').value = entry.value; computeTTC();
+    });
+    Workspace.hint($(pre+'txGain'), 'antennaGainDBi', num(pre+'txGain'), entry => {
+      $(pre+'txGain').value = entry.value; computeTTC();
+    });
+    Workspace.hint($(pre+'rxGain'), 'antennaGainDBi', num(pre+'rxGain'), entry => {
+      $(pre+'rxGain').value = entry.value; computeTTC();
+    });
+    Workspace.hint($(pre+'sysTemp'), 'sysTempK', num(pre+'sysTemp'), entry => {
+      $(pre+'sysTemp').value = entry.value; computeTTC();
+    });
+    Workspace.hint($(pre+'txPower'), 'txPowerDBW', toDBW(num(pre+'txPower'),$(pre+'txPowerUnit').value), entry => {
+      $(pre+'txPowerUnit').value = 'dBW'; $(pre+'txPower').value = entry.value; computeTTC();
+    });
   });
 }
 
@@ -837,6 +863,7 @@ function computeTTC(){
   );
 
   drawTTCChart(alt);
+  syncHintsTTC();
 }
 
 function drawTTCChart(alt){
@@ -1241,6 +1268,7 @@ if(window.ShareTool) ShareTool.apply();
 syncUncodedThresholds();
 fillReqEbN0();
 compute();
+if(window.Workspace) Workspace.onChange(()=>{ currentMode==='single' ? syncHints() : syncHintsTTC(); });
 if(window.ShareTool) ShareTool.initButton();
 if(window.onLang) window.onLang(()=>{compute();if(currentMode==='ttc')computeTTC();});
 // Deep-link via ?mode=ttc (must be after all consts are initialized)

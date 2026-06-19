@@ -152,7 +152,7 @@
 <footer>Free phased array gain calculator · array gain, scan loss, beamwidth, grating lobes · runs in your browser.</footer>
 
 <script src="share.js?v=10"></script>
-<script src="workspace.js?v=1"></script>
+<script src="workspace.js?v=2"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -205,6 +205,7 @@ function syncHints(){
     compute();
   });
 }
+if(window.Workspace) Workspace.onChange(syncHints);
 const presets={
   p88:{freq:10,frequnit:'GHz',nx:8,ny:8,dx:0.5,dy:0.5,ge:6,scan:0,taper:0},
   ka:{freq:30,frequnit:'GHz',nx:16,ny:16,dx:0.5,dy:0.5,ge:5,scan:30,taper:1},
