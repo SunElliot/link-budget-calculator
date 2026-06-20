@@ -10,8 +10,8 @@
     });
     return p.toString();
   }
-  function apply(){
-    const p = new URLSearchParams(location.search);
+  function apply(qs){
+    const p = new URLSearchParams(qs !== undefined ? qs : location.search);
     let any = false;
     p.forEach((v,k)=>{
       const el = document.getElementById(k);

@@ -15,8 +15,8 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=11">
-<script src="i18n.js?v=11"></script>
+<link rel="stylesheet" href="styles.css?v=12">
+<script src="i18n.js?v=12"></script>
 <style>
 /* ── Mode bar ────────────────────────────────── */
 .mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
@@ -497,7 +497,7 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
-<script src="share.js?v=11"></script>
+<script src="share.js?v=12"></script>
 <script src="linkout.js?v=1"></script>
 <script src="modcod.js?v=1"></script>
 <script>
@@ -1211,6 +1211,12 @@ function freqFieldFor(fieldId){
   return 'freq';
 }
 function jumpOut(toolPage, fieldId, freqFieldId){
+  // Snapshot every field before leaving: this is a full page navigation,
+  // so returning via ?apply=<fieldId>&value=<n> would otherwise reload
+  // the document fresh and reset every *other* field to its HTML
+  // default, clobbering any earlier jump-out round trip (e.g. a txGain
+  // brought back first gets wiped out when rxGain is brought back next).
+  if(window.ShareTool){ try{ sessionStorage.setItem('lb_jump_snapshot', ShareTool.collect()); }catch(e){} }
   const url = new URL(toolPage, location.href);
   url.searchParams.set('back', fieldId);
   if(freqFieldId && $(freqFieldId)){
@@ -1249,6 +1255,15 @@ function applyPendingFromJump(){
   if(!window.LinkOut) return;
   const pending = LinkOut.consumeApply();
   if(!pending) return;
+  // Restore the rest of the form to how it was right before this same
+  // round trip's jumpOut(), so this one explicit field update doesn't
+  // blow away earlier ones from prior round trips.
+  if(window.ShareTool){
+    try{
+      const snap = sessionStorage.getItem('lb_jump_snapshot');
+      if(snap){ sessionStorage.removeItem('lb_jump_snapshot'); ShareTool.apply(snap); }
+    }catch(e){}
+  }
   const isTTC = pending.field.startsWith('ul_') || pending.field.startsWith('dl_');
   switchMode(isTTC ? 'ttc' : 'single');
   const el = $(pending.field);
