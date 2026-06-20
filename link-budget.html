@@ -15,8 +15,8 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=10">
-<script src="i18n.js?v=10"></script>
+<link rel="stylesheet" href="styles.css?v=11">
+<script src="i18n.js?v=11"></script>
 <style>
 /* ── Mode bar ────────────────────────────────── */
 .mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
@@ -497,8 +497,8 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
-<script src="share.js?v=10"></script>
-<script src="workspace.js?v=2"></script>
+<script src="share.js?v=11"></script>
+<script src="linkout.js?v=1"></script>
 <script src="modcod.js?v=1"></script>
 <script>
 const $  = id => document.getElementById(id);
@@ -525,6 +525,7 @@ function rateBps(val,unit){
   return val;
 }
 const num = id => parseFloat($(id)?.value) || 0;
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 
 /* ── Single-link compute ───────────────────────────── */
 function compute(){
@@ -613,71 +614,6 @@ function compute(){
 
   drawChart();
   computePassBudget();
-  syncHints();
-}
-
-/* ── Cross-tool workspace sync (single-link panel) ─────────
-   Pushing only happens on a genuine user edit to the freq field
-   (see pushFreq below) — never from an automatic compute() call —
-   otherwise this page's own default would silently overwrite a
-   value another tool just offered, before syncHints() below ever
-   gets a chance to show it (compute() runs twice on load: once
-   inline, once via the onLang callback fired on DOMContentLoaded). */
-function pushFreq(){
-  if(window.Workspace) Workspace.set('freqMHz', freqMHz(num('freq'),$('freqUnit').value), t('Link Budget calculator','链路预算计算器'));
-}
-$('freq').addEventListener('input', pushFreq);
-$('freqUnit').addEventListener('input', pushFreq);
-
-function syncHints(){
-  if(!window.Workspace) return;
-  Workspace.hint($('freq'), 'freqMHz', freqMHz(num('freq'),$('freqUnit').value), entry => {
-    $('freqUnit').value = 'MHz'; $('freq').value = entry.value; compute();
-  });
-  Workspace.hint($('txGain'), 'antennaGainDBi', num('txGain'), entry => {
-    $('txGain').value = entry.value; compute();
-  });
-  Workspace.hint($('rxGain'), 'antennaGainDBi', num('rxGain'), entry => {
-    $('rxGain').value = entry.value; compute();
-  });
-  Workspace.hint($('sysTemp'), 'sysTempK', num('sysTemp'), entry => {
-    $('sysTemp').value = entry.value; compute();
-  });
-  Workspace.hint($('rainLoss'), 'rainLossDB', num('rainLoss'), entry => {
-    $('rainLoss').value = entry.value; compute();
-  });
-  Workspace.hint($('atmLoss'), 'atmLossDB', num('atmLoss'), entry => {
-    $('atmLoss').value = entry.value; compute();
-  });
-  Workspace.hint($('txPower'), 'txPowerDBW', toDBW(num('txPower'),$('txPowerUnit').value), entry => {
-    $('txPowerUnit').value = 'dBW'; $('txPower').value = entry.value; compute();
-  });
-}
-
-/* ── Cross-tool workspace sync (TT&C panel) ────────────────
-   Same hint set as the single-link panel above, applied to both the
-   ul_ and dl_ field prefixes. ul_/dl_ freq are consumers only — TT&C
-   has two independent frequencies (uplink/downlink), so neither should
-   be pushed out as "the" shared freqMHz value. */
-function syncHintsTTC(){
-  if(!window.Workspace) return;
-  ['ul_','dl_'].forEach(pre=>{
-    Workspace.hint($(pre+'freq'), 'freqMHz', freqMHz(num(pre+'freq'),$(pre+'freqUnit').value), entry => {
-      $(pre+'freqUnit').value = 'MHz'; $(pre+'freq').value = entry.value; computeTTC();
-    });
-    Workspace.hint($(pre+'txGain'), 'antennaGainDBi', num(pre+'txGain'), entry => {
-      $(pre+'txGain').value = entry.value; computeTTC();
-    });
-    Workspace.hint($(pre+'rxGain'), 'antennaGainDBi', num(pre+'rxGain'), entry => {
-      $(pre+'rxGain').value = entry.value; computeTTC();
-    });
-    Workspace.hint($(pre+'sysTemp'), 'sysTempK', num(pre+'sysTemp'), entry => {
-      $(pre+'sysTemp').value = entry.value; computeTTC();
-    });
-    Workspace.hint($(pre+'txPower'), 'txPowerDBW', toDBW(num(pre+'txPower'),$(pre+'txPowerUnit').value), entry => {
-      $(pre+'txPowerUnit').value = 'dBW'; $(pre+'txPower').value = entry.value; computeTTC();
-    });
-  });
 }
 
 /* ── Orbit geometry ────────────────────────────────── */
@@ -863,7 +799,6 @@ function computeTTC(){
   );
 
   drawTTCChart(alt);
-  syncHintsTTC();
 }
 
 function drawTTCChart(alt){
@@ -1131,7 +1066,7 @@ function compareScenarios(mode, ids){
   renderCompareTable(scenarios, rows);
 }
 function renderCompareTable(scenarios, rows){
-  const esc = window.Workspace ? Workspace.escapeHtml : (s=>s);
+  const esc = escapeHtml;
   const labels = rows[0].map(r=>r[0]);
   let html = `<table><thead><tr><th>${t('Metric','指标')}</th>${scenarios.map(s=>`<th>${esc(s.name)}</th>`).join('')}</tr></thead><tbody>`;
   labels.forEach((label,i)=>{
@@ -1142,7 +1077,7 @@ function renderCompareTable(scenarios, rows){
 }
 function renderScenarioList(mode){
   const el = $(mode==='single' ? 'scenarioListSingle' : 'scenarioListTTC');
-  const esc = window.Workspace ? Workspace.escapeHtml : (s=>s);
+  const esc = escapeHtml;
   const list = loadScenarios().filter(s=>s.mode===mode);
   if(!list.length){
     el.innerHTML = `<div class="scenario-empty">${t('No scenarios saved yet.','尚无已保存场景。')}</div>`;
@@ -1251,6 +1186,81 @@ function fillReqEbN0(){
   ro.setAttribute('readonly','');ro.style.opacity=.7;
 }
 
+/* ── Jump out to a source-tool calculator, bring the value back ──────
+   Each relevant field gets small "↗ <tool>" links. Clicking one carries
+   the current frequency along (when the destination tool has a freq
+   field) plus a `back=<fieldId>` marker. The tool then shows a "← Use
+   this value" bar; clicking that navigates back here with
+   ?apply=<fieldId>&value=<n>, applied once, no confirm step — this is a
+   single explicit round trip the user started from this page. Visiting
+   a tool directly (no jump-out link, no `back` param) never shows that
+   bar and never touches this page — nothing is written anywhere. */
+const JUMP_LINKS = {
+  txGain:   [['antenna.html','Antenna'],['phased-array.html','Array']],
+  rxGain:   [['antenna.html','Antenna'],['phased-array.html','Array']],
+  sysTemp:  [['gt.html','G/T'],['noise-figure.html','Noise Fig.']],
+  rainLoss: [['rain.html','Rain Fade']],
+  atmLoss:  [['gas.html','Gas Atten.']],
+  txPower:  [['hpa-backoff.html','HPA Backoff']],
+};
+function freqFieldFor(fieldId){
+  const base = fieldId.replace(/^(ul_|dl_)/,'');
+  if(base!=='txGain' && base!=='rxGain' && base!=='rainLoss' && base!=='atmLoss') return null;
+  if(fieldId.startsWith('ul_')) return 'ul_freq';
+  if(fieldId.startsWith('dl_')) return 'dl_freq';
+  return 'freq';
+}
+function jumpOut(toolPage, fieldId, freqFieldId){
+  const url = new URL(toolPage, location.href);
+  url.searchParams.set('back', fieldId);
+  if(freqFieldId && $(freqFieldId)){
+    const mhz = freqMHz(num(freqFieldId), $(freqFieldId+'Unit')?.value || 'MHz');
+    if(toolPage==='rain.html' || toolPage==='gas.html'){
+      url.searchParams.set('freq', mhz/1000);
+    } else if(toolPage==='antenna.html'){
+      url.searchParams.set('freq', mhz); url.searchParams.set('freqUnit','MHz');
+    } else if(toolPage==='phased-array.html'){
+      url.searchParams.set('freq', mhz); url.searchParams.set('frequnit','MHz');
+    }
+  }
+  location.href = url.toString();
+}
+function injectJumpLinks(){
+  Object.keys(JUMP_LINKS).forEach(base=>{
+    ['','ul_','dl_'].forEach(pre=>{
+      const fieldId = pre+base;
+      const el = $(fieldId);
+      if(!el) return;
+      const label = el.closest('.row')?.querySelector('label');
+      if(!label || label.querySelector('.jump-links')) return;
+      const wrap = document.createElement('span');
+      wrap.className = 'jump-links';
+      JUMP_LINKS[base].forEach(([tool,name])=>{
+        const a = document.createElement('a');
+        a.href = '#'; a.className = 'jump-link'; a.textContent = '↗ '+name;
+        a.addEventListener('click', e=>{ e.preventDefault(); jumpOut(tool, fieldId, freqFieldFor(fieldId)); });
+        wrap.appendChild(a);
+      });
+      label.appendChild(wrap);
+    });
+  });
+}
+function applyPendingFromJump(){
+  if(!window.LinkOut) return;
+  const pending = LinkOut.consumeApply();
+  if(!pending) return;
+  const isTTC = pending.field.startsWith('ul_') || pending.field.startsWith('dl_');
+  switchMode(isTTC ? 'ttc' : 'single');
+  const el = $(pending.field);
+  if(!el) return;
+  if(pending.field.endsWith('txPower')){
+    const unitEl = $(pending.field+'Unit');
+    if(unitEl) unitEl.value = 'dBW';
+  }
+  el.value = pending.value;
+  isTTC ? computeTTC() : compute();
+}
+
 /* ── Event wiring ──────────────────────────────────── */
 document.querySelectorAll('.preset-bar button[data-preset]').forEach(b=>
   b.addEventListener('click',()=>applyPreset(b.dataset.preset)));
@@ -1268,11 +1278,13 @@ if(window.ShareTool) ShareTool.apply();
 syncUncodedThresholds();
 fillReqEbN0();
 compute();
-if(window.Workspace) Workspace.onChange(()=>{ currentMode==='single' ? syncHints() : syncHintsTTC(); });
+injectJumpLinks();
 if(window.ShareTool) ShareTool.initButton();
 if(window.onLang) window.onLang(()=>{compute();if(currentMode==='ttc')computeTTC();});
 // Deep-link via ?mode=ttc (must be after all consts are initialized)
 if(new URLSearchParams(location.search).get('mode')==='ttc'){ switchMode('ttc'); applyTTCPreset('leo-s-ttc'); }
+// A jump-out round trip takes priority over the ?mode=ttc deep link above.
+applyPendingFromJump();
 </script>
 <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
 </body>

@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=10">
-<script src="i18n.js?v=10"></script>
+<link rel="stylesheet" href="styles.css?v=11">
+<script src="i18n.js?v=11"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Rain Attenuation Calculator (ITU-R P.618/P.838)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -153,8 +153,8 @@
 
 <footer>Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation &amp; slant-path fade · runs in your browser.</footer>
 
-<script src="share.js?v=10"></script>
-<script src="workspace.js?v=2"></script>
+<script src="share.js?v=11"></script>
+<script src="linkout.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -214,25 +214,8 @@ function compute(){
     const a=scaleTo(core.A001,pp,th,lat);
     tb.insertAdjacentHTML('beforeend',`<tr><td>${av}%</td><td>${pp}%</td><td class="num">${a.toFixed(2)}</td></tr>`);
   });
-  syncHints();
-  if(window.Workspace) Workspace.set('rainLossDB', Ap, t('Rain Fade calculator','雨衰计算器'));
+  if(window.LinkOut) LinkOut.updateReturnBar(Ap);
 }
-/* Pushing freq only happens on a genuine edit (see pushFreq) — never from
-   an automatic compute() call, since compute() also runs once via the
-   onLang callback on load, which would silently overwrite a value another
-   tool just offered before the hint below ever gets shown. */
-function pushFreq(){
-  if(window.Workspace) Workspace.set('freqMHz', num('freq')*1000, t('Rain Fade calculator','雨衰计算器'));
-}
-$('freq').addEventListener('input', pushFreq);
-function syncHints(){
-  if(!window.Workspace) return;
-  Workspace.hint($('freq'), 'freqMHz', num('freq')*1000, entry => {
-    $('freq').value = entry.value/1000;
-    compute();
-  });
-}
-if(window.Workspace) Workspace.onChange(syncHints);
 const presets={
   ku:{freq:12,elev:30,R:42,hR:3,lat:40,hs:0.1,avail:99.99},
   ka:{freq:20,elev:30,R:42,hR:3,lat:40,hs:0.1,avail:99.9},
@@ -243,6 +226,7 @@ document.querySelectorAll('.preset-bar button').forEach(b=>b.addEventListener('c
   const c=presets[b.dataset.preset];for(const k in c)$(k).value=c[k];compute();}));
 document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',compute));
 if(window.ShareTool) ShareTool.apply();
+if(window.LinkOut) LinkOut.initReturnBar();
 compute();
 if(window.ShareTool) ShareTool.initButton();
 if(window.onLang) window.onLang(compute);

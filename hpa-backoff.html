@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=10">
-<script src="i18n.js?v=10"></script>
+<link rel="stylesheet" href="styles.css?v=11">
+<script src="i18n.js?v=11"></script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"HPA Backoff Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
@@ -221,8 +221,8 @@
 
 <footer>Free HPA backoff calculator · TWTA (Saleh) / SSPA (Rapp) saturation curve · IBO/OBO, gain compression &amp; C/I₃ · runs entirely in your browser.</footer>
 
-<script src="share.js?v=10"></script>
-<script src="workspace.js?v=2"></script>
+<script src="share.js?v=11"></script>
+<script src="linkout.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -314,7 +314,7 @@ function compute(){
     : t(`SSPA (Rapp model, p=${p}) — solid curve; dashed line is ideal linear gain.`,`SSPA(Rapp 模型,p=${p})——实线为曲线,虚线为理想线性增益参考。`);
 
   drawChart(type,p,IBO,OBO);
-  if(window.Workspace) Workspace.set('txPowerDBW', poutCarrier, t('HPA Backoff calculator','HPA 回退计算器'));
+  if(window.LinkOut) LinkOut.updateReturnBar(poutCarrier);
 }
 
 function drawChart(type,p,IBO,OBO){
@@ -385,6 +385,7 @@ document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input
 }));
 
 if(window.ShareTool) ShareTool.apply();
+if(window.LinkOut) LinkOut.initReturnBar();
 updateTypeUI();
 compute();
 if(window.ShareTool) ShareTool.initButton();

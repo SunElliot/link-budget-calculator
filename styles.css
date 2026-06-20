@@ -73,13 +73,17 @@ td:last-child{text-align:right;font-variant-numeric:tabular-nums}
      padding:7px 13px;border-radius:20px;font-size:.83rem;cursor:pointer;box-shadow:var(--shadow)}
 .preset-bar button:hover{border-color:var(--accent);color:var(--accent)}
 
-/* ---- cross-tool workspace sync hint ---- */
-.sync-hint{display:none;align-items:center;justify-content:space-between;gap:8px;
-     margin:-3px 0 10px;padding:6px 10px;background:var(--accent-soft);border-radius:8px;font-size:.78rem;color:var(--accent)}
-.sync-hint b{font-variant-numeric:tabular-nums}
-.sync-hint button{background:var(--accent);color:#fff;border:none;padding:4px 11px;border-radius:14px;
-     font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
-.sync-hint button:hover{filter:brightness(1.1)}
+/* ---- tool-page "bring this value back to Link Budget" return bar ---- */
+.linkback-bar{display:flex;justify-content:center;padding:10px 16px;background:var(--accent)}
+.linkback-btn{background:#fff;color:var(--accent);border:none;padding:7px 16px;border-radius:20px;
+     font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
+.linkback-btn:disabled{opacity:.6;cursor:default}
+.linkback-btn:not(:disabled):hover{filter:brightness(1.05)}
+
+/* ---- link-budget.html: jump-out links to the source-tool calculators ---- */
+.jump-links{display:block;margin-top:2px}
+.jump-link{font-size:.72rem;color:var(--accent);text-decoration:none;margin-right:10px;white-space:nowrap}
+.jump-link:hover{text-decoration:underline}
 
 /* ---- scenario save/compare panel ---- */
 .scenario-panel{display:none;margin:0 0 18px}
