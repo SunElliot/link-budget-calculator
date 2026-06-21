@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=12">
-<script src="i18n.js?v=12"></script>
+<link rel="stylesheet" href="styles.css?v=13">
+<script src="i18n.js?v=13"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Pass Predictor","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -93,7 +93,7 @@
       <h2><span class="dot"></span>Upcoming Passes</h2>
       <div id="status" style="color:var(--muted);font-size:.85rem">Loading orbit library…</div>
       <table id="out" style="display:none">
-        <thead><tr><th>#</th><th>AOS (local)</th><th>Max elev (time)</th><th>LOS (local)</th><th>Duration</th></tr></thead>
+        <thead><tr><th>#</th><th>AOS (local · az)</th><th>Max elev (time · az)</th><th>LOS (local · az)</th><th>Duration</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
@@ -138,7 +138,7 @@
 <footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
 
 <script src="vendor/satellite.min.js"></script>
-<script src="share.js?v=12"></script>
+<script src="share.js?v=13"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -152,6 +152,9 @@ else { status.textContent=t('Loading orbit library…','正在加载轨道库…
 
 function fmtLocal(d){return d.toLocaleString(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function fmtTime(d){return d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+const COMPASS=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+function compass(az){return COMPASS[Math.round(((az%360)+360)%360/22.5)%16];}
+function azSub(az){return `<br><span style="font-size:.78em;color:var(--muted);font-variant-numeric:tabular-nums">${Math.round(az)}° ${compass(az)}</span>`;}
 
 function predict(){
   if(!libReady()){status.textContent=t('Orbit library not loaded yet — please wait a moment.','轨道库尚未加载完成 —— 请稍候。');return;}
@@ -165,24 +168,29 @@ function predict(){
   const gs={longitude:satellite.degreesToRadians(num('lon')),latitude:satellite.degreesToRadians(num('lat')),height:num('hgt')/1000};
   const minEl=num('minel'), hours=Math.min(Math.max(num('hours'),1),168);
   const start=Date.now(), step=15000; // 15 s
-  const rows=[]; let inPass=false,aos=null,maxEl=-90,maxT=null,n=0;
+  const rows=[]; let inPass=false,aosKnown=true,aos=null,azAos=null,maxEl=-90,maxT=null,azMax=null,n=0;
   for(let s=0;s<=hours*3600;s+=step/1000){
     const t=new Date(start+s*1000);
     const pv=satellite.propagate(rec,t); if(!pv.position) continue;
     const la=satellite.ecfToLookAngles(gs,satellite.eciToEcf(pv.position,satellite.gstime(t)));
     const el=satellite.radiansToDegrees(la.elevation);
-    if(el>=minEl){ if(!inPass){inPass=true;aos=t;maxEl=el;maxT=t;} else if(el>maxEl){maxEl=el;maxT=t;} }
-    else if(inPass){ inPass=false;n++;
+    const az=satellite.radiansToDegrees(la.azimuth);
+    if(el>=minEl){
+      if(!inPass){inPass=true;aosKnown=(s>0);aos=t;azAos=az;maxEl=el;maxT=t;azMax=az;}
+      else if(el>maxEl){maxEl=el;maxT=t;azMax=az;}
+    } else if(inPass){ inPass=false;n++;
       const dur=Math.round((t-aos)/1000);
-      rows.push({n,aos,maxEl,maxT,los:t,dur});
+      rows.push({n,aos,aosKnown,azAos,maxEl,maxT,azMax,los:t,azLos:az,dur});
       if(n>=60)break; }
   }
   const tb=$('out').querySelector('tbody'); tb.innerHTML='';
   if(!rows.length){ status.innerHTML=t('No passes above '+minEl+'° in the next '+hours+' h for this TLE / location.','未来 '+hours+' 小时内,该 TLE / 位置无高于 '+minEl+'° 的过境。'); $('out').style.display='none'; return; }
   rows.forEach(r=>{
     const m=Math.floor(r.dur/60), ss=r.dur%60;
+    const aosCell=r.aosKnown?fmtLocal(r.aos)+azSub(r.azAos):
+      '<span style="color:var(--muted)">'+t('already up','已在过境中')+'</span>';
     tb.insertAdjacentHTML('beforeend',
-      `<tr><td>${r.n}</td><td>${fmtLocal(r.aos)}</td><td class="num">${r.maxEl.toFixed(1)}° (${fmtTime(r.maxT)})</td><td>${fmtTime(r.los)}</td><td class="num">${m}m ${ss}s</td></tr>`);
+      `<tr><td>${r.n}</td><td>${aosCell}</td><td class="num">${r.maxEl.toFixed(1)}° (${fmtTime(r.maxT)})${azSub(r.azMax)}</td><td>${fmtTime(r.los)}${azSub(r.azLos)}</td><td class="num">${m}m ${ss}s</td></tr>`);
   });
   status.textContent=t(rows.length+' pass(es) above '+minEl+'° in the next '+hours+' h (local time). TLE epoch age affects accuracy.','未来 '+hours+' 小时内有 '+rows.length+' 次高于 '+minEl+'° 的过境(本地时间)。TLE 历元越旧越不准。');
   $('out').style.display='';
