@@ -124,10 +124,10 @@
     "1.2 m Ka-band":"1.2 m Ka 波段","3 m S-band, good LNA":"3 m S 波段(优质 LNA)",
     "CubeSat UHF Rx":"立方星 UHF 接收","Standard (15°C, 7.5 g/m³)":"标准(15°C,7.5 g/m³)",
     "Tropical humid":"热带潮湿","Cold & dry":"寒冷干燥","High-altitude site":"高海拔站点",
-    "Predict passes":"预测过境","📍 Detect":"📍 定位",
+    "Predict passes":"预测过境","📍 Detect":"📍 定位","Use my location:":"使用我的位置:",
     // ---- table headers ----
     "Band":"波段","Typical satellite use":"典型卫星用途","Service":"业务","Uplink":"上行","Downlink":"下行",
-    "AOS (local)":"AOS(本地)","Max elev (time)":"最大仰角(时刻)","LOS (local)":"LOS(本地)",
+    "AOS (local · az)":"AOS(本地 · 方位)","Max elev (time · az)":"最大仰角(时刻 · 方位)","LOS (local · az)":"LOS(本地 · 方位)",
     "Duration":"时长","Availability":"可用度","Outage % (p)":"中断 %(p)","Modulation":"调制","bits/sym":"比特/符号",
     // ---- select options ----
     "Circular":"圆极化","Horizontal":"水平极化","Vertical":"垂直极化","Custom (set Eb/N₀ below)":"自定义(在下方填 Eb/N₀)",

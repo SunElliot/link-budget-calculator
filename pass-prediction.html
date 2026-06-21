@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=13">
-<script src="i18n.js?v=13"></script>
+<link rel="stylesheet" href="styles.css?v=14">
+<script src="i18n.js?v=14"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Pass Predictor","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -138,17 +138,19 @@
 <footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
 
 <script src="vendor/satellite.min.js"></script>
-<script src="share.js?v=13"></script>
+<script src="share.js?v=14"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
 const status=$('status');
 
 function libReady(){return typeof satellite!=='undefined'&&satellite.twoline2satrec;}
-if(libReady()) status.textContent=t('Ready — click "Predict passes".','已就绪 —— 点"预测过境"。');
-else { status.textContent=t('Loading orbit library…','正在加载轨道库…');
-  let n=0,iv=setInterval(()=>{ if(libReady()){clearInterval(iv);status.textContent=t('Ready — click "Predict passes".','已就绪 —— 点"预测过境"。');}
-    else if(++n>40){clearInterval(iv);status.innerHTML='<span style="color:var(--bad)">'+t('Could not load the orbit library (satellite.js). Try reloading the page.','无法加载轨道库(satellite.js)。请刷新页面重试。')+'</span>';}},250);}
+function setIdleStatus(){status.textContent=libReady()?t('Ready — click "Predict passes".','已就绪 —— 点"预测过境"。'):t('Loading orbit library…','正在加载轨道库…');}
+setIdleStatus();
+if(!libReady()){
+  let n=0,iv=setInterval(()=>{ if(libReady()){clearInterval(iv);setIdleStatus();}
+    else if(++n>40){clearInterval(iv);status.innerHTML='<span style="color:var(--bad)">'+t('Could not load the orbit library (satellite.js). Try reloading the page.','无法加载轨道库(satellite.js)。请刷新页面重试。')+'</span>';}},250);
+}
 
 function fmtLocal(d){return d.toLocaleString(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function fmtTime(d){return d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -210,6 +212,7 @@ $('geo').addEventListener('click',()=>{
 
 if(window.ShareTool){ const shared = ShareTool.apply(); ShareTool.initButton();
   if(shared && libReady()) predict(); }
+if(window.onLang) window.onLang(()=>{ if($('out').style.display==='none') setIdleStatus(); });
 </script>
 <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
 </body>
