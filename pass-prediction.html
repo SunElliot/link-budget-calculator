@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Satellite Pass Predictor (TLE) — Free Online Tool</title>
-<meta name="description" content="Free satellite pass predictor. Paste a TLE and your ground-station coordinates to compute upcoming visible passes: AOS, LOS, maximum elevation and duration. Runs in your browser.">
-<meta name="keywords" content="satellite pass predictor, TLE tracker, satellite tracking, AOS LOS, satellite visibility, ground station pass prediction, ISS pass">
+<meta name="description" content="Free satellite pass predictor. Paste a TLE or enter six Keplerian orbital elements (two-way synced) plus your ground-station coordinates to compute upcoming visible passes: AOS, LOS, maximum elevation and duration. Runs in your browser.">
+<meta name="keywords" content="satellite pass predictor, TLE tracker, orbital elements, Keplerian elements, satellite tracking, AOS LOS, satellite visibility, ground station pass prediction, ISS pass">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/pass-prediction.html">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Satellite Pass Predictor (TLE)">
@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=16">
-<script src="i18n.js?v=16"></script>
+<link rel="stylesheet" href="styles.css?v=17">
+<script src="i18n.js?v=17"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Satellite Pass Predictor","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -63,13 +63,34 @@
 
   <div class="grid">
     <div class="card">
-      <h2><span class="dot"></span>Two-Line Element (TLE)</h2>
-      <p style="color:var(--muted);font-size:.8rem;margin:0 0 8px">
-        <span class="en-only">Paste the two TLE lines (get them from <a href="https://celestrak.org/NORAD/elements/" style="color:var(--accent)" target="_blank" rel="noopener">CelesTrak</a>).</span><span class="zh-only">粘贴两行 TLE(可从 <a href="https://celestrak.org/NORAD/elements/" style="color:var(--accent)" target="_blank" rel="noopener">CelesTrak</a> 获取)。</span>
-      </p>
-      <div class="row"><textarea id="tle" rows="3" spellcheck="false">1 25544U 98067A   24001.50000000  .00016717  00000-0  10270-3 0  9000
+      <h2><span class="dot"></span>Orbit — TLE / Elements</h2>
+      <style>
+        .oe-pills{display:flex;gap:6px;margin-bottom:10px}
+        .oe-pills button{flex:1;padding:6px 10px;background:#fff;border:1px solid var(--line);color:var(--txt);border-radius:7px;font-size:.83rem;cursor:pointer}
+        .oe-pills button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+      </style>
+      <div class="oe-pills">
+        <button type="button" id="mode-tle" class="active">Paste TLE</button>
+        <button type="button" id="mode-oe">Orbital elements</button>
+      </div>
+      <div id="sec-tle">
+        <p style="color:var(--muted);font-size:.8rem;margin:0 0 8px">
+          <span class="en-only">Paste the two TLE lines (get them from <a href="https://celestrak.org/NORAD/elements/" style="color:var(--accent)" target="_blank" rel="noopener">CelesTrak</a>).</span><span class="zh-only">粘贴两行 TLE(可从 <a href="https://celestrak.org/NORAD/elements/" style="color:var(--accent)" target="_blank" rel="noopener">CelesTrak</a> 获取)。</span>
+        </p>
+        <div class="row"><textarea id="tle" rows="3" spellcheck="false">1 25544U 98067A   24001.50000000  .00016717  00000-0  10270-3 0  9000
 2 25544  51.6400 208.0000 0006703 130.0000 325.0000 15.50000000    05</textarea></div>
-      <p style="color:var(--muted);font-size:.74rem;margin:2px 0 0">Example above is the ISS — replace with a current TLE for accurate results.</p>
+        <p style="color:var(--muted);font-size:.74rem;margin:2px 0 0">Example above is the ISS — replace with a current TLE for accurate results.</p>
+      </div>
+      <div id="sec-oe" style="display:none">
+        <div class="row"><label>Epoch (UTC)<span class="hint">element set reference time</span></label><input type="datetime-local" id="oe_epoch" step="1" style="width:210px"></div>
+        <div class="row"><label>Semi-major axis a<span class="hint">km — 6371 + altitude</span></label><input type="number" id="oe_a" step="any"></div>
+        <div class="row"><label>Eccentricity e<span class="hint">0 ≤ e &lt; 1</span></label><input type="number" id="oe_e" step="any" min="0" max="0.9999999"></div>
+        <div class="row"><label>Inclination i<span class="hint">deg</span></label><input type="number" id="oe_i" step="any"></div>
+        <div class="row"><label>RAAN Ω<span class="hint">deg</span></label><input type="number" id="oe_raan" step="any"></div>
+        <div class="row"><label>Argument of perigee ω<span class="hint">deg</span></label><input type="number" id="oe_argp" step="any"></div>
+        <div class="row"><label>Mean anomaly M<span class="hint">deg</span></label><input type="number" id="oe_ma" step="any"></div>
+      </div>
+      <div id="oe_status" style="color:var(--muted);font-size:.76rem;margin-top:8px"></div>
     </div>
 
     <div class="card">
@@ -104,7 +125,8 @@
   <div class="card">
     <h2><span class="dot"></span>📖 How to use</h2>
     <ol class="howto">
-      <li><span class="en-only">Paste a current <b>TLE</b> (both lines) from <a href="https://celestrak.org/NORAD/elements/" target="_blank" rel="noopener">CelesTrak</a> — the fresher, the more accurate.</span><span class="zh-only">从 <a href="https://celestrak.org/NORAD/elements/" target="_blank" rel="noopener">CelesTrak</a> 粘贴最新的<b>两行根数 TLE</b>(两行都要)——越新越准。</span></li>
+      <li><span class="en-only">Paste a current <b>TLE</b> (both lines) from <a href="https://celestrak.org/NORAD/elements/" target="_blank" rel="noopener">CelesTrak</a> — the fresher, the more accurate — or switch to <b>Orbital elements</b> and type the six Keplerian elements directly.</span><span class="zh-only">从 <a href="https://celestrak.org/NORAD/elements/" target="_blank" rel="noopener">CelesTrak</a> 粘贴最新的<b>两行根数 TLE</b>(两行都要)——越新越准;也可切换到<b>六根数</b>直接填写开普勒根数。</span></li>
+      <li><span class="en-only">The two forms stay <b>in sync</b>: pasting a TLE fills the six elements; editing any element regenerates the TLE (drag terms are kept from the last pasted TLE).</span><span class="zh-only">两种输入<b>相互同步</b>:粘贴 TLE 会填入六根数,修改任一根数会重新生成 TLE(大气阻力项沿用上次粘贴的 TLE)。</span></li>
       <li><span class="en-only">Enter your ground-station <b>latitude, longitude and altitude</b>, or click <b>📍 Detect</b> to use your location.</span><span class="zh-only">输入地面站<b>纬度、经度、海拔</b>,或点 <b>📍 Detect</b> 使用当前位置。</span></li>
       <li><span class="en-only">Set the <b>minimum elevation</b> (horizon mask) and how many <b>hours ahead</b> to search.</span><span class="zh-only">设置<b>最低仰角</b>(地平遮挡)和向后预测的<b>小时数</b>。</span></li>
       <li><span class="en-only">Click <b>Predict passes</b> to list upcoming passes with AOS, LOS, maximum elevation and duration.</span><span class="zh-only">点 <b>Predict passes</b> 列出未来过境的 AOS、LOS、最大仰角和时长。</span></li>
@@ -138,7 +160,7 @@
 <footer>Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.</footer>
 
 <script src="vendor/satellite.min.js"></script>
-<script src="share.js?v=16"></script>
+<script src="share.js?v=17"></script>
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
@@ -151,6 +173,109 @@ if(!libReady()){
   let n=0,iv=setInterval(()=>{ if(libReady()){clearInterval(iv);setIdleStatus();}
     else if(++n>40){clearInterval(iv);status.innerHTML='<span style="color:var(--bad)">'+t('Could not load the orbit library (satellite.js). Try reloading the page.','无法加载轨道库(satellite.js)。请刷新页面重试。')+'</span>';}},250);
 }
+
+/* ── TLE ↔ Keplerian elements two-way sync ─────────────────────────
+   The TLE textarea stays the single source the propagator reads;
+   editing the six elements regenerates the TLE (checksummed, column-
+   exact), and editing/pasting a TLE re-fills the six element fields.
+   Programmatic .value writes don't fire 'input', so no update loops. */
+const MU_KM=398600.4418, RE_KM=6371;
+// Line-1 fields we can't derive from the six elements (drag terms, ids)
+// are preserved from the last successfully parsed TLE:
+let tleMeta={satnum:'99999',classif:'U',intl:'24001A  ',ndot:' .00016717',nddot:' 00000-0',bstar:' 10270-3',elset:' 900',rev:'    0'};
+let tleName='';
+
+function tleChecksum(line){let s=0;for(const c of line){if(c>='0'&&c<='9')s+=+c;else if(c==='-')s++;}return String(s%10);}
+const norm360=x=>((x%360)+360)%360;
+
+function epochToDate(str){ // "24001.50000000" → Date (UTC)
+  const yy=parseInt(str.slice(0,2),10), doy=parseFloat(str.slice(2));
+  if(!isFinite(yy)||!isFinite(doy)) return null;
+  const year=yy<57?2000+yy:1900+yy;
+  return new Date(Date.UTC(year,0,1)+(doy-1)*86400000);
+}
+function dateToEpoch(d){ // Date → "YYDDD.DDDDDDDD"
+  const y=d.getUTCFullYear();
+  const doy=(d.getTime()-Date.UTC(y,0,1))/86400000+1;
+  const [ip,fp]=doy.toFixed(8).split('.');
+  return String(y%100).padStart(2,'0')+ip.padStart(3,'0')+'.'+fp;
+}
+function dateToUTCInput(d){ // Date → datetime-local string, shown as UTC
+  const p=n=>String(n).padStart(2,'0');
+  return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+'T'+p(d.getUTCHours())+':'+p(d.getUTCMinutes())+':'+p(d.getUTCSeconds());
+}
+function utcInputToDate(v){ if(!v) return null; const d=new Date(v+'Z'); return isFinite(d.getTime())?d:null; }
+
+function parseTLE(l1,l2){
+  if(!l1||!l2||l1.length<68||l2.length<68) return null;
+  const epoch=epochToDate(l1.slice(18,32).trim());
+  const incl=parseFloat(l2.slice(8,16)), raan=parseFloat(l2.slice(17,25));
+  const ecc=parseFloat('0.'+l2.slice(26,33).trim());
+  const argp=parseFloat(l2.slice(34,42)), ma=parseFloat(l2.slice(43,51));
+  const n=parseFloat(l2.slice(52,63));
+  if(!epoch||![incl,raan,ecc,argp,ma,n].every(isFinite)||n<=0) return null;
+  const a=Math.cbrt(MU_KM/Math.pow(n*2*Math.PI/86400,2));
+  tleMeta={satnum:l1.slice(2,7),classif:l1.slice(7,8),intl:l1.slice(9,17),
+           ndot:l1.slice(33,43),nddot:l1.slice(44,52),bstar:l1.slice(53,61),
+           elset:l1.slice(64,68),rev:l2.slice(63,68)};
+  return {epoch,a,ecc,incl,raan,argp,ma};
+}
+function genTLE(el){
+  const nRev=86400/(2*Math.PI*Math.sqrt(Math.pow(el.a,3)/MU_KM));
+  const f84=x=>norm360(x).toFixed(4).padStart(8,' ');
+  let l1='1 '+tleMeta.satnum+tleMeta.classif+' '+tleMeta.intl+' '+dateToEpoch(el.epoch)+' '+tleMeta.ndot+' '+tleMeta.nddot+' '+tleMeta.bstar+' 0 '+tleMeta.elset;
+  l1+=tleChecksum(l1);
+  let l2='2 '+tleMeta.satnum+' '+f84(el.incl)+' '+f84(el.raan)+' '+Math.min(Math.max(el.ecc,0),0.9999999).toFixed(7).slice(2)+' '+f84(el.argp)+' '+f84(el.ma)+' '+nRev.toFixed(8).padStart(11,' ')+tleMeta.rev;
+  l2+=tleChecksum(l2);
+  return [l1,l2];
+}
+function oeStatus(ok, el){
+  const s=$('oe_status'); if(!s) return;
+  if(!ok){ s.innerHTML='<span style="color:var(--bad)">'+t('Cannot sync — check the TLE / element values.','无法同步——请检查 TLE / 根数取值。')+'</span>'; return; }
+  const period=2*Math.PI*Math.sqrt(Math.pow(el.a,3)/MU_KM)/60;
+  const nRev=1440/period;
+  s.textContent=t(
+    `TLE ↔ elements in sync · alt ≈ ${(el.a-RE_KM).toFixed(0)} km · period ${period.toFixed(1)} min · ${nRev.toFixed(4)} rev/day`,
+    `TLE ↔ 六根数已同步 · 轨道高度 ≈ ${(el.a-RE_KM).toFixed(0)} km · 周期 ${period.toFixed(1)} 分钟 · ${nRev.toFixed(4)} 圈/天`);
+}
+function tleLines(){
+  const lines=$('tle').value.trim().split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  return {l1:lines.find(l=>l.startsWith('1 ')), l2:lines.find(l=>l.startsWith('2 ')),
+          name:lines.find(l=>!l.startsWith('1 ')&&!l.startsWith('2 '))||''};
+}
+function fillElementsFromTLE(){
+  const {l1,l2,name}=tleLines();
+  const el=parseTLE(l1,l2);
+  if(!el){ oeStatus(false); return; }
+  tleName=name;
+  $('oe_epoch').value=dateToUTCInput(el.epoch);
+  $('oe_a').value=el.a.toFixed(3);
+  $('oe_e').value=el.ecc.toFixed(7);
+  $('oe_i').value=el.incl.toFixed(4);
+  $('oe_raan').value=el.raan.toFixed(4);
+  $('oe_argp').value=el.argp.toFixed(4);
+  $('oe_ma').value=el.ma.toFixed(4);
+  oeStatus(true, el);
+}
+function fillTLEFromElements(){
+  const epoch=utcInputToDate($('oe_epoch').value);
+  const el={epoch,a:num('oe_a'),ecc:parseFloat($('oe_e').value)||0,
+            incl:num('oe_i'),raan:num('oe_raan'),argp:num('oe_argp'),ma:num('oe_ma')};
+  if(!epoch||!(el.a>RE_KM)||el.ecc<0||el.ecc>=1){ oeStatus(false); return; }
+  $('tle').value=(tleName?tleName+'\n':'')+genTLE(el).join('\n');
+  oeStatus(true, el);
+}
+function setOrbitMode(mode){
+  $('sec-tle').style.display = mode==='tle'?'':'none';
+  $('sec-oe').style.display  = mode==='oe'?'':'none';
+  $('mode-tle').classList.toggle('active',mode==='tle');
+  $('mode-oe').classList.toggle('active',mode==='oe');
+}
+$('mode-tle').addEventListener('click',()=>setOrbitMode('tle'));
+$('mode-oe').addEventListener('click',()=>setOrbitMode('oe'));
+$('tle').addEventListener('input',fillElementsFromTLE);
+['oe_epoch','oe_a','oe_e','oe_i','oe_raan','oe_argp','oe_ma'].forEach(id=>
+  $(id).addEventListener('input',fillTLEFromElements));
 
 function fmtLocal(d){return d.toLocaleString(undefined,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 function fmtTime(d){return d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -212,6 +337,7 @@ $('geo').addEventListener('click',()=>{
 
 if(window.ShareTool){ const shared = ShareTool.apply(); ShareTool.initButton();
   if(shared && libReady()) predict(); }
+fillElementsFromTLE();
 if(window.onLang) window.onLang(()=>{ if($('out').style.display==='none') setIdleStatus(); });
 </script>
 <script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");</script>
