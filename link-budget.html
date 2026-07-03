@@ -15,8 +15,8 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=17">
-<script src="i18n.js?v=17"></script>
+<link rel="stylesheet" href="styles.css?v=18">
+<script src="i18n.js?v=18"></script>
 <style>
 /* ── Mode bar ────────────────────────────────── */
 .mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
@@ -165,8 +165,17 @@
       <div class="card">
         <h2><span class="dot"></span>Receiver</h2>
         <div class="row"><label>Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="rxGain" value="30" step="any"></div>
-        <div class="row"><label>System noise temperature<span class="hint">Kelvin (incl. LNA, sky, feed)</span></label><input type="number" id="sysTemp" value="200" step="any"></div>
+        <div class="row"><label>System noise temperature<span class="hint">clear-sky, Kelvin (incl. LNA, sky, feed)</span></label><input type="number" id="sysTemp" value="200" step="any"></div>
         <div class="row"><label>Rx line loss before LNA<span class="hint">dB</span></label><input type="number" id="rxLoss" value="0.5" step="any"></div>
+        <div class="row">
+          <label>Rain sky-noise coupling<span class="hint">rain/atm loss also heats the sky</span></label>
+          <select id="rainNoise" style="width:190px;text-align:left">
+            <option value="off">Off</option>
+            <option value="on">On (Rx under rain — downlink)</option>
+          </select>
+        </div>
+        <div class="row" id="row_skyTm"><label>Medium temperature T_m<span class="hint">K, ITU typ. 275</span></label><input type="number" id="skyTm" value="275" step="any"></div>
+        <div id="rn_summary" style="font-size:.85rem;color:var(--muted);margin-top:6px"></div>
       </div>
 
       <!-- INTERFERENCE -->
@@ -287,6 +296,7 @@
         <li><span class="en-only">Pick a <b>preset</b> or use <b>Single Link / TT&amp;C</b> tabs for different analysis modes.</span><span class="zh-only">选一个<b>预设</b>,或用上方标签切换<b>单链路 / 测控分析</b>模式。</span></li>
         <li><span class="en-only">Fill in Transmitter, Path, Receiver and Modem — power, gains, frequency, slant range, data rate.</span><span class="zh-only">填写发射机、路径、接收机和调制解调器参数——功率、增益、频率、斜距、数据率。</span></li>
         <li><span class="en-only">Optionally add <b>Interference</b> C/I entries (adjacent satellite, cross-pol, HPA intermod — use ↗ HPA Backoff to estimate C/I₃); the margin is then computed on C/(N+I).</span><span class="zh-only">可选填写<b>干扰</b>各项 C/I（邻星、交叉极化、HPA 互调——可用 ↗ HPA 回退估算 C/I₃），余量将按 C/(N+I) 计算。</span></li>
+        <li><span class="en-only">For a downlink, turn on <b>Rain sky-noise coupling</b> — rain/gas absorption also raises the receive noise temperature (ΔT = T_m·(1−10^(−A/10))), often costing as much margin as the fade itself.</span><span class="zh-only">下行链路建议开启<b>雨致天空噪声耦合</b>——雨/大气吸收同时抬升接收噪温（ΔT = T_m·(1−10^(−A/10))），其代价常与雨衰本身相当。</span></li>
         <li><span class="en-only">Choose a <b>Modulation / coding</b> scheme; required Eb/N₀ fills automatically.</span><span class="zh-only">选择<b>调制/编码</b>方式,所需 Eb/N₀ 自动填入。</span></li>
         <li><span class="en-only">Read the <b>Link margin</b>: green ≥ 3 dB, amber 0–3 dB, red = link fails.</span><span class="zh-only">看<b>链路余量</b>:绿 ≥ 3 dB、黄 0–3 dB、红 = 链路不通。</span></li>
         <li><span class="en-only">Check <b>Pass Data Budget</b> for contact time and data-per-pass at your data rate.</span><span class="zh-only">查看<b>过境数据预算</b>——当前数据率下每次过境的接触时长与数据量。</span></li>
@@ -304,6 +314,7 @@
         <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
         <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k &nbsp; (k = −228.6 dBW/K/Hz)</p>
         <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
+        <p><strong>ΔT<sub>sky</sub></strong> = T<sub>m</sub>·(1 − 10<sup>−A<sub>abs</sub>/10</sup>) — rain/gas absorption raises the receive noise temperature (downlink); G/T uses T<sub>sys</sub>+ΔT</p>
         <p><strong>C/(N+I)</strong> = −10·log₁₀(10<sup>−(C/N)/10</sup> + 10<sup>−(C/I)/10</sup>) — aggregate C/I combines adjacent-satellite, cross-pol and intermod entries as powers</p>
 <p><strong>Link margin</strong> = Eb/N₀<sub>rx</sub> − interference degradation − Eb/N₀<sub>req</sub> − implementation loss</p>
         <h2>Typical LEO smallsat values</h2>
@@ -318,7 +329,9 @@
         <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
         <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k &nbsp; (k = −228.6 dBW/K/Hz)</p>
         <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
-        <p><strong>链路余量</strong> = Eb/N₀<sub>接收</sub> − Eb/N₀<sub>所需</sub> − 实现损耗</p>
+        <p><strong>ΔT<sub>sky</sub></strong> = T<sub>m</sub>·(1 − 10<sup>−A<sub>abs</sub>/10</sup>) —— 雨/大气吸收同时抬升接收噪温(下行)，G/T 按 T<sub>sys</sub>+ΔT 计算</p>
+        <p><strong>C/(N+I)</strong> = −10·log₁₀(10<sup>−(C/N)/10</sup> + 10<sup>−(C/I)/10</sup>) —— 合计 C/I 由邻星、交叉极化与互调各项按功率合成</p>
+        <p><strong>链路余量</strong> = Eb/N₀<sub>接收</sub> − 干扰恶化量 − Eb/N₀<sub>所需</sub> − 实现损耗</p>
         <h2>典型 LEO 小卫星取值</h2>
         <p>立方星 S 波段下行：~2 W、6 dBi 贴片、3 m 地面站碟(~30 dBi)、斜距 1500–2500 km、噪温 150–250 K。最低工作仰角处至少保留 <strong>3 dB 余量</strong>。</p>
       </div>
@@ -498,7 +511,16 @@
           <div class="row"><label>Additional losses<span class="hint">dB (atm+rain+pol+pointing)</span></label><input type="number" id="dl_addLoss" value="2" step="any"></div>
           <div class="row"><label>Aggregate C/I<span class="hint">dB, 0 or blank = ignore</span></label><input type="number" id="dl_ci" value="0" step="any"></div>
           <div class="row"><label>Ground Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="dl_rxGain" value="30" step="any"></div>
-          <div class="row"><label>Ground noise temperature<span class="hint">K</span></label><input type="number" id="dl_sysTemp" value="150" step="any"></div>
+          <div class="row"><label>Ground noise temperature<span class="hint">clear-sky, K</span></label><input type="number" id="dl_sysTemp" value="150" step="any"></div>
+          <div class="row">
+            <label>Rain sky-noise coupling<span class="hint">absorptive loss heats the sky</span></label>
+            <select id="dl_rainNoise" style="width:190px;text-align:left">
+              <option value="off">Off</option>
+              <option value="on">On (ground Rx under rain)</option>
+            </select>
+          </div>
+          <div class="row" id="dl_row_absLoss"><label>Absorptive loss part<span class="hint">dB of add. losses that absorb (rain+gas)</span></label><input type="number" id="dl_absLoss" value="1" step="any"></div>
+          <div class="row" id="dl_row_skyTm"><label>Medium temperature T_m<span class="hint">K, ITU typ. 275</span></label><input type="number" id="dl_skyTm" value="275" step="any"></div>
           <div class="row"><label>Rx line loss<span class="hint">dB</span></label><input type="number" id="dl_rxLoss" value="0.5" step="any"></div>
         </div>
 
@@ -576,12 +598,14 @@
       Residual-carrier power split: PCM/PM &amp; square subcarrier P<sub>c</sub>/P<sub>t</sub> = cos²m, P<sub>d</sub>/P<sub>t</sub> = sin²m;
       sine subcarrier P<sub>c</sub>/P<sub>t</sub> = J₀²(m), P<sub>d</sub>/P<sub>t</sub> = 2J₁²(m). Ranging modeled as a sine major tone
       (higher-order intermod products discarded); turnaround noise regeneration is not modeled. Carrier loop threshold: SNR ≥ 10 dB in 2B<sub>L</sub>.
-      Aggregate C/I is referenced to the bit-rate bandwidth and degrades the data channel only (Eb/(N₀+I₀)); carrier loop and ranging Pr/N₀ are not degraded by it.</span>
+      Aggregate C/I is referenced to the bit-rate bandwidth and degrades the data channel only (Eb/(N₀+I₀)); carrier loop and ranging Pr/N₀ are not degraded by it.
+      Rain sky-noise coupling adds ΔT = T<sub>m</sub>·(1 − 10^(−A<sub>abs</sub>/10)) to the ground Rx noise temperature (TM downlink only — the satellite Rx on the TC uplink already sees the warm Earth).</span>
       <span class="zh-only">编码门限为 BER ≈ 1e-5 下的 CCSDS 典型参考值，请以任务规范为准。
       残留载波功率分配：PCM/PM 及方波副载波 P<sub>c</sub>/P<sub>t</sub> = cos²m、P<sub>d</sub>/P<sub>t</sub> = sin²m；
       正弦副载波 P<sub>c</sub>/P<sub>t</sub> = J₀²(m)、P<sub>d</sub>/P<sub>t</sub> = 2J₁²(m)。测距按正弦主音建模（高阶互调分量按损失计），
       未建模转发噪声再生。载波环门限：2B<sub>L</sub> 内 SNR ≥ 10 dB。
-      合计 C/I 以比特率带宽为参考、只作用于数据信道（Eb/(N₀+I₀)），不影响载波环与测距 Pr/N₀。</span>
+      合计 C/I 以比特率带宽为参考、只作用于数据信道（Eb/(N₀+I₀)），不影响载波环与测距 Pr/N₀。
+      雨致噪温耦合把 ΔT = T<sub>m</sub>·(1 − 10^(−A<sub>abs</sub>/10)) 加到地面接收噪温上（仅 TM 下行——TC 上行的星上接收机本就对着温暖的地球）。</span>
     </p>
 
     <!-- TT&C summary -->
@@ -619,7 +643,7 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
-<script src="share.js?v=17"></script>
+<script src="share.js?v=18"></script>
 <script src="linkout.js?v=1"></script>
 <script src="modcod.js?v=1"></script>
 <script>
@@ -700,7 +724,13 @@ function compute(){
   const fspl   = (f>0&&d>0) ? 32.44+20*Math.log10(d)+20*Math.log10(f) : 0;
   const extra  = atm+rain+pol+point;
   const totL   = fspl+extra;
-  const gt     = rxG-rxL-(Tsys>0 ? 10*Math.log10(Tsys) : 0);
+  // Rain/atm absorption also raises the sky-noise temperature seen by a
+  // receiver looking through it: ΔT = T_m·(1 − 10^(−A_abs/10)), with
+  // A_abs the absorptive losses only (gas + rain; pol/pointing excluded).
+  const rnOn   = $('rainNoise')?.value==='on';
+  const dT     = rnOn ? (num('skyTm')||275)*(1-Math.pow(10,-(atm+rain)/10)) : 0;
+  const Teff   = Tsys + dT;
+  const gt     = rxG-rxL-(Teff>0 ? 10*Math.log10(Teff) : 0);
   const cn0    = eirp-totL+gt-K_BOLTZMANN_DBW;
   const ebn0   = Rb>0 ? cn0-10*Math.log10(Rb) : 0;
 
@@ -736,6 +766,15 @@ function compute(){
       : t('No interference included (all entries 0 / blank).','未计入干扰(所有条目为 0 或留空)。');
   }
 
+  const tmRow=$('row_skyTm'); if(tmRow) tmRow.style.display=rnOn?'':'none';
+  const rnBox=$('rn_summary');
+  if(rnBox){
+    rnBox.innerHTML = rnOn
+      ? t(`Sky-noise rise ΔT = <b>+${dT.toFixed(0)} K</b> (from ${f2(atm+rain)} dB absorptive) → T<sub>sys</sub> ${Teff.toFixed(0)} K, G/T ${Tsys>0?'−'+f2(10*Math.log10(Teff/Tsys)):'–'} dB`,
+          `天空噪声抬升 ΔT = <b>+${dT.toFixed(0)} K</b>(由 ${f2(atm+rain)} dB 吸收性损耗)→ T<sub>sys</sub> ${Teff.toFixed(0)} K,G/T ${Tsys>0?'−'+f2(10*Math.log10(Teff/Tsys)):'–'} dB`)
+      : t('Clear-sky Tsys used as entered (coupling off).','按晴空 Tsys 计算(耦合关闭)。');
+  }
+
   const box = $('marginBox');
   box.className = 'margin-box '+(margin>=3?'margin-good':margin>=0?'margin-warn':'margin-bad');
   const verdict = margin>=3 ? t('✓ Link closes with comfortable margin','✓ 链路闭合，余量充足')
@@ -752,7 +791,9 @@ function compute(){
     [t('Atmospheric / rain / pol / pointing','大气/雨/极化/指向'), '−'+f2(extra)+' dB'],
     [t('Rx antenna gain','接收天线增益'),           '+'+f2(rxG)+' dBi'],
     [t('Rx line loss','接收线损'),                  '−'+f2(rxL)+' dB'],
-    [t('System noise temp','系统噪温'),             f2(Tsys)+' K ('+f2(10*Math.log10(Tsys||1))+' dB)'],
+    [t('System noise temp (clear sky)','系统噪温(晴空)'), f2(Tsys)+' K'],
+    [t('Rain/atm sky-noise rise ΔT','雨/大气噪声抬升 ΔT'), rnOn?'+'+dT.toFixed(0)+' K':t('off','未启用')],
+    [t('Effective noise temp','等效系统噪温'),      f2(Teff)+' K ('+f2(10*Math.log10(Teff||1))+' dB)'],
     [t('= G/T','= G/T'),                           f2(gt)+' dB/K'],
     [t('Boltzmann constant','玻尔兹曼常数'),        f2(K_BOLTZMANN_DBW)+' dBW/K/Hz'],
     [t('= C/N₀','= C/N₀'),                        f2(cn0)+' dB-Hz'],
@@ -791,7 +832,9 @@ function marginForDistance(d){
   const f    = freqMHz(num('freq'),$('freqUnit').value);
   const fspl = (f>0&&d>0)?32.44+20*Math.log10(d)+20*Math.log10(f):0;
   const extra= num('atmLoss')+num('rainLoss')+num('polLoss')+num('pointLoss');
-  const gt   = num('rxGain')-num('rxLoss')-(num('sysTemp')>0?10*Math.log10(num('sysTemp')):0);
+  const dT   = $('rainNoise')?.value==='on' ? (num('skyTm')||275)*(1-Math.pow(10,-(num('atmLoss')+num('rainLoss'))/10)) : 0;
+  const Teff = num('sysTemp')+dT;
+  const gt   = num('rxGain')-num('rxLoss')-(Teff>0?10*Math.log10(Teff):0);
   const cn0  = eirp-(fspl+extra)+gt-K_BOLTZMANN_DBW;
   const Rb   = rateBps(num('rate'),$('rateUnit').value);
   const ebn0 = Rb>0?cn0-10*Math.log10(Rb):0;
@@ -918,7 +961,12 @@ function computeTTCLink(pre, distKm){
   const addL = n('addLoss');
   const fspl = (freq>0&&distKm>0) ? 32.44+20*Math.log10(distKm)+20*Math.log10(freq) : 0;
   const totL = fspl+addL;
-  const Tsys = n('sysTemp');
+  // Rain sky-noise coupling (fields exist on the dl_ column only; the
+  // satellite Rx on the uplink already looks at the warm Earth, so the
+  // ul_ prefix simply resolves to "off" here).
+  const rnOn = s('rainNoise')==='on';
+  const dT   = rnOn ? (n('skyTm')||275)*(1-Math.pow(10,-n('absLoss')/10)) : 0;
+  const Tsys = n('sysTemp')+dT;
   const gt   = n('rxGain')-n('rxLoss')-(Tsys>0?10*Math.log10(Tsys):0);
   const cn0  = eirp-totL+gt-K_BOLTZMANN_DBW;
   const Rb   = rateBps(n('rate'), s('rateUnit'));
@@ -957,7 +1005,7 @@ function computeTTCLink(pre, distKm){
   }
   return {eirp,fspl,totL,gt,cn0,ebn0,margin,Rb,
           residual,rngEnabled:rngOn,pcN0,loopSnr,loopOk,prN0,rngMargin,rngOk,
-          ciOn,ebni,dI};
+          ciOn,ebni,dI,rnOn,dT};
 }
 
 /* Show/hide residual-carrier & ranging rows, apply coding → required
@@ -974,6 +1022,8 @@ function updateTTCUi(pre){
   show('row_ranging', residual);
   show('row_rngIdx',  rngOn);
   show('row_reqPrN0', rngOn);
+  const rn=$(pre+'rainNoise');
+  if(rn){ show('row_absLoss', rn.value==='on'); show('row_skyTm', rn.value==='on'); }
 
   const codeSel=$(pre+'coding'), req=$(pre+'reqEbN0');
   if(codeSel && req){
@@ -1012,6 +1062,8 @@ function ttcBoxClass(L){
 }
 function ttcBoxExtras(L, f2){
   let extra='';
+  if(L.rnOn)
+    extra+=` · ${t('sky noise','雨致噪温')} +${L.dT.toFixed(0)} K`;
   if(L.ciOn)
     extra+=` · ${t('interference','干扰恶化')} −${f2(L.dI)} dB`;
   if(isFinite(L.loopSnr))
@@ -1206,6 +1258,7 @@ function exportPDF(){
       [T('Rx antenna gain','接收天线增益'), nv('rxGain')+' dBi'],
       [T('System noise temp','系统噪温'),   nv('sysTemp')+' K'],
       [T('Rx line loss','接收线损'),        nv('rxLoss')+' dB'],
+      [T('Rain sky-noise coupling','雨致天空噪声耦合'), nv('rainNoise')==='on'?T('On','开')+' (T_m '+nv('skyTm')+' K)':T('Off','关')],
       [T('Adjacent-satellite C/I','邻星干扰 C/I'), nv('ciAdj')+' dB'],
       [T('Cross-pol C/I','交叉极化 C/I'),   nv('ciXpol')+' dB'],
       [T('HPA intermod C/I₃','HPA 互调 C/I₃'), nv('ciIm')+' dB'],
@@ -1255,7 +1308,7 @@ function exportPDF(){
       const rngOn=residual && nv(pre+'ranging')==='on';
       const out=[[label,''],[T('Tx power','发射功率'),nv(pre+'txPower')+' '+nv(pre+'txPowerUnit')],[T('Tx gain','天线增益'),nv(pre+'txGain')+' dBi'],[T('Tx loss','线损'),nv(pre+'txLoss')+' dB'],[T('Frequency','频率'),nv(pre+'freq')+' '+nv(pre+'freqUnit')]];
       if(pre==='dl_' && nv('dl_freqMode')!=='manual') out.push([T('TM frequency source','TM 频率来源'),T('coherent ×','相干转发 ×')+nv('dl_freqMode')]);
-      out.push([T('Additional losses','附加损耗'),nv(pre+'addLoss')+' dB'],[T('Aggregate C/I','合计 C/I'),(parseFloat(nv(pre+'ci'))>0?nv(pre+'ci')+' dB':T('not included','未计入'))],[T('Rx gain','接收增益'),nv(pre+'rxGain')+' dBi'],[T('Noise temp','噪温'),nv(pre+'sysTemp')+' K'],[T('Rx loss','接收线损'),nv(pre+'rxLoss')+' dB'],[T('Data rate','数据率'),nv(pre+'rate')+' '+nv(pre+'rateUnit')],[T('Modulation scheme','调制体制'),selTxt(pre+'modScheme')]);
+      out.push([T('Additional losses','附加损耗'),nv(pre+'addLoss')+' dB'],[T('Aggregate C/I','合计 C/I'),(parseFloat(nv(pre+'ci'))>0?nv(pre+'ci')+' dB':T('not included','未计入'))],[T('Rx gain','接收增益'),nv(pre+'rxGain')+' dBi'],[T('Noise temp','噪温'),nv(pre+'sysTemp')+' K'],...(nv(pre+'rainNoise')==='on'?[[T('Rain sky-noise coupling','雨致天空噪声耦合'),T('On','开')+' ('+nv(pre+'absLoss')+' dB abs, T_m '+nv(pre+'skyTm')+' K)']]:[]),[T('Rx loss','接收线损'),nv(pre+'rxLoss')+' dB'],[T('Data rate','数据率'),nv(pre+'rate')+' '+nv(pre+'rateUnit')],[T('Modulation scheme','调制体制'),selTxt(pre+'modScheme')]);
       if(residual){
         out.push([T('Data mod index','数据调制指数'),nv(pre+'modIdx')+' rad'],[T('Carrier loop bandwidth','载波环带宽'),nv(pre+'loopBw')+' Hz']);
       }
@@ -1447,10 +1500,10 @@ function renderScenarioPanel(){
 
 /* ── Single-link presets ───────────────────────────── */
 const presets={
-  'leo-s':       {txPower:2,txPowerUnit:'W',txGain:6,txLoss:1,freq:2200,freqUnit:'MHz',dist:2000,atmLoss:0.5,rainLoss:0,polLoss:0.5,pointLoss:0.5,rxGain:30,sysTemp:200,rxLoss:0.5,rate:1,rateUnit:'Mbps',modcod:'s2-qpsk34',rolloff:0.2,implLoss:1,ciAdj:0,ciXpol:0,ciIm:0},
-  'cubesat-uhf': {txPower:1,txPowerUnit:'W',txGain:2,txLoss:0.5,freq:437,freqUnit:'MHz',dist:1500,atmLoss:0.3,rainLoss:0,polLoss:1,pointLoss:0.5,rxGain:15,sysTemp:300,rxLoss:1,rate:9.6,rateUnit:'kbps',modcod:'u-bpsk',rolloff:0.35,implLoss:2,ciAdj:0,ciXpol:0,ciIm:0},
-  'leo-x':       {txPower:5,txPowerUnit:'W',txGain:8,txLoss:1.5,freq:8200,freqUnit:'MHz',dist:2200,atmLoss:1,rainLoss:1,polLoss:0.5,pointLoss:0.5,rxGain:45,sysTemp:150,rxLoss:0.5,rate:150,rateUnit:'Mbps',modcod:'s2-8psk34',rolloff:0.2,implLoss:1.5,ciAdj:0,ciXpol:0,ciIm:0},
-  'geo-ku':      {txPower:20,txPowerUnit:'W',txGain:35,txLoss:1,freq:12000,freqUnit:'MHz',dist:38500,atmLoss:0.5,rainLoss:3,polLoss:0.5,pointLoss:0.5,rxGain:40,sysTemp:120,rxLoss:0.5,rate:36,rateUnit:'Mbps',modcod:'s2-16a34',rolloff:0.25,implLoss:1.5,ciAdj:27,ciXpol:30,ciIm:21},
+  'leo-s':       {txPower:2,txPowerUnit:'W',txGain:6,txLoss:1,freq:2200,freqUnit:'MHz',dist:2000,atmLoss:0.5,rainLoss:0,polLoss:0.5,pointLoss:0.5,rxGain:30,sysTemp:200,rxLoss:0.5,rate:1,rateUnit:'Mbps',modcod:'s2-qpsk34',rolloff:0.2,implLoss:1,ciAdj:0,ciXpol:0,ciIm:0,rainNoise:'on',skyTm:275},
+  'cubesat-uhf': {txPower:1,txPowerUnit:'W',txGain:2,txLoss:0.5,freq:437,freqUnit:'MHz',dist:1500,atmLoss:0.3,rainLoss:0,polLoss:1,pointLoss:0.5,rxGain:15,sysTemp:300,rxLoss:1,rate:9.6,rateUnit:'kbps',modcod:'u-bpsk',rolloff:0.35,implLoss:2,ciAdj:0,ciXpol:0,ciIm:0,rainNoise:'on',skyTm:275},
+  'leo-x':       {txPower:5,txPowerUnit:'W',txGain:8,txLoss:1.5,freq:8200,freqUnit:'MHz',dist:2200,atmLoss:1,rainLoss:1,polLoss:0.5,pointLoss:0.5,rxGain:45,sysTemp:150,rxLoss:0.5,rate:150,rateUnit:'Mbps',modcod:'s2-8psk34',rolloff:0.2,implLoss:1.5,ciAdj:0,ciXpol:0,ciIm:0,rainNoise:'on',skyTm:275},
+  'geo-ku':      {txPower:20,txPowerUnit:'W',txGain:35,txLoss:1,freq:12000,freqUnit:'MHz',dist:38500,atmLoss:0.5,rainLoss:3,polLoss:0.5,pointLoss:0.5,rxGain:40,sysTemp:120,rxLoss:0.5,rate:36,rateUnit:'Mbps',modcod:'s2-16a34',rolloff:0.25,implLoss:1.5,ciAdj:27,ciXpol:30,ciIm:21,rainNoise:'on',skyTm:275},
 };
 function applyPreset(p){
   const c=presets[p];if(!c)return;
@@ -1475,6 +1528,7 @@ const ttcPresets={
     dl_txPower:2,dl_txPowerUnit:'W',dl_txGain:5,dl_txLoss:1.5,
     dl_freqMode:'240/221',dl_freq:2199.10,dl_freqUnit:'MHz',dl_addLoss:2,dl_ci:0,
     dl_rxGain:30,dl_sysTemp:150,dl_rxLoss:0.5,
+    dl_rainNoise:'on',dl_absLoss:1,dl_skyTm:275,
     dl_rate:64,dl_rateUnit:'kbps',
     dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
     dl_coding:'conv12',dl_reqEbN0:4.5,
@@ -1493,6 +1547,7 @@ const ttcPresets={
     dl_txPower:1,dl_txPowerUnit:'W',dl_txGain:2,dl_txLoss:1,
     dl_freqMode:'manual',dl_freq:437,dl_freqUnit:'MHz',dl_addLoss:2.5,dl_ci:0,
     dl_rxGain:10,dl_sysTemp:300,dl_rxLoss:1,
+    dl_rainNoise:'off',dl_absLoss:0.5,dl_skyTm:275,
     dl_rate:9.6,dl_rateUnit:'kbps',
     dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
     dl_coding:'uncoded',dl_reqEbN0:9.6,
@@ -1512,6 +1567,7 @@ const ttcPresets={
     dl_txPower:5,dl_txPowerUnit:'W',dl_txGain:8,dl_txLoss:1.5,
     dl_freqMode:'manual',dl_freq:8200,dl_freqUnit:'MHz',dl_addLoss:2.5,dl_ci:0,
     dl_rxGain:45,dl_sysTemp:100,dl_rxLoss:0.5,
+    dl_rainNoise:'on',dl_absLoss:1.5,dl_skyTm:275,
     dl_rate:1,dl_rateUnit:'Mbps',
     dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
     dl_coding:'convrs',dl_reqEbN0:2.6,

@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=17">
-<script src="i18n.js?v=17"></script>
+<link rel="stylesheet" href="styles.css?v=18">
+<script src="i18n.js?v=18"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Rain Attenuation Calculator (ITU-R P.618/P.838)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -99,6 +99,7 @@
         <div class="metric"><div class="k">Effective path length</div><div class="v"><span id="r_le">–</span> <span class="u">km</span></div></div>
         <div class="metric"><div class="k">Attenuation A₀.₀₁</div><div class="v"><span id="r_a001">–</span> <span class="u">dB</span></div></div>
         <div class="metric"><div class="k">Rain fade @ target</div><div class="v"><span id="r_ap">–</span> <span class="u">dB</span></div></div>
+        <div class="metric"><div class="k">Sky-noise rise ΔT</div><div class="v"><span id="r_dt">–</span> <span class="u">K</span></div></div>
         <div class="metric"><div class="k">Outage time / year</div><div class="v"><span id="r_out">–</span></div></div>
       </div>
       <div class="note" id="rnote"></div>
@@ -153,7 +154,7 @@
 
 <footer>Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation &amp; slant-path fade · runs in your browser.</footer>
 
-<script src="share.js?v=17"></script>
+<script src="share.js?v=18"></script>
 <script src="linkout.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
@@ -207,8 +208,13 @@ function compute(){
   $('r_le').textContent=f2(core.LE);
   $('r_a001').textContent=f2(core.A001);
   $('r_ap').textContent=f2(Ap);
+  // Rain is an absorber at T_m ≈ 275 K: the fade also raises the sky-noise
+  // temperature a ground receiver sees. Same formula the link-budget
+  // page's "Rain sky-noise coupling" applies (ΔT = T_m·(1−10^(−A/10))).
+  const dT=275*(1-Math.pow(10,-Ap/10));
+  $('r_dt').textContent=dT.toFixed(0);
   $('r_out').textContent=outageStr(p);
-  $('rnote').textContent=t('Add ~'+f2(Ap)+' dB of rain margin to your link budget for '+avail+'% availability at '+f+' GHz.','在 '+f+' GHz、可用度 '+avail+'% 下,给链路预算增加约 '+f2(Ap)+' dB 雨衰余量。');
+  $('rnote').textContent=t('Add ~'+f2(Ap)+' dB of rain margin for '+avail+'% availability at '+f+' GHz — and on a downlink, the same rain raises the receive noise temperature by ~'+dT.toFixed(0)+' K (enable "Rain sky-noise coupling" in the Link Budget).','在 '+f+' GHz、可用度 '+avail+'% 下,给链路预算增加约 '+f2(Ap)+' dB 雨衰余量——下行链路中这场雨还会把接收噪温抬升约 '+dT.toFixed(0)+' K(可在链路预算页开启"雨致天空噪声耦合")。');
   const tb=$('avtab').querySelector('tbody'); tb.innerHTML='';
   [[99,1],[99.9,0.1],[99.99,0.01],[99.999,0.001]].forEach(([av,pp])=>{
     const a=scaleTo(core.A001,pp,th,lat);
