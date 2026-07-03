@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Satellite Link Budget Calculator (LEO / Smallsat) — Free Online Tool</title>
-<meta name="description" content="Free satellite link budget calculator with TT&C uplink/downlink analysis, payload data downlink and PDF export. Compute EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin.">
-<meta name="keywords" content="link budget calculator, satellite link budget, TT&C analysis, uplink downlink, EIRP, FSPL, Eb/N0, C/N0, G/T, LEO satellite">
+<meta name="description" content="Free satellite link budget calculator with TT&C uplink/downlink analysis — CCSDS coding, residual carrier PCM/PSK/PM, carrier loop SNR, ranging Pr/N0 — plus payload downlink and PDF export. Compute EIRP, FSPL, G/T, C/N0, Eb/N0 and link margin.">
+<meta name="keywords" content="link budget calculator, satellite link budget, TT&C analysis, uplink downlink, EIRP, FSPL, Eb/N0, C/N0, G/T, LEO satellite, CCSDS coding, PCM/PSK/PM, residual carrier, ranging">
 <link rel="canonical" href="https://sunelliot.github.io/link-budget-calculator/link-budget.html">
 <meta property="og:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
 <meta property="og:image:width" content="1200">
@@ -379,7 +379,7 @@
         </div>
 
         <div class="card">
-          <h2><span class="dot dot-up"></span>TC Modem</h2>
+          <h2><span class="dot dot-up"></span>TC Modem &amp; Carrier</h2>
           <div class="row">
             <label>TC data rate</label>
             <div class="ig">
@@ -387,7 +387,47 @@
               <select id="ul_rateUnit"><option value="kbps">kbps</option><option value="bps">bps</option><option value="Mbps">Mbps</option></select>
             </div>
           </div>
+          <div class="row">
+            <label>Modulation scheme<span class="hint">residual carrier splits power</span></label>
+            <select id="ul_modScheme" style="width:190px;text-align:left">
+              <option value="sc">Suppressed carrier (BPSK/QPSK)</option>
+              <option value="pcm-pm">PCM/PM (NRZ on carrier)</option>
+              <option value="pcm-psk-pm-sq">PCM/PSK/PM square subcarrier</option>
+              <option value="pcm-psk-pm-sin">PCM/PSK/PM sine subcarrier</option>
+            </select>
+          </div>
+          <div class="row" id="ul_row_modIdx"><label>Data mod index<span class="hint">rad peak, e.g. 0.8–1.4</span></label><input type="number" id="ul_modIdx" value="1.2" step="any"></div>
+          <div class="row" id="ul_row_loopBw"><label>Carrier loop bandwidth B<sub>L</sub><span class="hint">Hz, one-sided</span></label><input type="number" id="ul_loopBw" value="100" step="any"></div>
+          <div class="row">
+            <label>Coding<span class="hint">auto-sets required Eb/N₀</span></label>
+            <select id="ul_coding" style="width:190px;text-align:left">
+              <!-- data-ebn0 = typical required information-bit Eb/N0 (dB) at BER ≈ 1e-5,
+                   reference design values from CCSDS 130.1-G / 230.1-G class curves —
+                   confirm against the actual mission spec. -->
+              <optgroup label="TC / simple">
+                <option value="uncoded"    data-ebn0="9.6" selected>Uncoded PCM (BER 1e-5)</option>
+                <option value="bch"        data-ebn0="8.3">CCSDS BCH(63,56) SEC</option>
+                <option value="ldpc-short" data-ebn0="5.5">CCSDS LDPC(128,64) TC</option>
+              </optgroup>
+              <optgroup label="CCSDS TM coding">
+                <option value="conv12"  data-ebn0="4.5">Conv K=7 R=1/2</option>
+                <option value="convrs"  data-ebn0="2.6">Conv + RS(255,223)</option>
+                <option value="turbo12" data-ebn0="1.5">Turbo 1/2 (8920)</option>
+                <option value="turbo13" data-ebn0="1.0">Turbo 1/3 (8920)</option>
+                <option value="turbo16" data-ebn0="0.5">Turbo 1/6 (8920)</option>
+                <option value="ldpc12"  data-ebn0="2.0">LDPC 1/2 AR4JA (k=1024)</option>
+                <option value="ldpc78"  data-ebn0="4.0">LDPC 7/8 C2 (8160,7136)</option>
+              </optgroup>
+              <option value="custom">Custom (set Eb/N₀ below)</option>
+            </select>
+          </div>
           <div class="row"><label>Required Eb/N₀<span class="hint">dB</span></label><input type="number" id="ul_reqEbN0" value="9.6" step="any"></div>
+          <div class="row" id="ul_row_ranging">
+            <label>Ranging channel<span class="hint">sine major tone on carrier</span></label>
+            <select id="ul_ranging" style="width:190px;text-align:left"><option value="off">Off</option><option value="on">On</option></select>
+          </div>
+          <div class="row" id="ul_row_rngIdx"><label>Ranging mod index<span class="hint">rad peak, e.g. 0.4–0.8</span></label><input type="number" id="ul_rngIdx" value="0.7" step="any"></div>
+          <div class="row" id="ul_row_reqPrN0"><label>Required Pr/N₀<span class="hint">dB-Hz, per integration time</span></label><input type="number" id="ul_reqPrN0" value="20" step="any"></div>
           <div class="row"><label>Implementation loss<span class="hint">dB</span></label><input type="number" id="ul_implLoss" value="2" step="any"></div>
         </div>
 
@@ -399,6 +439,9 @@
             <div class="metric"><div class="k">G/T</div><div class="v"><span id="ul_r_gt">–</span> <span class="u">dB/K</span></div></div>
             <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="ul_r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
             <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="ul_r_ebn0">–</span> <span class="u">dB</span></div></div>
+            <div class="metric"><div class="k">Carrier Pc/N₀</div><div class="v"><span id="ul_r_pcn0">–</span> <span class="u">dB-Hz</span></div></div>
+            <div class="metric"><div class="k">Loop SNR (2B_L)</div><div class="v"><span id="ul_r_loop">–</span> <span class="u">dB</span></div></div>
+            <div class="metric"><div class="k">Ranging Pr/N₀</div><div class="v"><span id="ul_r_prn0">–</span> <span class="u">dB-Hz</span></div></div>
           </div>
           <div id="ul_marginBox" class="margin-box margin-good" style="margin-top:12px">–</div>
         </div>
@@ -424,6 +467,14 @@
         <div class="card">
           <h2><span class="dot dot-dn"></span>TM Path + Ground Receiver</h2>
           <div class="row">
+            <label>TM frequency source<span class="hint">coherent = from TC × turnaround ratio</span></label>
+            <select id="dl_freqMode" style="width:190px;text-align:left">
+              <option value="manual">Independent (set below)</option>
+              <option value="240/221">Coherent ×240/221 (S/S)</option>
+              <option value="880/749">Coherent ×880/749 (X/X)</option>
+            </select>
+          </div>
+          <div class="row">
             <label>TM frequency</label>
             <div class="ig">
               <input type="number" id="dl_freq" value="2200" step="any">
@@ -437,7 +488,7 @@
         </div>
 
         <div class="card">
-          <h2><span class="dot dot-dn"></span>TM Modem</h2>
+          <h2><span class="dot dot-dn"></span>TM Modem &amp; Carrier</h2>
           <div class="row">
             <label>TM data rate</label>
             <div class="ig">
@@ -445,7 +496,44 @@
               <select id="dl_rateUnit"><option value="kbps">kbps</option><option value="bps">bps</option><option value="Mbps">Mbps</option></select>
             </div>
           </div>
+          <div class="row">
+            <label>Modulation scheme<span class="hint">residual carrier splits power</span></label>
+            <select id="dl_modScheme" style="width:190px;text-align:left">
+              <option value="sc">Suppressed carrier (BPSK/QPSK)</option>
+              <option value="pcm-pm">PCM/PM (NRZ on carrier)</option>
+              <option value="pcm-psk-pm-sq">PCM/PSK/PM square subcarrier</option>
+              <option value="pcm-psk-pm-sin">PCM/PSK/PM sine subcarrier</option>
+            </select>
+          </div>
+          <div class="row" id="dl_row_modIdx"><label>Data mod index<span class="hint">rad peak, e.g. 0.8–1.4</span></label><input type="number" id="dl_modIdx" value="1.2" step="any"></div>
+          <div class="row" id="dl_row_loopBw"><label>Carrier loop bandwidth B<sub>L</sub><span class="hint">Hz, one-sided</span></label><input type="number" id="dl_loopBw" value="100" step="any"></div>
+          <div class="row">
+            <label>Coding<span class="hint">auto-sets required Eb/N₀</span></label>
+            <select id="dl_coding" style="width:190px;text-align:left">
+              <optgroup label="TC / simple">
+                <option value="uncoded"    data-ebn0="9.6" selected>Uncoded PCM (BER 1e-5)</option>
+                <option value="bch"        data-ebn0="8.3">CCSDS BCH(63,56) SEC</option>
+                <option value="ldpc-short" data-ebn0="5.5">CCSDS LDPC(128,64) TC</option>
+              </optgroup>
+              <optgroup label="CCSDS TM coding">
+                <option value="conv12"  data-ebn0="4.5">Conv K=7 R=1/2</option>
+                <option value="convrs"  data-ebn0="2.6">Conv + RS(255,223)</option>
+                <option value="turbo12" data-ebn0="1.5">Turbo 1/2 (8920)</option>
+                <option value="turbo13" data-ebn0="1.0">Turbo 1/3 (8920)</option>
+                <option value="turbo16" data-ebn0="0.5">Turbo 1/6 (8920)</option>
+                <option value="ldpc12"  data-ebn0="2.0">LDPC 1/2 AR4JA (k=1024)</option>
+                <option value="ldpc78"  data-ebn0="4.0">LDPC 7/8 C2 (8160,7136)</option>
+              </optgroup>
+              <option value="custom">Custom (set Eb/N₀ below)</option>
+            </select>
+          </div>
           <div class="row"><label>Required Eb/N₀<span class="hint">dB</span></label><input type="number" id="dl_reqEbN0" value="9.6" step="any"></div>
+          <div class="row" id="dl_row_ranging">
+            <label>Ranging channel<span class="hint">turnaround tone on TM carrier</span></label>
+            <select id="dl_ranging" style="width:190px;text-align:left"><option value="off">Off</option><option value="on">On</option></select>
+          </div>
+          <div class="row" id="dl_row_rngIdx"><label>Ranging mod index<span class="hint">rad peak, e.g. 0.4–0.8</span></label><input type="number" id="dl_rngIdx" value="0.7" step="any"></div>
+          <div class="row" id="dl_row_reqPrN0"><label>Required Pr/N₀<span class="hint">dB-Hz, per integration time</span></label><input type="number" id="dl_reqPrN0" value="20" step="any"></div>
           <div class="row"><label>Implementation loss<span class="hint">dB</span></label><input type="number" id="dl_implLoss" value="2" step="any"></div>
         </div>
 
@@ -457,12 +545,26 @@
             <div class="metric"><div class="k">G/T</div><div class="v"><span id="dl_r_gt">–</span> <span class="u">dB/K</span></div></div>
             <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="dl_r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
             <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="dl_r_ebn0">–</span> <span class="u">dB</span></div></div>
+            <div class="metric"><div class="k">Carrier Pc/N₀</div><div class="v"><span id="dl_r_pcn0">–</span> <span class="u">dB-Hz</span></div></div>
+            <div class="metric"><div class="k">Loop SNR (2B_L)</div><div class="v"><span id="dl_r_loop">–</span> <span class="u">dB</span></div></div>
+            <div class="metric"><div class="k">Ranging Pr/N₀</div><div class="v"><span id="dl_r_prn0">–</span> <span class="u">dB-Hz</span></div></div>
           </div>
           <div id="dl_marginBox" class="margin-box margin-good" style="margin-top:12px">–</div>
         </div>
       </div><!-- /.ttc-col downlink -->
 
     </div><!-- /.ttc-dual -->
+
+    <p style="color:var(--muted);font-size:.78rem;margin:10px 2px 0">
+      <span class="en-only">Coding thresholds are typical CCSDS reference values at BER ≈ 1e-5 — confirm against your mission spec.
+      Residual-carrier power split: PCM/PM &amp; square subcarrier P<sub>c</sub>/P<sub>t</sub> = cos²m, P<sub>d</sub>/P<sub>t</sub> = sin²m;
+      sine subcarrier P<sub>c</sub>/P<sub>t</sub> = J₀²(m), P<sub>d</sub>/P<sub>t</sub> = 2J₁²(m). Ranging modeled as a sine major tone
+      (higher-order intermod products discarded); turnaround noise regeneration is not modeled. Carrier loop threshold: SNR ≥ 10 dB in 2B<sub>L</sub>.</span>
+      <span class="zh-only">编码门限为 BER ≈ 1e-5 下的 CCSDS 典型参考值，请以任务规范为准。
+      残留载波功率分配：PCM/PM 及方波副载波 P<sub>c</sub>/P<sub>t</sub> = cos²m、P<sub>d</sub>/P<sub>t</sub> = sin²m；
+      正弦副载波 P<sub>c</sub>/P<sub>t</sub> = J₀²(m)、P<sub>d</sub>/P<sub>t</sub> = 2J₁²(m)。测距按正弦主音建模（高阶互调分量按损失计），
+      未建模转发噪声再生。载波环门限：2B<sub>L</sub> 内 SNR ≥ 10 dB。</span>
+    </p>
 
     <!-- TT&C summary -->
     <div class="card results" style="margin-top:18px">
@@ -484,6 +586,8 @@
         <li><span class="en-only">Select a <b>TT&amp;C preset</b> (LEO S-band / CubeSat UHF / X/S Mixed) as a starting point.</span><span class="zh-only">选一个<b>测控预设</b>（LEO S 波段 / 立方星 UHF / X/S 混合）作为起点。</span></li>
         <li><span class="en-only">Set <b>Orbit altitude</b> and <b>Elevation angle</b> — the slant range is computed automatically for both links.</span><span class="zh-only">设置<b>轨道高度</b>和<b>工作仰角</b>——两条链路的斜距自动计算。</span></li>
         <li><span class="en-only">Fill the TC Uplink (Ground → Satellite) and TM Downlink (Satellite → Ground) columns independently.</span><span class="zh-only">分别填写 TC 上行（地面→卫星）和 TM 下行（卫星→地面）各列参数。</span></li>
+        <li><span class="en-only">Pick a <b>modulation scheme</b> (suppressed carrier or residual-carrier PCM/PSK/PM with a mod index) and a <b>CCSDS coding</b> — required Eb/N₀ fills automatically. For residual carrier, check the <b>carrier loop SNR</b> and optionally enable the <b>ranging channel</b> (Pr/N₀ margin).</span><span class="zh-only">选择<b>调制体制</b>（抑制载波或带调制指数的残留载波 PCM/PSK/PM）和 <b>CCSDS 编码</b>——所需 Eb/N₀ 自动填入。残留载波下注意检查<b>载波环 SNR</b>，并可开启<b>测距信道</b>（Pr/N₀ 余量）。</span></li>
+        <li><span class="en-only">Set <b>TM frequency source</b> to a coherent turnaround ratio (×240/221 S-band, ×880/749 X-band) to derive the TM frequency from the TC uplink.</span><span class="zh-only">把 <b>TM 频率来源</b>设为相干转发比（S 频段 ×240/221、X 频段 ×880/749），TM 频率将由 TC 上行频率自动推得。</span></li>
         <li><span class="en-only">Check the <b>TT&amp;C Summary</b> for the limiting direction and the dual-link elevation chart.</span><span class="zh-only">在<b>测控汇总</b>中查看瓶颈方向，以及两路链路的余量-仰角曲线。</span></li>
         <li><span class="en-only">Click <b>↓ Export PDF</b> to download a side-by-side TT&amp;C calculation report.</span><span class="zh-only">点击 <b>↓ 导出 PDF</b> 下载并排展示的测控计算报告。</span></li>
       </ol>
@@ -722,6 +826,28 @@ function switchMode(mode){
 }
 
 /* ── TT&C link budget ──────────────────────────────── */
+/* Bessel J0/J1 by power series — fine for mod indices ≤ ~2 rad. */
+function besselJ0(x){ let sum=1, term=1; for(let k=1;k<=14;k++){ term*=-(x*x/4)/(k*k); sum+=term; } return sum; }
+function besselJ1(x){ let sum=x/2, term=x/2; for(let k=1;k<=14;k++){ term*=-(x*x/4)/(k*(k+1)); sum+=term; } return sum; }
+
+const LOOP_SNR_MIN = 10; // dB in 2·B_L — conventional PLL design threshold
+
+/* Residual-carrier power split. Returns linear fractions of total power:
+   pc = residual carrier, pd = data sidebands, pr = ranging tone.
+   PCM/PM & square-wave subcarrier: cos²/sin² of the data index; sine-wave
+   subcarrier: J₀²/2J₁² (harmonics above the fundamental are lost). Ranging
+   is a sine major tone: J₀²(mr) multiplies carrier+data, 2J₁²(mr) is the
+   ranging fraction; data×ranging intermod products are counted as loss. */
+function ttcPowerSplit(scheme, md, rngOn, mr){
+  if(scheme==='sc') return {pc:0, pd:1, pr:0};
+  let cD, sD;
+  if(scheme==='pcm-psk-pm-sin'){ cD=besselJ0(md)**2; sD=2*besselJ1(md)**2; }
+  else { cD=Math.cos(md)**2; sD=Math.sin(md)**2; }
+  let cR=1, sR=0;
+  if(rngOn){ cR=besselJ0(mr)**2; sR=2*besselJ1(mr)**2; }
+  return {pc:cD*cR, pd:sD*cR, pr:cD*sR};
+}
+
 function computeTTCLink(pre, distKm){
   const n = id => parseFloat($(pre+id)?.value)||0;
   const s = id => $(pre+id)?.value||'';
@@ -735,12 +861,95 @@ function computeTTCLink(pre, distKm){
   const gt   = n('rxGain')-n('rxLoss')-(Tsys>0?10*Math.log10(Tsys):0);
   const cn0  = eirp-totL+gt-K_BOLTZMANN_DBW;
   const Rb   = rateBps(n('rate'), s('rateUnit'));
-  const ebn0 = Rb>0 ? cn0-10*Math.log10(Rb) : 0;
+
+  const scheme   = s('modScheme')||'sc';
+  const residual = scheme!=='sc';
+  const rngOn    = residual && s('ranging')==='on';
+  const split    = ttcPowerSplit(scheme, n('modIdx'), rngOn, n('rngIdx'));
+  const pdDb     = 10*Math.log10(Math.max(split.pd,1e-12));
+
+  const ebn0 = Rb>0 ? cn0+pdDb-10*Math.log10(Rb) : 0;
   const margin = ebn0-n('reqEbN0')-n('implLoss');
-  return {eirp,fspl,totL,gt,cn0,ebn0,margin,Rb};
+
+  let pcN0=NaN, loopSnr=NaN, loopOk=true, prN0=NaN, rngMargin=NaN, rngOk=true;
+  if(residual){
+    pcN0 = cn0+10*Math.log10(Math.max(split.pc,1e-12));
+    const BL = n('loopBw');
+    loopSnr = BL>0 ? pcN0-10*Math.log10(2*BL) : NaN;
+    loopOk  = isFinite(loopSnr) && loopSnr>=LOOP_SNR_MIN;
+    if(rngOn){
+      prN0 = cn0+10*Math.log10(Math.max(split.pr,1e-12));
+      rngMargin = prN0-n('reqPrN0');
+      rngOk = rngMargin>=0;
+    }
+  }
+  return {eirp,fspl,totL,gt,cn0,ebn0,margin,Rb,
+          residual,rngEnabled:rngOn,pcN0,loopSnr,loopOk,prN0,rngMargin,rngOk};
+}
+
+/* Show/hide residual-carrier & ranging rows, apply coding → required
+   Eb/N0, and derive the coherent TM frequency. Idempotent; called from
+   computeTTC() so presets / scenario loads / jump-backs all stay in sync. */
+function updateTTCUi(pre){
+  const schemeSel = $(pre+'modScheme');
+  if(!schemeSel) return;
+  const residual = schemeSel.value!=='sc';
+  const rngOn    = residual && $(pre+'ranging')?.value==='on';
+  const show = (id,on)=>{ const el=$(pre+id); if(el) el.style.display=on?'':'none'; };
+  show('row_modIdx',  residual);
+  show('row_loopBw',  residual);
+  show('row_ranging', residual);
+  show('row_rngIdx',  rngOn);
+  show('row_reqPrN0', rngOn);
+
+  const codeSel=$(pre+'coding'), req=$(pre+'reqEbN0');
+  if(codeSel && req){
+    if(codeSel.value==='custom'){ req.removeAttribute('readonly'); req.style.opacity=1; }
+    else{
+      const v=parseFloat(codeSel.selectedOptions[0].dataset.ebn0);
+      if(isFinite(v)) req.value=v;
+      req.setAttribute('readonly',''); req.style.opacity=.7;
+    }
+  }
+
+  if(pre==='dl_'){
+    const fm=$('dl_freqMode'), fEl=$('dl_freq'), fu=$('dl_freqUnit');
+    if(fm && fEl){
+      const coh = fm.value!=='manual';
+      if(coh){
+        const ratio = fm.value==='240/221' ? 240/221 : 880/749;
+        const ulMHz = freqMHz(parseFloat($('ul_freq')?.value)||0, $('ul_freqUnit')?.value||'MHz');
+        if(fu) fu.value='MHz';
+        fEl.value=(ulMHz*ratio).toFixed(2);
+      }
+      coh ? fEl.setAttribute('readonly','') : fEl.removeAttribute('readonly');
+      fEl.style.opacity = coh ? .7 : 1;
+      if(fu) fu.disabled = coh;
+    }
+  }
+}
+
+/* Margin-box severity: a carrier loop that can't lock kills the link;
+   a failed ranging channel degrades a green link to amber. */
+function ttcBoxClass(L){
+  if(!L.loopOk) return 'margin-bad';
+  let cls = L.margin>=3?'margin-good':L.margin>=0?'margin-warn':'margin-bad';
+  if(L.rngEnabled && !L.rngOk && cls==='margin-good') cls='margin-warn';
+  return cls;
+}
+function ttcBoxExtras(L, f2){
+  let extra='';
+  if(isFinite(L.loopSnr))
+    extra+=` · ${t('carrier loop','载波环')} ${f2(L.loopSnr)} dB ${L.loopOk?'✓':'✗'}`;
+  if(L.rngEnabled)
+    extra+=` · ${t('ranging margin','测距余量')} ${isFinite(L.rngMargin)?f2(L.rngMargin):'–'} dB ${L.rngOk?'✓':'✗'}`;
+  return extra;
 }
 
 function computeTTC(){
+  updateTTCUi('ul_');
+  updateTTCUi('dl_');
+
   const alt  = parseFloat($('ttc_alt')?.value)||550;
   const elev = parseFloat($('ttc_elev')?.value)||10;
   const dist = slantRange(alt, Math.max(elev,1));
@@ -750,6 +959,7 @@ function computeTTC(){
   const ul = computeTTCLink('ul_', dist);
   const dl = computeTTCLink('dl_', dist);
   const f2 = x => x.toFixed(2);
+  const fd = x => isFinite(x) ? f2(x) : '–';
 
   // UL result
   $('ul_r_eirp').textContent = f2(ul.eirp);
@@ -757,9 +967,12 @@ function computeTTC(){
   $('ul_r_gt').textContent   = f2(ul.gt);
   $('ul_r_cn0').textContent  = f2(ul.cn0);
   $('ul_r_ebn0').textContent = f2(ul.ebn0);
+  $('ul_r_pcn0').textContent = fd(ul.pcN0);
+  $('ul_r_loop').textContent = fd(ul.loopSnr);
+  $('ul_r_prn0').textContent = fd(ul.prN0);
   const ulBox=$('ul_marginBox');
-  ulBox.className='margin-box '+(ul.margin>=3?'margin-good':ul.margin>=0?'margin-warn':'margin-bad');
-  ulBox.innerHTML=`${t('TC Uplink margin','TC 上行余量')}: <span>${f2(ul.margin)}</span> dB`;
+  ulBox.className='margin-box '+ttcBoxClass(ul);
+  ulBox.innerHTML=`${t('TC Uplink margin','TC 上行余量')}: <span>${f2(ul.margin)}</span> dB${ttcBoxExtras(ul,f2)}`;
 
   // DL result
   $('dl_r_eirp').textContent = f2(dl.eirp);
@@ -767,14 +980,22 @@ function computeTTC(){
   $('dl_r_gt').textContent   = f2(dl.gt);
   $('dl_r_cn0').textContent  = f2(dl.cn0);
   $('dl_r_ebn0').textContent = f2(dl.ebn0);
+  $('dl_r_pcn0').textContent = fd(dl.pcN0);
+  $('dl_r_loop').textContent = fd(dl.loopSnr);
+  $('dl_r_prn0').textContent = fd(dl.prN0);
   const dlBox=$('dl_marginBox');
-  dlBox.className='margin-box '+(dl.margin>=3?'margin-good':dl.margin>=0?'margin-warn':'margin-bad');
-  dlBox.innerHTML=`${t('TM Downlink margin','TM 下行余量')}: <span>${f2(dl.margin)}</span> dB`;
+  dlBox.className='margin-box '+ttcBoxClass(dl);
+  dlBox.innerHTML=`${t('TM Downlink margin','TM 下行余量')}: <span>${f2(dl.margin)}</span> dB${ttcBoxExtras(dl,f2)}`;
 
   // Summary
   const minM = Math.min(ul.margin, dl.margin);
   const lim  = ul.margin<=dl.margin ? t('TC Uplink ↑','TC 上行 ↑') : t('TM Downlink ↓','TM 下行 ↓');
   const tc   = passContactTime(alt, elev);
+  const issues=[];
+  if(!ul.loopOk) issues.push(t('TC carrier loop below threshold','TC 载波环低于门限'));
+  if(!dl.loopOk) issues.push(t('TM carrier loop below threshold','TM 载波环低于门限'));
+  if(ul.rngEnabled && !ul.rngOk) issues.push(t('TC ranging Pr/N₀ short','TC 测距 Pr/N₀ 不足'));
+  if(dl.rngEnabled && !dl.rngOk) issues.push(t('TM ranging Pr/N₀ short','TM 测距 Pr/N₀ 不足'));
 
   $('ttc_summary_grid').innerHTML=`<div class="resgrid">
     <div class="metric"><div class="k">${t('TC Uplink Margin','TC 上行余量')}</div>
@@ -792,10 +1013,15 @@ function computeTTC(){
   </div>`;
 
   const sbox=$('ttc_summary_box');
-  sbox.className='margin-box '+(minM>=3?'margin-good':minM>=0?'margin-warn':'margin-bad');
+  const loopFail = !ul.loopOk || !dl.loopOk;
+  let scls = minM>=3?'margin-good':minM>=0?'margin-warn':'margin-bad';
+  if(loopFail) scls='margin-bad';
+  else if(issues.length && scls==='margin-good') scls='margin-warn';
+  sbox.className='margin-box '+scls;
+  const issueTxt = issues.length ? ' &nbsp;·&nbsp; ⚠ '+issues.join(' · ') : '';
   sbox.innerHTML=t(
-    `TT&C system ${minM>=0?'closes':'does <b>not</b> close'} — min margin <span>${f2(minM)}</span> dB (${lim} limits) &nbsp;·&nbsp; slant range ${dist.toFixed(0)} km`,
-    `TT&C 系统${minM>=0?'链路闭合':'链路<b>不通</b>'} — 最小余量 <span>${f2(minM)}</span> dB（${lim} 为瓶颈）&nbsp;·&nbsp; 斜距 ${dist.toFixed(0)} km`
+    `TT&C system ${minM>=0&&!loopFail?'closes':'does <b>not</b> close'} — min margin <span>${f2(minM)}</span> dB (${lim} limits) &nbsp;·&nbsp; slant range ${dist.toFixed(0)} km${issueTxt}`,
+    `TT&C 系统${minM>=0&&!loopFail?'链路闭合':'链路<b>不通</b>'} — 最小余量 <span>${f2(minM)}</span> dB（${lim} 为瓶颈）&nbsp;·&nbsp; 斜距 ${dist.toFixed(0)} km${issueTxt}`
   );
 
   drawTTCChart(alt);
@@ -941,14 +1167,42 @@ function exportPDF(){
       <h2>${T('Link Margin vs Elevation','余量-仰角曲线')}</h2>${chartImg}`;
   } else {
     // TT&C PDF
-    const li=(pre,label)=>[[label,''],[T('Tx power','发射功率'),nv(pre+'txPower')+' '+nv(pre+'txPowerUnit')],[T('Tx gain','天线增益'),nv(pre+'txGain')+' dBi'],[T('Tx loss','线损'),nv(pre+'txLoss')+' dB'],[T('Frequency','频率'),nv(pre+'freq')+' '+nv(pre+'freqUnit')],[T('Additional losses','附加损耗'),nv(pre+'addLoss')+' dB'],[T('Rx gain','接收增益'),nv(pre+'rxGain')+' dBi'],[T('Noise temp','噪温'),nv(pre+'sysTemp')+' K'],[T('Rx loss','接收线损'),nv(pre+'rxLoss')+' dB'],[T('Data rate','数据率'),nv(pre+'rate')+' '+nv(pre+'rateUnit')],[T('Required Eb/N₀','所需 Eb/N₀'),nv(pre+'reqEbN0')+' dB'],[T('Impl. loss','实现损耗'),nv(pre+'implLoss')+' dB']];
+    const selTxt=id=>$(id)?.selectedOptions[0]?.textContent.trim()||'';
+    const li=(pre,label)=>{
+      const scheme=nv(pre+'modScheme');
+      const residual=scheme && scheme!=='sc';
+      const rngOn=residual && nv(pre+'ranging')==='on';
+      const out=[[label,''],[T('Tx power','发射功率'),nv(pre+'txPower')+' '+nv(pre+'txPowerUnit')],[T('Tx gain','天线增益'),nv(pre+'txGain')+' dBi'],[T('Tx loss','线损'),nv(pre+'txLoss')+' dB'],[T('Frequency','频率'),nv(pre+'freq')+' '+nv(pre+'freqUnit')]];
+      if(pre==='dl_' && nv('dl_freqMode')!=='manual') out.push([T('TM frequency source','TM 频率来源'),T('coherent ×','相干转发 ×')+nv('dl_freqMode')]);
+      out.push([T('Additional losses','附加损耗'),nv(pre+'addLoss')+' dB'],[T('Rx gain','接收增益'),nv(pre+'rxGain')+' dBi'],[T('Noise temp','噪温'),nv(pre+'sysTemp')+' K'],[T('Rx loss','接收线损'),nv(pre+'rxLoss')+' dB'],[T('Data rate','数据率'),nv(pre+'rate')+' '+nv(pre+'rateUnit')],[T('Modulation scheme','调制体制'),selTxt(pre+'modScheme')]);
+      if(residual){
+        out.push([T('Data mod index','数据调制指数'),nv(pre+'modIdx')+' rad'],[T('Carrier loop bandwidth','载波环带宽'),nv(pre+'loopBw')+' Hz']);
+      }
+      out.push([T('Coding','信道编码'),selTxt(pre+'coding')],[T('Required Eb/N₀','所需 Eb/N₀'),nv(pre+'reqEbN0')+' dB']);
+      if(rngOn){
+        out.push([T('Ranging mod index','测距调制指数'),nv(pre+'rngIdx')+' rad'],[T('Required Pr/N₀','所需 Pr/N₀'),nv(pre+'reqPrN0')+' dB-Hz']);
+      }
+      out.push([T('Impl. loss','实现损耗'),nv(pre+'implLoss')+' dB']);
+      return out;
+    };
     const ulM=parseFloat(rv('ul_r_ebn0'))-parseFloat(nv('ul_reqEbN0'))-parseFloat(nv('ul_implLoss'));
     const dlM=parseFloat(rv('dl_r_ebn0'))-parseFloat(nv('dl_reqEbN0'))-parseFloat(nv('dl_implLoss'));
     const minM=Math.min(ulM,dlM);
     const lim=ulM<=dlM?T('TC Uplink ↑','TC 上行 ↑'):T('TM Downlink ↓','TM 下行 ↓');
-    const vcls=minM>=3?'good':minM>=0?'warn':'bad';
-    const vtxt=minM>=3?T('✓ TT&C system closes','✓ TT&C 链路闭合'):minM>=0?T('⚠ TT&C margin tight','⚠ TT&C 余量偏紧'):T('✗ TT&C does NOT close','✗ TT&C 链路不通');
-    const resRows=(pre,m)=>[['EIRP',rv(pre+'r_eirp')+' dBW'],['FSPL',rv(pre+'r_fspl')+' dB'],['G/T',rv(pre+'r_gt')+' dB/K'],['C/N₀',rv(pre+'r_cn0')+' dB-Hz'],['Eb/N₀',rv(pre+'r_ebn0')+' dB'],[T('Link margin','链路余量'),(m||0).toFixed(2)+' dB']];
+    const loopBad=['ul_','dl_'].some(pre=>{const v=rv(pre+'r_loop');return v!=='–'&&parseFloat(v)<10;});
+    const rngBad=['ul_','dl_'].some(pre=>{const v=rv(pre+'r_prn0');return v!=='–'&&nv(pre+'ranging')==='on'&&parseFloat(v)<parseFloat(nv(pre+'reqPrN0'));});
+    let vcls=minM>=3?'good':minM>=0?'warn':'bad';
+    if(loopBad) vcls='bad'; else if(rngBad&&vcls==='good') vcls='warn';
+    let vtxt=minM>=3&&!loopBad?T('✓ TT&C system closes','✓ TT&C 链路闭合'):minM>=0&&!loopBad?T('⚠ TT&C margin tight','⚠ TT&C 余量偏紧'):T('✗ TT&C does NOT close','✗ TT&C 链路不通');
+    if(loopBad) vtxt+=' — '+T('carrier loop SNR below 10 dB threshold','载波环 SNR 低于 10 dB 门限');
+    if(rngBad)  vtxt+=' — '+T('ranging Pr/N₀ below requirement','测距 Pr/N₀ 低于要求');
+    const resRows=(pre,m)=>{
+      const out=[['EIRP',rv(pre+'r_eirp')+' dBW'],['FSPL',rv(pre+'r_fspl')+' dB'],['G/T',rv(pre+'r_gt')+' dB/K'],['C/N₀',rv(pre+'r_cn0')+' dB-Hz'],['Eb/N₀',rv(pre+'r_ebn0')+' dB']];
+      if(rv(pre+'r_pcn0')!=='–') out.push(['Pc/N₀',rv(pre+'r_pcn0')+' dB-Hz'],[T('Loop SNR (2B_L)','载波环 SNR (2B_L)'),rv(pre+'r_loop')+' dB']);
+      if(rv(pre+'r_prn0')!=='–') out.push([T('Ranging Pr/N₀','测距 Pr/N₀'),rv(pre+'r_prn0')+' dB-Hz']);
+      out.push([T('Link margin','链路余量'),(m||0).toFixed(2)+' dB']);
+      return out;
+    };
     const cEl=$('ttc-chart');
     const cImg=cEl?`<img src="${cEl.toDataURL('image/png')}" style="width:100%;max-height:220pt">`:''  ;
     body=`<div class="hdr"><div>
@@ -1042,8 +1296,11 @@ function readTTCResults(){
   const dlM=parseFloat(rv('dl_r_ebn0'))-parseFloat(nv('dl_reqEbN0'))-parseFloat(nv('dl_implLoss'));
   const minM=Math.min(ulM,dlM);
   const lim=ulM<=dlM?t('TC Uplink ↑','TC 上行 ↑'):t('TM Downlink ↓','TM 下行 ↓');
+  const dbOr=(id,unit)=>{const v=rv(id);return v==='–'?'–':v+' '+unit;};
   return [[t('TC Uplink margin','TC 上行余量'),ulM.toFixed(2)+' dB'],[t('TM Downlink margin','TM 下行余量'),dlM.toFixed(2)+' dB'],
-    [t('Min margin','最小余量'),minM.toFixed(2)+' dB'],[t('Limiting','瓶颈'),lim]];
+    [t('Min margin','最小余量'),minM.toFixed(2)+' dB'],[t('Limiting','瓶颈'),lim],
+    [t('TC loop SNR','TC 载波环 SNR'),dbOr('ul_r_loop','dB')],[t('TM loop SNR','TM 载波环 SNR'),dbOr('dl_r_loop','dB')],
+    [t('TC ranging Pr/N₀','TC 测距 Pr/N₀'),dbOr('ul_r_prn0','dB-Hz')],[t('TM ranging Pr/N₀','TM 测距 Pr/N₀'),dbOr('dl_r_prn0','dB-Hz')]];
 }
 // Snapshot → apply each scenario → compute() → read result spans → restore.
 // Must stay fully synchronous (no await/setTimeout) so the intermediate
@@ -1119,38 +1376,62 @@ function applyPreset(p){
 
 /* ── TT&C presets ──────────────────────────────────── */
 const ttcPresets={
+  // Classic ESA/CCSDS-style S-band TT&C: TC on a residual carrier with a
+  // sine subcarrier + ranging, TM suppressed-carrier convolutional,
+  // coherent turnaround ×240/221 (2025 → 2199.10 MHz).
   'leo-s-ttc':{
     ttc_alt:550,ttc_elev:10,
     ul_txPower:50,ul_txPowerUnit:'W',ul_txGain:30,ul_txLoss:1,
     ul_freq:2025,ul_freqUnit:'MHz',ul_addLoss:2,
     ul_rxGain:3,ul_sysTemp:500,ul_rxLoss:2,
-    ul_rate:4,ul_rateUnit:'kbps',ul_reqEbN0:9.6,ul_implLoss:2,
+    ul_rate:4,ul_rateUnit:'kbps',
+    ul_modScheme:'pcm-psk-pm-sin',ul_modIdx:1.2,ul_loopBw:100,
+    ul_coding:'bch',ul_reqEbN0:8.3,
+    ul_ranging:'on',ul_rngIdx:0.7,ul_reqPrN0:20,ul_implLoss:2,
     dl_txPower:2,dl_txPowerUnit:'W',dl_txGain:5,dl_txLoss:1.5,
-    dl_freq:2200,dl_freqUnit:'MHz',dl_addLoss:2,
+    dl_freqMode:'240/221',dl_freq:2199.10,dl_freqUnit:'MHz',dl_addLoss:2,
     dl_rxGain:30,dl_sysTemp:150,dl_rxLoss:0.5,
-    dl_rate:64,dl_rateUnit:'kbps',dl_reqEbN0:9.6,dl_implLoss:2,
+    dl_rate:64,dl_rateUnit:'kbps',
+    dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
+    dl_coding:'conv12',dl_reqEbN0:4.5,
+    dl_ranging:'off',dl_rngIdx:0.7,dl_reqPrN0:20,dl_implLoss:2,
   },
+  // Amateur-style CubeSat UHF: suppressed carrier, uncoded, no ranging.
   'cubesat-uhf-ttc':{
     ttc_alt:400,ttc_elev:10,
     ul_txPower:50,ul_txPowerUnit:'W',ul_txGain:10,ul_txLoss:1,
     ul_freq:435,ul_freqUnit:'MHz',ul_addLoss:2.5,
     ul_rxGain:0,ul_sysTemp:600,ul_rxLoss:2,
-    ul_rate:1.2,ul_rateUnit:'kbps',ul_reqEbN0:9.6,ul_implLoss:2,
+    ul_rate:1.2,ul_rateUnit:'kbps',
+    ul_modScheme:'sc',ul_modIdx:1.2,ul_loopBw:100,
+    ul_coding:'uncoded',ul_reqEbN0:9.6,
+    ul_ranging:'off',ul_rngIdx:0.7,ul_reqPrN0:20,ul_implLoss:2,
     dl_txPower:1,dl_txPowerUnit:'W',dl_txGain:2,dl_txLoss:1,
-    dl_freq:437,dl_freqUnit:'MHz',dl_addLoss:2.5,
+    dl_freqMode:'manual',dl_freq:437,dl_freqUnit:'MHz',dl_addLoss:2.5,
     dl_rxGain:10,dl_sysTemp:300,dl_rxLoss:1,
-    dl_rate:9.6,dl_rateUnit:'kbps',dl_reqEbN0:9.6,dl_implLoss:2,
+    dl_rate:9.6,dl_rateUnit:'kbps',
+    dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
+    dl_coding:'uncoded',dl_reqEbN0:9.6,
+    dl_ranging:'off',dl_rngIdx:0.7,dl_reqPrN0:20,dl_implLoss:2,
   },
+  // Modern mixed: S-band TC with short-block LDPC + ranging, X-band
+  // payload-class TM with Conv+RS (cross-band, so no coherent ratio).
   'leo-xs-ttc':{
     ttc_alt:500,ttc_elev:5,
     ul_txPower:20,ul_txPowerUnit:'W',ul_txGain:24,ul_txLoss:1,
     ul_freq:2025,ul_freqUnit:'MHz',ul_addLoss:2,
     ul_rxGain:5,ul_sysTemp:400,ul_rxLoss:1.5,
-    ul_rate:4,ul_rateUnit:'kbps',ul_reqEbN0:9.6,ul_implLoss:2,
+    ul_rate:4,ul_rateUnit:'kbps',
+    ul_modScheme:'pcm-psk-pm-sin',ul_modIdx:1.0,ul_loopBw:100,
+    ul_coding:'ldpc-short',ul_reqEbN0:5.5,
+    ul_ranging:'on',ul_rngIdx:0.6,ul_reqPrN0:20,ul_implLoss:2,
     dl_txPower:5,dl_txPowerUnit:'W',dl_txGain:8,dl_txLoss:1.5,
-    dl_freq:8200,dl_freqUnit:'MHz',dl_addLoss:2.5,
+    dl_freqMode:'manual',dl_freq:8200,dl_freqUnit:'MHz',dl_addLoss:2.5,
     dl_rxGain:45,dl_sysTemp:100,dl_rxLoss:0.5,
-    dl_rate:1,dl_rateUnit:'Mbps',dl_reqEbN0:9.6,dl_implLoss:1.5,
+    dl_rate:1,dl_rateUnit:'Mbps',
+    dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
+    dl_coding:'convrs',dl_reqEbN0:2.6,
+    dl_ranging:'off',dl_rngIdx:0.7,dl_reqPrN0:20,dl_implLoss:1.5,
   },
 };
 function applyTTCPreset(key){
