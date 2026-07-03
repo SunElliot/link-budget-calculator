@@ -128,6 +128,13 @@
     "Carrier Pc/N₀":"载波 Pc/N₀",
     "Loop SNR (2B_L)":"载波环 SNR(2B_L)",
     "Ranging Pr/N₀":"测距 Pr/N₀",
+    // ---- interference / C/(N+I) (2026-07) ----
+    "Interference (optional)":"干扰(可选)",
+    "Adjacent-satellite C/I":"邻星干扰 C/I",
+    "Cross-pol C/I":"交叉极化 C/I",
+    "HPA intermod C/I₃":"HPA 互调 C/I₃",
+    "Aggregate C/I":"合计 C/I",
+    "dB, 0 or blank = ignore":"dB,0 或留空 = 忽略",
     // pre-existing TT&C strings that were missing from DICT
     "Rx line loss":"接收线损",
     "deg — working elevation":"度 — 工作仰角",

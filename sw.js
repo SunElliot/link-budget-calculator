@@ -1,4 +1,4 @@
-const CACHE = 'sattools-v11';
+const CACHE = 'sattools-v12';
 const ASSETS = [
   './',
   './index.html',

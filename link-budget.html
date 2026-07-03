@@ -15,8 +15,8 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=15">
-<script src="i18n.js?v=15"></script>
+<link rel="stylesheet" href="styles.css?v=16">
+<script src="i18n.js?v=16"></script>
 <style>
 /* ── Mode bar ────────────────────────────────── */
 .mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
@@ -169,6 +169,15 @@
         <div class="row"><label>Rx line loss before LNA<span class="hint">dB</span></label><input type="number" id="rxLoss" value="0.5" step="any"></div>
       </div>
 
+      <!-- INTERFERENCE -->
+      <div class="card">
+        <h2><span class="dot"></span>Interference (optional)</h2>
+        <div class="row"><label>Adjacent-satellite C/I<span class="hint">dB, 0 or blank = ignore</span></label><input type="number" id="ciAdj" value="0" step="any"></div>
+        <div class="row"><label>Cross-pol C/I<span class="hint">dB, 0 or blank = ignore</span></label><input type="number" id="ciXpol" value="0" step="any"></div>
+        <div class="row"><label>HPA intermod C/I₃<span class="hint">dB, 0 or blank = ignore</span></label><input type="number" id="ciIm" value="0" step="any"></div>
+        <div id="ci_summary" style="font-size:.85rem;color:var(--muted);margin-top:6px"></div>
+      </div>
+
       <!-- MODEM -->
       <div class="card">
         <h2><span class="dot"></span>Data Link / Modem</h2>
@@ -228,6 +237,7 @@
           <div class="metric"><div class="k">Spectral efficiency</div><div class="v"><span id="r_speceff">–</span> <span class="u">bit/s/Hz</span></div></div>
           <div class="metric"><div class="k">Occupied bandwidth</div><div class="v"><span id="r_bw">–</span> <span class="u">MHz</span></div></div>
           <div class="metric"><div class="k">C/N (received)</div><div class="v"><span id="r_cn">–</span> <span class="u">dB</span></div></div>
+          <div class="metric"><div class="k">C/(N+I)</div><div class="v"><span id="r_cni">–</span> <span class="u">dB</span></div></div>
           <div class="metric"><div class="k">C/N (required)</div><div class="v"><span id="r_cnreq">–</span> <span class="u">dB</span></div></div>
         </div>
         <div id="marginBox" class="margin-box margin-good">–</div>
@@ -276,6 +286,7 @@
       <ol class="howto">
         <li><span class="en-only">Pick a <b>preset</b> or use <b>Single Link / TT&amp;C</b> tabs for different analysis modes.</span><span class="zh-only">选一个<b>预设</b>,或用上方标签切换<b>单链路 / 测控分析</b>模式。</span></li>
         <li><span class="en-only">Fill in Transmitter, Path, Receiver and Modem — power, gains, frequency, slant range, data rate.</span><span class="zh-only">填写发射机、路径、接收机和调制解调器参数——功率、增益、频率、斜距、数据率。</span></li>
+        <li><span class="en-only">Optionally add <b>Interference</b> C/I entries (adjacent satellite, cross-pol, HPA intermod — use ↗ HPA Backoff to estimate C/I₃); the margin is then computed on C/(N+I).</span><span class="zh-only">可选填写<b>干扰</b>各项 C/I（邻星、交叉极化、HPA 互调——可用 ↗ HPA 回退估算 C/I₃），余量将按 C/(N+I) 计算。</span></li>
         <li><span class="en-only">Choose a <b>Modulation / coding</b> scheme; required Eb/N₀ fills automatically.</span><span class="zh-only">选择<b>调制/编码</b>方式,所需 Eb/N₀ 自动填入。</span></li>
         <li><span class="en-only">Read the <b>Link margin</b>: green ≥ 3 dB, amber 0–3 dB, red = link fails.</span><span class="zh-only">看<b>链路余量</b>:绿 ≥ 3 dB、黄 0–3 dB、红 = 链路不通。</span></li>
         <li><span class="en-only">Check <b>Pass Data Budget</b> for contact time and data-per-pass at your data rate.</span><span class="zh-only">查看<b>过境数据预算</b>——当前数据率下每次过境的接触时长与数据量。</span></li>
@@ -293,7 +304,8 @@
         <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
         <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k &nbsp; (k = −228.6 dBW/K/Hz)</p>
         <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
-        <p><strong>Link margin</strong> = Eb/N₀<sub>rx</sub> − Eb/N₀<sub>req</sub> − implementation loss</p>
+        <p><strong>C/(N+I)</strong> = −10·log₁₀(10<sup>−(C/N)/10</sup> + 10<sup>−(C/I)/10</sup>) — aggregate C/I combines adjacent-satellite, cross-pol and intermod entries as powers</p>
+<p><strong>Link margin</strong> = Eb/N₀<sub>rx</sub> − interference degradation − Eb/N₀<sub>req</sub> − implementation loss</p>
         <h2>Typical LEO smallsat values</h2>
         <p>CubeSat S-band downlink: ~2 W TX, 6 dBi patch, 3 m ground dish (~30 dBi), 1500–2500 km slant range, 150–250 K noise temp. Keep at least <strong>3 dB margin</strong> at the minimum operating elevation.</p>
       </div>
@@ -373,6 +385,7 @@
             </div>
           </div>
           <div class="row"><label>Additional losses<span class="hint">dB (atm+rain+pol+pointing)</span></label><input type="number" id="ul_addLoss" value="2" step="any"></div>
+          <div class="row"><label>Aggregate C/I<span class="hint">dB, 0 or blank = ignore</span></label><input type="number" id="ul_ci" value="0" step="any"></div>
           <div class="row"><label>Sat Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="ul_rxGain" value="3" step="any"></div>
           <div class="row"><label>Sat noise temperature<span class="hint">K</span></label><input type="number" id="ul_sysTemp" value="500" step="any"></div>
           <div class="row"><label>Rx line loss<span class="hint">dB</span></label><input type="number" id="ul_rxLoss" value="2" step="any"></div>
@@ -439,6 +452,7 @@
             <div class="metric"><div class="k">G/T</div><div class="v"><span id="ul_r_gt">–</span> <span class="u">dB/K</span></div></div>
             <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="ul_r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
             <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="ul_r_ebn0">–</span> <span class="u">dB</span></div></div>
+            <div class="metric"><div class="k">Eb/(N₀+I₀)</div><div class="v"><span id="ul_r_ebni">–</span> <span class="u">dB</span></div></div>
             <div class="metric"><div class="k">Carrier Pc/N₀</div><div class="v"><span id="ul_r_pcn0">–</span> <span class="u">dB-Hz</span></div></div>
             <div class="metric"><div class="k">Loop SNR (2B_L)</div><div class="v"><span id="ul_r_loop">–</span> <span class="u">dB</span></div></div>
             <div class="metric"><div class="k">Ranging Pr/N₀</div><div class="v"><span id="ul_r_prn0">–</span> <span class="u">dB-Hz</span></div></div>
@@ -482,6 +496,7 @@
             </div>
           </div>
           <div class="row"><label>Additional losses<span class="hint">dB (atm+rain+pol+pointing)</span></label><input type="number" id="dl_addLoss" value="2" step="any"></div>
+          <div class="row"><label>Aggregate C/I<span class="hint">dB, 0 or blank = ignore</span></label><input type="number" id="dl_ci" value="0" step="any"></div>
           <div class="row"><label>Ground Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="dl_rxGain" value="30" step="any"></div>
           <div class="row"><label>Ground noise temperature<span class="hint">K</span></label><input type="number" id="dl_sysTemp" value="150" step="any"></div>
           <div class="row"><label>Rx line loss<span class="hint">dB</span></label><input type="number" id="dl_rxLoss" value="0.5" step="any"></div>
@@ -545,6 +560,7 @@
             <div class="metric"><div class="k">G/T</div><div class="v"><span id="dl_r_gt">–</span> <span class="u">dB/K</span></div></div>
             <div class="metric"><div class="k">C/N₀</div><div class="v"><span id="dl_r_cn0">–</span> <span class="u">dB-Hz</span></div></div>
             <div class="metric"><div class="k">Eb/N₀ (received)</div><div class="v"><span id="dl_r_ebn0">–</span> <span class="u">dB</span></div></div>
+            <div class="metric"><div class="k">Eb/(N₀+I₀)</div><div class="v"><span id="dl_r_ebni">–</span> <span class="u">dB</span></div></div>
             <div class="metric"><div class="k">Carrier Pc/N₀</div><div class="v"><span id="dl_r_pcn0">–</span> <span class="u">dB-Hz</span></div></div>
             <div class="metric"><div class="k">Loop SNR (2B_L)</div><div class="v"><span id="dl_r_loop">–</span> <span class="u">dB</span></div></div>
             <div class="metric"><div class="k">Ranging Pr/N₀</div><div class="v"><span id="dl_r_prn0">–</span> <span class="u">dB-Hz</span></div></div>
@@ -559,11 +575,13 @@
       <span class="en-only">Coding thresholds are typical CCSDS reference values at BER ≈ 1e-5 — confirm against your mission spec.
       Residual-carrier power split: PCM/PM &amp; square subcarrier P<sub>c</sub>/P<sub>t</sub> = cos²m, P<sub>d</sub>/P<sub>t</sub> = sin²m;
       sine subcarrier P<sub>c</sub>/P<sub>t</sub> = J₀²(m), P<sub>d</sub>/P<sub>t</sub> = 2J₁²(m). Ranging modeled as a sine major tone
-      (higher-order intermod products discarded); turnaround noise regeneration is not modeled. Carrier loop threshold: SNR ≥ 10 dB in 2B<sub>L</sub>.</span>
+      (higher-order intermod products discarded); turnaround noise regeneration is not modeled. Carrier loop threshold: SNR ≥ 10 dB in 2B<sub>L</sub>.
+      Aggregate C/I is referenced to the bit-rate bandwidth and degrades the data channel only (Eb/(N₀+I₀)); carrier loop and ranging Pr/N₀ are not degraded by it.</span>
       <span class="zh-only">编码门限为 BER ≈ 1e-5 下的 CCSDS 典型参考值，请以任务规范为准。
       残留载波功率分配：PCM/PM 及方波副载波 P<sub>c</sub>/P<sub>t</sub> = cos²m、P<sub>d</sub>/P<sub>t</sub> = sin²m；
       正弦副载波 P<sub>c</sub>/P<sub>t</sub> = J₀²(m)、P<sub>d</sub>/P<sub>t</sub> = 2J₁²(m)。测距按正弦主音建模（高阶互调分量按损失计），
-      未建模转发噪声再生。载波环门限：2B<sub>L</sub> 内 SNR ≥ 10 dB。</span>
+      未建模转发噪声再生。载波环门限：2B<sub>L</sub> 内 SNR ≥ 10 dB。
+      合计 C/I 以比特率带宽为参考、只作用于数据信道（Eb/(N₀+I₀)），不影响载波环与测距 Pr/N₀。</span>
     </p>
 
     <!-- TT&C summary -->
@@ -601,7 +619,7 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
-<script src="share.js?v=15"></script>
+<script src="share.js?v=16"></script>
 <script src="linkout.js?v=1"></script>
 <script src="modcod.js?v=1"></script>
 <script>
@@ -630,6 +648,30 @@ function rateBps(val,unit){
 }
 const num = id => parseFloat($(id)?.value) || 0;
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+
+/* ── Interference (C/(N+I)) helpers ─────────────────────
+   Each C/I entry is carrier-to-interference in dB; 0 / blank / negative
+   means "not included". Entries combine as interference powers:
+   C/I_agg = −10·log₁₀( Σ 10^(−C/I_i /10) ). */
+function aggCI(ids){
+  let inv=0;
+  ids.forEach(id=>{
+    const v=parseFloat($(id)?.value);
+    if(isFinite(v)&&v>0) inv+=Math.pow(10,-v/10);
+  });
+  return inv>0 ? -10*Math.log10(inv) : NaN;
+}
+/* Interference is assumed noise-like across the C/I reference bandwidth
+   (the occupied bandwidth when the MODCOD is known, else the bit-rate
+   bandwidth). Returns the Eb degradation in dB plus display values. */
+function interfCombine(cn0, Rb, bwHz, ci){
+  if(!isFinite(ci)) return {d:0, ci:NaN, cni:NaN};
+  const Bref=(isFinite(bwHz)&&bwHz>0)?bwHz:Rb;
+  if(!(Bref>0)) return {d:0, ci, cni:NaN};
+  const cnB=cn0-10*Math.log10(Bref);
+  const cni=-10*Math.log10(Math.pow(10,-cnB/10)+Math.pow(10,-ci/10));
+  return {d:cnB-cni, ci, cni};
+}
 
 /* ── Single-link compute ───────────────────────────── */
 function compute(){
@@ -661,13 +703,15 @@ function compute(){
   const gt     = rxG-rxL-(Tsys>0 ? 10*Math.log10(Tsys) : 0);
   const cn0    = eirp-totL+gt-K_BOLTZMANN_DBW;
   const ebn0   = Rb>0 ? cn0-10*Math.log10(Rb) : 0;
-  const margin = ebn0-reqEb-impl;
 
   const specEff = (!isCustom&&bps&&cr) ? bps*cr : NaN;
   const symRate = specEff>0 ? Rb/specEff : NaN;
   const bwHz    = symRate>0 ? symRate*(1+alpha) : NaN;
   const cnRx    = bwHz>0 ? cn0-10*Math.log10(bwHz) : NaN;
   const cnReq   = specEff>0 ? reqEb+10*Math.log10(specEff/(1+alpha)) : NaN;
+
+  const intf   = interfCombine(cn0, Rb, bwHz, aggCI(['ciAdj','ciXpol','ciIm']));
+  const margin = ebn0-intf.d-reqEb-impl;
 
   const f2 = x => (Math.round(x*100)/100).toFixed(2);
   const fd = x  => isFinite(x) ? f2(x) : '–';
@@ -681,7 +725,16 @@ function compute(){
   $('r_speceff').textContent = fd(specEff);
   $('r_bw').textContent      = isFinite(bwHz) ? f2(bwHz/1e6) : '–';
   $('r_cn').textContent      = fd(cnRx);
+  $('r_cni').textContent     = fd(intf.cni);
   $('r_cnreq').textContent   = fd(cnReq);
+
+  const ciBox=$('ci_summary');
+  if(ciBox){
+    ciBox.innerHTML = isFinite(intf.ci)
+      ? t(`Aggregate C/I: <b>${f2(intf.ci)} dB</b> → Eb/N₀ degradation <b>${f2(intf.d)} dB</b>`,
+          `合计 C/I:<b>${f2(intf.ci)} dB</b> → Eb/N₀ 恶化 <b>${f2(intf.d)} dB</b>`)
+      : t('No interference included (all entries 0 / blank).','未计入干扰(所有条目为 0 或留空)。');
+  }
 
   const box = $('marginBox');
   box.className = 'margin-box '+(margin>=3?'margin-good':margin>=0?'margin-warn':'margin-bad');
@@ -708,8 +761,11 @@ function compute(){
     [t('Spectral efficiency','频谱效率'),           fd(specEff)+' bit/s/Hz'],
     [t('Occupied bandwidth','占用带宽'),            isFinite(bwHz)?f2(bwHz/1e6)+' MHz':'–'],
     [t('C/N received','接收 C/N'),                 fd(cnRx)+' dB'],
+    [t('Aggregate C/I','合计 C/I'),                isFinite(intf.ci)?f2(intf.ci)+' dB':t('not included','未计入')],
+    [t('C/(N+I)','C/(N+I)'),                      fd(intf.cni)+' dB'],
     [t('C/N required','所需 C/N'),                 fd(cnReq)+' dB'],
     [t('= Eb/N₀ received','= 接收 Eb/N₀'),        f2(ebn0)+' dB'],
+    [t('Interference degradation','干扰恶化量'),   '−'+f2(intf.d)+' dB'],
     [t('Required Eb/N₀','所需 Eb/N₀'),            '−'+f2(reqEb)+' dB'],
     [t('Implementation loss','实现损耗'),           '−'+f2(impl)+' dB'],
     [t('= LINK MARGIN','= 链路余量'),              f2(margin)+' dB'],
@@ -739,7 +795,12 @@ function marginForDistance(d){
   const cn0  = eirp-(fspl+extra)+gt-K_BOLTZMANN_DBW;
   const Rb   = rateBps(num('rate'),$('rateUnit').value);
   const ebn0 = Rb>0?cn0-10*Math.log10(Rb):0;
-  return ebn0-num('reqEbN0')-num('implLoss');
+  const sel  = $('modcod').selectedOptions[0];
+  const specEff = ($('modcod').value!=='custom' && parseFloat(sel.dataset.bps) && parseFloat(sel.dataset.cr))
+    ? parseFloat(sel.dataset.bps)*parseFloat(sel.dataset.cr) : NaN;
+  const bwHz = specEff>0 ? Rb/specEff*(1+num('rolloff')) : NaN;
+  const intf = interfCombine(cn0, Rb, bwHz, aggCI(['ciAdj','ciXpol','ciIm']));
+  return ebn0-intf.d-num('reqEbN0')-num('implLoss');
 }
 
 function drawChart(){
@@ -869,7 +930,18 @@ function computeTTCLink(pre, distKm){
   const pdDb     = 10*Math.log10(Math.max(split.pd,1e-12));
 
   const ebn0 = Rb>0 ? cn0+pdDb-10*Math.log10(Rb) : 0;
-  const margin = ebn0-n('reqEbN0')-n('implLoss');
+
+  // Interference: C/I is total-carrier to interference, referenced to the
+  // bit-rate bandwidth; the data channel sees Eb/I0 = C/I + data fraction.
+  const ciV = n('ci');
+  const ciOn = ciV>0;
+  let ebni=NaN, dI=0;
+  if(ciOn){
+    const ebi0 = ciV+pdDb;
+    ebni = -10*Math.log10(Math.pow(10,-ebn0/10)+Math.pow(10,-ebi0/10));
+    dI = ebn0-ebni;
+  }
+  const margin = (ciOn?ebni:ebn0)-n('reqEbN0')-n('implLoss');
 
   let pcN0=NaN, loopSnr=NaN, loopOk=true, prN0=NaN, rngMargin=NaN, rngOk=true;
   if(residual){
@@ -884,7 +956,8 @@ function computeTTCLink(pre, distKm){
     }
   }
   return {eirp,fspl,totL,gt,cn0,ebn0,margin,Rb,
-          residual,rngEnabled:rngOn,pcN0,loopSnr,loopOk,prN0,rngMargin,rngOk};
+          residual,rngEnabled:rngOn,pcN0,loopSnr,loopOk,prN0,rngMargin,rngOk,
+          ciOn,ebni,dI};
 }
 
 /* Show/hide residual-carrier & ranging rows, apply coding → required
@@ -939,6 +1012,8 @@ function ttcBoxClass(L){
 }
 function ttcBoxExtras(L, f2){
   let extra='';
+  if(L.ciOn)
+    extra+=` · ${t('interference','干扰恶化')} −${f2(L.dI)} dB`;
   if(isFinite(L.loopSnr))
     extra+=` · ${t('carrier loop','载波环')} ${f2(L.loopSnr)} dB ${L.loopOk?'✓':'✗'}`;
   if(L.rngEnabled)
@@ -967,12 +1042,13 @@ function computeTTC(){
   $('ul_r_gt').textContent   = f2(ul.gt);
   $('ul_r_cn0').textContent  = f2(ul.cn0);
   $('ul_r_ebn0').textContent = f2(ul.ebn0);
+  $('ul_r_ebni').textContent = fd(ul.ebni);
   $('ul_r_pcn0').textContent = fd(ul.pcN0);
   $('ul_r_loop').textContent = fd(ul.loopSnr);
   $('ul_r_prn0').textContent = fd(ul.prN0);
   const ulBox=$('ul_marginBox');
   ulBox.className='margin-box '+ttcBoxClass(ul);
-  ulBox.innerHTML=`${t('TC Uplink margin','TC 上行余量')}: <span>${f2(ul.margin)}</span> dB${ttcBoxExtras(ul,f2)}`;
+  ulBox.innerHTML=`${t('TC Uplink margin','TC 上行余量')}: <span id="ul_r_margin">${f2(ul.margin)}</span> dB${ttcBoxExtras(ul,f2)}`;
 
   // DL result
   $('dl_r_eirp').textContent = f2(dl.eirp);
@@ -980,12 +1056,13 @@ function computeTTC(){
   $('dl_r_gt').textContent   = f2(dl.gt);
   $('dl_r_cn0').textContent  = f2(dl.cn0);
   $('dl_r_ebn0').textContent = f2(dl.ebn0);
+  $('dl_r_ebni').textContent = fd(dl.ebni);
   $('dl_r_pcn0').textContent = fd(dl.pcN0);
   $('dl_r_loop').textContent = fd(dl.loopSnr);
   $('dl_r_prn0').textContent = fd(dl.prN0);
   const dlBox=$('dl_marginBox');
   dlBox.className='margin-box '+ttcBoxClass(dl);
-  dlBox.innerHTML=`${t('TM Downlink margin','TM 下行余量')}: <span>${f2(dl.margin)}</span> dB${ttcBoxExtras(dl,f2)}`;
+  dlBox.innerHTML=`${t('TM Downlink margin','TM 下行余量')}: <span id="dl_r_margin">${f2(dl.margin)}</span> dB${ttcBoxExtras(dl,f2)}`;
 
   // Summary
   const minM = Math.min(ul.margin, dl.margin);
@@ -1129,6 +1206,9 @@ function exportPDF(){
       [T('Rx antenna gain','接收天线增益'), nv('rxGain')+' dBi'],
       [T('System noise temp','系统噪温'),   nv('sysTemp')+' K'],
       [T('Rx line loss','接收线损'),        nv('rxLoss')+' dB'],
+      [T('Adjacent-satellite C/I','邻星干扰 C/I'), nv('ciAdj')+' dB'],
+      [T('Cross-pol C/I','交叉极化 C/I'),   nv('ciXpol')+' dB'],
+      [T('HPA intermod C/I₃','HPA 互调 C/I₃'), nv('ciIm')+' dB'],
       [T('Data rate','数据率'),             nv('rate')+' '+nv('rateUnit')],
       [T('Modulation / coding','调制/编码'), $('modcod')?.selectedOptions[0]?.textContent.trim()||''],
       [T('Required Eb/N₀','所需 Eb/N₀'),   nv('reqEbN0')+' dB'],
@@ -1146,6 +1226,7 @@ function exportPDF(){
       ['G/T',rv('r_gt')+' dB/K'],
       ['C/N₀',rv('r_cn0')+' dB-Hz'],
       ['Eb/N₀ '+T('(received)','(接收)'), rv('r_ebn0')+' dB'],
+      ['C/(N+I)',rv('r_cni')+' dB'],
       [T('Occupied bandwidth','占用带宽'), rv('r_bw')+' MHz'],
       [T('Link margin','链路余量'),        rv('r_margin')+' dB'],
     ];
@@ -1174,7 +1255,7 @@ function exportPDF(){
       const rngOn=residual && nv(pre+'ranging')==='on';
       const out=[[label,''],[T('Tx power','发射功率'),nv(pre+'txPower')+' '+nv(pre+'txPowerUnit')],[T('Tx gain','天线增益'),nv(pre+'txGain')+' dBi'],[T('Tx loss','线损'),nv(pre+'txLoss')+' dB'],[T('Frequency','频率'),nv(pre+'freq')+' '+nv(pre+'freqUnit')]];
       if(pre==='dl_' && nv('dl_freqMode')!=='manual') out.push([T('TM frequency source','TM 频率来源'),T('coherent ×','相干转发 ×')+nv('dl_freqMode')]);
-      out.push([T('Additional losses','附加损耗'),nv(pre+'addLoss')+' dB'],[T('Rx gain','接收增益'),nv(pre+'rxGain')+' dBi'],[T('Noise temp','噪温'),nv(pre+'sysTemp')+' K'],[T('Rx loss','接收线损'),nv(pre+'rxLoss')+' dB'],[T('Data rate','数据率'),nv(pre+'rate')+' '+nv(pre+'rateUnit')],[T('Modulation scheme','调制体制'),selTxt(pre+'modScheme')]);
+      out.push([T('Additional losses','附加损耗'),nv(pre+'addLoss')+' dB'],[T('Aggregate C/I','合计 C/I'),(parseFloat(nv(pre+'ci'))>0?nv(pre+'ci')+' dB':T('not included','未计入'))],[T('Rx gain','接收增益'),nv(pre+'rxGain')+' dBi'],[T('Noise temp','噪温'),nv(pre+'sysTemp')+' K'],[T('Rx loss','接收线损'),nv(pre+'rxLoss')+' dB'],[T('Data rate','数据率'),nv(pre+'rate')+' '+nv(pre+'rateUnit')],[T('Modulation scheme','调制体制'),selTxt(pre+'modScheme')]);
       if(residual){
         out.push([T('Data mod index','数据调制指数'),nv(pre+'modIdx')+' rad'],[T('Carrier loop bandwidth','载波环带宽'),nv(pre+'loopBw')+' Hz']);
       }
@@ -1185,8 +1266,8 @@ function exportPDF(){
       out.push([T('Impl. loss','实现损耗'),nv(pre+'implLoss')+' dB']);
       return out;
     };
-    const ulM=parseFloat(rv('ul_r_ebn0'))-parseFloat(nv('ul_reqEbN0'))-parseFloat(nv('ul_implLoss'));
-    const dlM=parseFloat(rv('dl_r_ebn0'))-parseFloat(nv('dl_reqEbN0'))-parseFloat(nv('dl_implLoss'));
+    const ulM=parseFloat(rv('ul_r_margin'));
+    const dlM=parseFloat(rv('dl_r_margin'));
     const minM=Math.min(ulM,dlM);
     const lim=ulM<=dlM?T('TC Uplink ↑','TC 上行 ↑'):T('TM Downlink ↓','TM 下行 ↓');
     const loopBad=['ul_','dl_'].some(pre=>{const v=rv(pre+'r_loop');return v!=='–'&&parseFloat(v)<10;});
@@ -1198,6 +1279,7 @@ function exportPDF(){
     if(rngBad)  vtxt+=' — '+T('ranging Pr/N₀ below requirement','测距 Pr/N₀ 低于要求');
     const resRows=(pre,m)=>{
       const out=[['EIRP',rv(pre+'r_eirp')+' dBW'],['FSPL',rv(pre+'r_fspl')+' dB'],['G/T',rv(pre+'r_gt')+' dB/K'],['C/N₀',rv(pre+'r_cn0')+' dB-Hz'],['Eb/N₀',rv(pre+'r_ebn0')+' dB']];
+      if(rv(pre+'r_ebni')!=='–') out.push(['Eb/(N₀+I₀)',rv(pre+'r_ebni')+' dB']);
       if(rv(pre+'r_pcn0')!=='–') out.push(['Pc/N₀',rv(pre+'r_pcn0')+' dB-Hz'],[T('Loop SNR (2B_L)','载波环 SNR (2B_L)'),rv(pre+'r_loop')+' dB']);
       if(rv(pre+'r_prn0')!=='–') out.push([T('Ranging Pr/N₀','测距 Pr/N₀'),rv(pre+'r_prn0')+' dB-Hz']);
       out.push([T('Link margin','链路余量'),(m||0).toFixed(2)+' dB']);
@@ -1292,8 +1374,10 @@ function readSingleResults(){
     [t('Link margin','链路余量'),rv('r_margin')+' dB']];
 }
 function readTTCResults(){
-  const ulM=parseFloat(rv('ul_r_ebn0'))-parseFloat(nv('ul_reqEbN0'))-parseFloat(nv('ul_implLoss'));
-  const dlM=parseFloat(rv('dl_r_ebn0'))-parseFloat(nv('dl_reqEbN0'))-parseFloat(nv('dl_implLoss'));
+  // margins come straight from the just-rendered margin boxes so they can
+  // never drift from computeTTCLink() (power split, interference, …)
+  const ulM=parseFloat(rv('ul_r_margin'));
+  const dlM=parseFloat(rv('dl_r_margin'));
   const minM=Math.min(ulM,dlM);
   const lim=ulM<=dlM?t('TC Uplink ↑','TC 上行 ↑'):t('TM Downlink ↓','TM 下行 ↓');
   const dbOr=(id,unit)=>{const v=rv(id);return v==='–'?'–':v+' '+unit;};
@@ -1363,10 +1447,10 @@ function renderScenarioPanel(){
 
 /* ── Single-link presets ───────────────────────────── */
 const presets={
-  'leo-s':       {txPower:2,txPowerUnit:'W',txGain:6,txLoss:1,freq:2200,freqUnit:'MHz',dist:2000,atmLoss:0.5,rainLoss:0,polLoss:0.5,pointLoss:0.5,rxGain:30,sysTemp:200,rxLoss:0.5,rate:1,rateUnit:'Mbps',modcod:'s2-qpsk34',rolloff:0.2,implLoss:1},
-  'cubesat-uhf': {txPower:1,txPowerUnit:'W',txGain:2,txLoss:0.5,freq:437,freqUnit:'MHz',dist:1500,atmLoss:0.3,rainLoss:0,polLoss:1,pointLoss:0.5,rxGain:15,sysTemp:300,rxLoss:1,rate:9.6,rateUnit:'kbps',modcod:'u-bpsk',rolloff:0.35,implLoss:2},
-  'leo-x':       {txPower:5,txPowerUnit:'W',txGain:8,txLoss:1.5,freq:8200,freqUnit:'MHz',dist:2200,atmLoss:1,rainLoss:1,polLoss:0.5,pointLoss:0.5,rxGain:45,sysTemp:150,rxLoss:0.5,rate:150,rateUnit:'Mbps',modcod:'s2-8psk34',rolloff:0.2,implLoss:1.5},
-  'geo-ku':      {txPower:20,txPowerUnit:'W',txGain:35,txLoss:1,freq:12000,freqUnit:'MHz',dist:38500,atmLoss:0.5,rainLoss:3,polLoss:0.5,pointLoss:0.5,rxGain:40,sysTemp:120,rxLoss:0.5,rate:36,rateUnit:'Mbps',modcod:'s2-16a34',rolloff:0.25,implLoss:1.5},
+  'leo-s':       {txPower:2,txPowerUnit:'W',txGain:6,txLoss:1,freq:2200,freqUnit:'MHz',dist:2000,atmLoss:0.5,rainLoss:0,polLoss:0.5,pointLoss:0.5,rxGain:30,sysTemp:200,rxLoss:0.5,rate:1,rateUnit:'Mbps',modcod:'s2-qpsk34',rolloff:0.2,implLoss:1,ciAdj:0,ciXpol:0,ciIm:0},
+  'cubesat-uhf': {txPower:1,txPowerUnit:'W',txGain:2,txLoss:0.5,freq:437,freqUnit:'MHz',dist:1500,atmLoss:0.3,rainLoss:0,polLoss:1,pointLoss:0.5,rxGain:15,sysTemp:300,rxLoss:1,rate:9.6,rateUnit:'kbps',modcod:'u-bpsk',rolloff:0.35,implLoss:2,ciAdj:0,ciXpol:0,ciIm:0},
+  'leo-x':       {txPower:5,txPowerUnit:'W',txGain:8,txLoss:1.5,freq:8200,freqUnit:'MHz',dist:2200,atmLoss:1,rainLoss:1,polLoss:0.5,pointLoss:0.5,rxGain:45,sysTemp:150,rxLoss:0.5,rate:150,rateUnit:'Mbps',modcod:'s2-8psk34',rolloff:0.2,implLoss:1.5,ciAdj:0,ciXpol:0,ciIm:0},
+  'geo-ku':      {txPower:20,txPowerUnit:'W',txGain:35,txLoss:1,freq:12000,freqUnit:'MHz',dist:38500,atmLoss:0.5,rainLoss:3,polLoss:0.5,pointLoss:0.5,rxGain:40,sysTemp:120,rxLoss:0.5,rate:36,rateUnit:'Mbps',modcod:'s2-16a34',rolloff:0.25,implLoss:1.5,ciAdj:27,ciXpol:30,ciIm:21},
 };
 function applyPreset(p){
   const c=presets[p];if(!c)return;
@@ -1382,14 +1466,14 @@ const ttcPresets={
   'leo-s-ttc':{
     ttc_alt:550,ttc_elev:10,
     ul_txPower:50,ul_txPowerUnit:'W',ul_txGain:30,ul_txLoss:1,
-    ul_freq:2025,ul_freqUnit:'MHz',ul_addLoss:2,
+    ul_freq:2025,ul_freqUnit:'MHz',ul_addLoss:2,ul_ci:0,
     ul_rxGain:3,ul_sysTemp:500,ul_rxLoss:2,
     ul_rate:4,ul_rateUnit:'kbps',
     ul_modScheme:'pcm-psk-pm-sin',ul_modIdx:1.2,ul_loopBw:100,
     ul_coding:'bch',ul_reqEbN0:8.3,
     ul_ranging:'on',ul_rngIdx:0.7,ul_reqPrN0:20,ul_implLoss:2,
     dl_txPower:2,dl_txPowerUnit:'W',dl_txGain:5,dl_txLoss:1.5,
-    dl_freqMode:'240/221',dl_freq:2199.10,dl_freqUnit:'MHz',dl_addLoss:2,
+    dl_freqMode:'240/221',dl_freq:2199.10,dl_freqUnit:'MHz',dl_addLoss:2,dl_ci:0,
     dl_rxGain:30,dl_sysTemp:150,dl_rxLoss:0.5,
     dl_rate:64,dl_rateUnit:'kbps',
     dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
@@ -1400,14 +1484,14 @@ const ttcPresets={
   'cubesat-uhf-ttc':{
     ttc_alt:400,ttc_elev:10,
     ul_txPower:50,ul_txPowerUnit:'W',ul_txGain:10,ul_txLoss:1,
-    ul_freq:435,ul_freqUnit:'MHz',ul_addLoss:2.5,
+    ul_freq:435,ul_freqUnit:'MHz',ul_addLoss:2.5,ul_ci:0,
     ul_rxGain:0,ul_sysTemp:600,ul_rxLoss:2,
     ul_rate:1.2,ul_rateUnit:'kbps',
     ul_modScheme:'sc',ul_modIdx:1.2,ul_loopBw:100,
     ul_coding:'uncoded',ul_reqEbN0:9.6,
     ul_ranging:'off',ul_rngIdx:0.7,ul_reqPrN0:20,ul_implLoss:2,
     dl_txPower:1,dl_txPowerUnit:'W',dl_txGain:2,dl_txLoss:1,
-    dl_freqMode:'manual',dl_freq:437,dl_freqUnit:'MHz',dl_addLoss:2.5,
+    dl_freqMode:'manual',dl_freq:437,dl_freqUnit:'MHz',dl_addLoss:2.5,dl_ci:0,
     dl_rxGain:10,dl_sysTemp:300,dl_rxLoss:1,
     dl_rate:9.6,dl_rateUnit:'kbps',
     dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
@@ -1419,14 +1503,14 @@ const ttcPresets={
   'leo-xs-ttc':{
     ttc_alt:500,ttc_elev:5,
     ul_txPower:20,ul_txPowerUnit:'W',ul_txGain:24,ul_txLoss:1,
-    ul_freq:2025,ul_freqUnit:'MHz',ul_addLoss:2,
+    ul_freq:2025,ul_freqUnit:'MHz',ul_addLoss:2,ul_ci:0,
     ul_rxGain:5,ul_sysTemp:400,ul_rxLoss:1.5,
     ul_rate:4,ul_rateUnit:'kbps',
     ul_modScheme:'pcm-psk-pm-sin',ul_modIdx:1.0,ul_loopBw:100,
     ul_coding:'ldpc-short',ul_reqEbN0:5.5,
     ul_ranging:'on',ul_rngIdx:0.6,ul_reqPrN0:20,ul_implLoss:2,
     dl_txPower:5,dl_txPowerUnit:'W',dl_txGain:8,dl_txLoss:1.5,
-    dl_freqMode:'manual',dl_freq:8200,dl_freqUnit:'MHz',dl_addLoss:2.5,
+    dl_freqMode:'manual',dl_freq:8200,dl_freqUnit:'MHz',dl_addLoss:2.5,dl_ci:0,
     dl_rxGain:45,dl_sysTemp:100,dl_rxLoss:0.5,
     dl_rate:1,dl_rateUnit:'Mbps',
     dl_modScheme:'sc',dl_modIdx:1.2,dl_loopBw:100,
@@ -1483,6 +1567,8 @@ const JUMP_LINKS = {
   rainLoss: [['rain.html','Rain Fade','雨衰']],
   atmLoss:  [['gas.html','Gas Atten.','气体衰减']],
   txPower:  [['hpa-backoff.html','HPA Backoff','HPA 回退']],
+  ciIm:     [['hpa-backoff.html','HPA Backoff','HPA 回退']],
+  ci:       [['hpa-backoff.html','HPA Backoff','HPA 回退']],
 };
 /* Injected after i18n.js has already captured the page's text nodes, so
    the shared DICT walker never sees these labels — each anchor carries
