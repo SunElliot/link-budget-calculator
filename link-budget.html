@@ -15,8 +15,8 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=14">
-<script src="i18n.js?v=14"></script>
+<link rel="stylesheet" href="styles.css?v=15">
+<script src="i18n.js?v=15"></script>
 <style>
 /* ── Mode bar ────────────────────────────────── */
 .mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
@@ -601,7 +601,7 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
-<script src="share.js?v=14"></script>
+<script src="share.js?v=15"></script>
 <script src="linkout.js?v=1"></script>
 <script src="modcod.js?v=1"></script>
 <script>
@@ -1477,13 +1477,21 @@ function fillReqEbN0(){
    a tool directly (no jump-out link, no `back` param) never shows that
    bar and never touches this page — nothing is written anywhere. */
 const JUMP_LINKS = {
-  txGain:   [['antenna.html','Antenna'],['phased-array.html','Array']],
-  rxGain:   [['antenna.html','Antenna'],['phased-array.html','Array']],
-  sysTemp:  [['gt.html','G/T'],['noise-figure.html','Noise Fig.']],
-  rainLoss: [['rain.html','Rain Fade']],
-  atmLoss:  [['gas.html','Gas Atten.']],
-  txPower:  [['hpa-backoff.html','HPA Backoff']],
+  txGain:   [['antenna.html','Antenna','天线'],['phased-array.html','Array','相控阵']],
+  rxGain:   [['antenna.html','Antenna','天线'],['phased-array.html','Array','相控阵']],
+  sysTemp:  [['gt.html','G/T','G/T'],['noise-figure.html','Noise Fig.','噪声系数']],
+  rainLoss: [['rain.html','Rain Fade','雨衰']],
+  atmLoss:  [['gas.html','Gas Atten.','气体衰减']],
+  txPower:  [['hpa-backoff.html','HPA Backoff','HPA 回退']],
 };
+/* Injected after i18n.js has already captured the page's text nodes, so
+   the shared DICT walker never sees these labels — each anchor carries
+   its own en/zh pair and is refreshed on every language switch. */
+function refreshJumpLinkLabels(){
+  document.querySelectorAll('a.jump-link').forEach(a=>{
+    if(a.dataset.en) a.textContent = '↗ '+t(a.dataset.en, a.dataset.zh);
+  });
+}
 function freqFieldFor(fieldId){
   const base = fieldId.replace(/^(ul_|dl_)/,'');
   if(base!=='txGain' && base!=='rxGain' && base!=='rainLoss' && base!=='atmLoss') return null;
@@ -1522,9 +1530,11 @@ function injectJumpLinks(){
       if(!label || label.querySelector('.jump-links')) return;
       const wrap = document.createElement('span');
       wrap.className = 'jump-links';
-      JUMP_LINKS[base].forEach(([tool,name])=>{
+      JUMP_LINKS[base].forEach(([tool,nameEn,nameZh])=>{
         const a = document.createElement('a');
-        a.href = '#'; a.className = 'jump-link'; a.textContent = '↗ '+name;
+        a.href = '#'; a.className = 'jump-link';
+        a.dataset.en = nameEn; a.dataset.zh = nameZh;
+        a.textContent = '↗ '+t(nameEn, nameZh);
         a.addEventListener('click', e=>{ e.preventDefault(); jumpOut(tool, fieldId, freqFieldFor(fieldId)); });
         wrap.appendChild(a);
       });
@@ -1576,7 +1586,7 @@ fillReqEbN0();
 compute();
 injectJumpLinks();
 if(window.ShareTool) ShareTool.initButton();
-if(window.onLang) window.onLang(()=>{compute();if(currentMode==='ttc')computeTTC();});
+if(window.onLang) window.onLang(()=>{refreshJumpLinkLabels();compute();if(currentMode==='ttc')computeTTC();});
 // Deep-link via ?mode=ttc (must be after all consts are initialized)
 if(new URLSearchParams(location.search).get('mode')==='ttc'){ switchMode('ttc'); applyTTCPreset('leo-s-ttc'); }
 // A jump-out round trip takes priority over the ?mode=ttc deep link above.
