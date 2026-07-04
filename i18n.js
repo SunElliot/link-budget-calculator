@@ -164,6 +164,10 @@
     "Min Tx antenna gain":"最小发射天线增益",
     "Min Rx antenna gain":"最小接收天线增益",
     "Max slant range":"最大斜距",
+    "Max TC data rate":"最大 TC 数据率",
+    "Min ground Tx power":"最小地面发射功率",
+    "Max TM data rate":"最大 TM 数据率",
+    "Min satellite Tx power":"最小卫星发射功率",
     // ---- interference / C/(N+I) (2026-07) ----
     "Interference (optional)":"干扰(可选)",
     "Adjacent-satellite C/I":"邻星干扰 C/I",
