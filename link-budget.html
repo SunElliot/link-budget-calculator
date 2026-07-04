@@ -15,8 +15,8 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=20">
-<script src="i18n.js?v=20"></script>
+<link rel="stylesheet" href="styles.css?v=21">
+<script src="i18n.js?v=21"></script>
 <style>
 /* ── Mode bar ────────────────────────────────── */
 .mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
@@ -314,11 +314,15 @@
       <ol class="howto">
         <li><span class="en-only">Pick a <b>preset</b> or use <b>Single Link / TT&amp;C</b> tabs for different analysis modes.</span><span class="zh-only">选一个<b>预设</b>,或用上方标签切换<b>单链路 / 测控分析</b>模式。</span></li>
         <li><span class="en-only">Fill in Transmitter, Path, Receiver and Modem — power, gains, frequency, slant range, data rate.</span><span class="zh-only">填写发射机、路径、接收机和调制解调器参数——功率、增益、频率、斜距、数据率。</span></li>
+        <li><span class="en-only">Don't know a value? Click the small <b>↗ link</b> next to Tx power, antenna gains, noise temperature or rain/atmospheric loss — it opens the matching tool, and its <b>return bar</b> brings the computed value straight back into this field.</span><span class="zh-only">某个参数不会填?点字段旁的 <b>↗ 小链接</b>(发射功率、天线增益、噪温、雨衰/大气损耗等)——跳到对应工具计算,再点其顶部<b>返回条</b>即可把结果直接带回本字段。</span></li>
         <li><span class="en-only">Optionally add <b>Interference</b> C/I entries (adjacent satellite, cross-pol, HPA intermod — use ↗ HPA Backoff to estimate C/I₃); the margin is then computed on C/(N+I).</span><span class="zh-only">可选填写<b>干扰</b>各项 C/I（邻星、交叉极化、HPA 互调——可用 ↗ HPA 回退估算 C/I₃），余量将按 C/(N+I) 计算。</span></li>
         <li><span class="en-only">For a downlink, turn on <b>Rain sky-noise coupling</b> — rain/gas absorption also raises the receive noise temperature (ΔT = T_m·(1−10^(−A/10))), often costing as much margin as the fade itself.</span><span class="zh-only">下行链路建议开启<b>雨致天空噪声耦合</b>——雨/大气吸收同时抬升接收噪温（ΔT = T_m·(1−10^(−A/10))），其代价常与雨衰本身相当。</span></li>
         <li><span class="en-only">Choose a <b>Modulation / coding</b> scheme; required Eb/N₀ fills automatically.</span><span class="zh-only">选择<b>调制/编码</b>方式,所需 Eb/N₀ 自动填入。</span></li>
         <li><span class="en-only">Read the <b>Link margin</b>: green ≥ 3 dB, amber 0–3 dB, red = link fails.</span><span class="zh-only">看<b>链路余量</b>:绿 ≥ 3 dB、黄 0–3 dB、红 = 链路不通。</span></li>
+        <li><span class="en-only">Set the <b>orbit altitude</b> to sweep the <b>Margin vs Elevation</b> chart over a whole pass — it marks the lowest elevation where the link closes (≥ 0 dB) and where it is comfortable (≥ 3 dB).</span><span class="zh-only">设置<b>轨道高度</b>,<b>余量-仰角曲线</b>会扫描整个过境,并标出链路闭合(≥ 0 dB)和余量充足(≥ 3 dB)的最低仰角。</span></li>
+        <li><span class="en-only">Ask the question backwards with the <b>Reverse Solver</b>: given a target margin, it solves the max data rate, min Tx power, min antenna gain or max slant range — <b>Apply</b> writes the value into the form.</span><span class="zh-only">用<b>反算求解</b>反过来提问:给定目标余量,反解最大数据率、最小发射功率、最小天线增益或最大斜距——点<b>填入</b>即可写回表单。</span></li>
         <li><span class="en-only">Check <b>Pass Data Budget</b> for contact time and data-per-pass at your data rate.</span><span class="zh-only">查看<b>过境数据预算</b>——当前数据率下每次过境的接触时长与数据量。</span></li>
+        <li><span class="en-only">Click <b>📑 Scenarios</b> to save the current setup, reload it later, or select several saved scenarios and <b>compare</b> them side by side.</span><span class="zh-only">点<b>📑 场景</b>保存当前设置,之后可重新载入,或勾选多个已存场景进行<b>并排对比</b>。</span></li>
         <li><span class="en-only">Click <b>↓ Export PDF</b> to save a formatted calculation report.</span><span class="zh-only">点击 <b>↓ 导出 PDF</b> 保存格式化计算报告。</span></li>
       </ol>
     </div>
@@ -670,7 +674,10 @@
         <li><span class="en-only">Fill the TC Uplink (Ground → Satellite) and TM Downlink (Satellite → Ground) columns independently.</span><span class="zh-only">分别填写 TC 上行（地面→卫星）和 TM 下行（卫星→地面）各列参数。</span></li>
         <li><span class="en-only">Pick a <b>modulation scheme</b> (suppressed carrier or residual-carrier PCM/PSK/PM with a mod index) and a <b>CCSDS coding</b> — required Eb/N₀ fills automatically. For residual carrier, check the <b>carrier loop SNR</b> and optionally enable the <b>ranging channel</b> (Pr/N₀ margin).</span><span class="zh-only">选择<b>调制体制</b>（抑制载波或带调制指数的残留载波 PCM/PSK/PM）和 <b>CCSDS 编码</b>——所需 Eb/N₀ 自动填入。残留载波下注意检查<b>载波环 SNR</b>，并可开启<b>测距信道</b>（Pr/N₀ 余量）。</span></li>
         <li><span class="en-only">Set <b>TM frequency source</b> to a coherent turnaround ratio (×240/221 S-band, ×880/749 X-band) to derive the TM frequency from the TC uplink.</span><span class="zh-only">把 <b>TM 频率来源</b>设为相干转发比（S 频段 ×240/221、X 频段 ×880/749），TM 频率将由 TC 上行频率自动推得。</span></li>
+        <li><span class="en-only">Optionally set a per-link <b>Aggregate C/I</b> (the ↗ link estimates HPA intermod C/I₃) and, on the TM downlink, enable <b>Rain sky-noise coupling</b> so absorptive fades also heat the ground receive noise temperature.</span><span class="zh-only">可选填写每条链路的<b>合计 C/I</b>（↗ 链接可估算 HPA 互调 C/I₃）；TM 下行还可开启<b>雨致天空噪声耦合</b>，让吸收性衰减同时抬升地面接收噪温。</span></li>
         <li><span class="en-only">Check the <b>TT&amp;C Summary</b> for the limiting direction and the dual-link elevation chart.</span><span class="zh-only">在<b>测控汇总</b>中查看瓶颈方向，以及两路链路的余量-仰角曲线。</span></li>
+        <li><span class="en-only">Use the <b>Reverse Solver</b> to find the <b>min working elevation</b> for the whole system, or a link's max data rate / min Tx power at a target margin — the carrier-loop and ranging gates are enforced in the solution.</span><span class="zh-only">用<b>反算求解</b>求整个系统的<b>最低工作仰角</b>，或某条链路在目标余量下的最大数据率/最小发射功率——求解时同时校验载波环与测距硬门限。</span></li>
+        <li><span class="en-only">The <b>📑 Scenarios</b> button works here too — save TT&amp;C setups and compare them side by side.</span><span class="zh-only"><b>📑 场景</b>按钮在测控模式同样可用——保存多套测控配置并并排对比。</span></li>
         <li><span class="en-only">Click <b>↓ Export PDF</b> to download a side-by-side TT&amp;C calculation report.</span><span class="zh-only">点击 <b>↓ 导出 PDF</b> 下载并排展示的测控计算报告。</span></li>
       </ol>
     </div>
@@ -683,7 +690,7 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
-<script src="share.js?v=20"></script>
+<script src="share.js?v=21"></script>
 <script src="linkout.js?v=1"></script>
 <script src="modcod.js?v=1"></script>
 <script>

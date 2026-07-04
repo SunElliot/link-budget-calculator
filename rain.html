@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=20">
-<script src="i18n.js?v=20"></script>
+<link rel="stylesheet" href="styles.css?v=21">
+<script src="i18n.js?v=21"></script>
 <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script> -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"Rain Attenuation Calculator (ITU-R P.618/P.838)","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -120,6 +120,8 @@
       <li><span class="en-only">Choose your <b>target availability</b> (e.g. 99.99%).</span><span class="zh-only">选择<b>目标可用度</b>(如 99.99%)。</span></li>
       <li><span class="en-only">Read the <b>rain fade (dB)</b> at that availability, plus the fade-vs-availability table.</span><span class="zh-only">读取该可用度下的<b>雨衰(dB)</b>,以及"雨衰-可用度"对照表。</span></li>
       <li><span class="en-only">Add the fade as the <b>"Rain loss"</b> term in your link budget.</span><span class="zh-only">把该雨衰作为链路预算里的 <b>"Rain loss"</b> 项加入。</span></li>
+      <li><span class="en-only">Arrived via the <b>↗ link</b> next to the Link Budget's rain-loss field? Click the <b>return bar</b> at the top to carry the fade straight back (the bar never appears on a direct visit).</span><span class="zh-only">如果是点链路预算雨衰字段旁的 <b>↗ 链接</b>跳转而来,点顶部的<b>返回条</b>即可把雨衰直接带回(直接访问不会显示返回条)。</span></li>
+      <li><span class="en-only">For a downlink, note the <b>Sky-noise rise ΔT</b> — the same fade also heats the receive noise temperature; enable <b>Rain sky-noise coupling</b> in the link budget to include that second hit.</span><span class="zh-only">下行链路注意<b>天空噪声抬升 ΔT</b>——同一场雨还会抬升接收噪温;在链路预算里开启<b>雨致天空噪声耦合</b>即可把这部分损失一并计入。</span></li>
     </ol>
   </div>
 
@@ -154,7 +156,7 @@
 
 <footer>Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation &amp; slant-path fade · runs in your browser.</footer>
 
-<script src="share.js?v=20"></script>
+<script src="share.js?v=21"></script>
 <script src="linkout.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);

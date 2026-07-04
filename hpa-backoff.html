@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=20">
-<script src="i18n.js?v=20"></script>
+<link rel="stylesheet" href="styles.css?v=21">
+<script src="i18n.js?v=21"></script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebApplication","name":"HPA Backoff Calculator","applicationCategory":"EngineeringApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
@@ -158,6 +158,10 @@
         <span class="en-only">Optionally calibrate the <b>C/I₃ reference</b> with a known datasheet or measured point; the tool extrapolates using the standard 2 dB-per-dB small-signal slope. This is approximate and breaks down near saturation.</span>
         <span class="zh-only">可选地用数据表或实测的已知点校准<b>C/I₃ 参考值</b>;工具按标准的小信号 2 dB/dB 斜率外推。该估算仅为近似,在接近饱和时会失准。</span>
       </li>
+      <li>
+        <span class="en-only">Arrived via a <b>↗ link</b> from the Link Budget? The <b>return bar</b> at the top carries the <b>per-carrier output power</b> back when you came from a Tx-power field, or the <b>estimated C/I₃</b> when you came from an interference field (no bar appears on a direct visit).</span>
+        <span class="zh-only">如果是点链路预算里的 <b>↗ 链接</b>跳转而来,顶部<b>返回条</b>会按来源字段带回对应值:从发射功率字段跳来带回<b>每载波输出功率</b>,从干扰字段跳来带回<b>估算的 C/I₃</b>(直接访问不会显示返回条)。</span>
+      </li>
     </ol>
   </div>
 
@@ -221,7 +225,7 @@
 
 <footer>Free HPA backoff calculator · TWTA (Saleh) / SSPA (Rapp) saturation curve · IBO/OBO, gain compression &amp; C/I₃ · runs entirely in your browser.</footer>
 
-<script src="share.js?v=20"></script>
+<script src="share.js?v=21"></script>
 <script src="linkout.js?v=1"></script>
 <script>
 const $=id=>document.getElementById(id);
