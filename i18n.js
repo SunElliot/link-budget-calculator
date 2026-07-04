@@ -155,6 +155,15 @@
     "clear-sky Tsys above":"上方为晴空 Tsys",
     "clear-sky, Kelvin (incl. LNA, sky, feed)":"晴空值,开尔文(含 LNA、天空、馈线)",
     "Sky-noise rise ΔT":"天空噪声抬升 ΔT",
+    // ---- reverse solver (2026-07) ----
+    "Reverse Solver":"反算求解",
+    "Solve for":"求解变量",
+    "Target margin":"目标余量",
+    "Max data rate":"最大数据率",
+    "Min transmit power":"最小发射功率",
+    "Min Tx antenna gain":"最小发射天线增益",
+    "Min Rx antenna gain":"最小接收天线增益",
+    "Max slant range":"最大斜距",
     // ---- interference / C/(N+I) (2026-07) ----
     "Interference (optional)":"干扰(可选)",
     "Adjacent-satellite C/I":"邻星干扰 C/I",

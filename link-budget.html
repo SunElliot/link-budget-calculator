@@ -15,8 +15,8 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=18">
-<script src="i18n.js?v=18"></script>
+<link rel="stylesheet" href="styles.css?v=19">
+<script src="i18n.js?v=19"></script>
 <style>
 /* ── Mode bar ────────────────────────────────── */
 .mode-bar{display:flex;align-items:center;gap:6px;margin-bottom:20px;flex-wrap:wrap}
@@ -254,6 +254,25 @@
           <summary>Show full calculation breakdown</summary>
           <table id="breakdown"></table>
         </details>
+      </div>
+
+      <!-- REVERSE SOLVER -->
+      <div class="card results">
+        <h2><span class="dot"></span>Reverse Solver</h2>
+        <p class="en-only" style="color:var(--muted);font-size:.85rem;margin:0 0 10px">Given a target link margin, solves the limiting value of one variable. All other inputs stay as set above.</p>
+        <p class="zh-only" style="color:var(--muted);font-size:.85rem;margin:0 0 10px">给定目标链路余量，反推单个变量的极限值，其余输入保持上面的设定。</p>
+        <div class="row" style="max-width:360px">
+          <label>Solve for</label>
+          <select id="solveFor" style="width:190px;text-align:left">
+            <option value="rate">Max data rate</option>
+            <option value="txPower">Min transmit power</option>
+            <option value="txGain">Min Tx antenna gain</option>
+            <option value="rxGain">Min Rx antenna gain</option>
+            <option value="dist">Max slant range</option>
+          </select>
+        </div>
+        <div class="row" style="max-width:360px"><label>Target margin<span class="hint">dB</span></label><input type="number" id="solveMargin" value="3" step="any"></div>
+        <div id="solveResult" style="margin-top:10px"></div>
       </div>
 
       <!-- ELEVATION CHART -->
@@ -643,7 +662,7 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · No data leaves your browser.</footer>
 
-<script src="share.js?v=18"></script>
+<script src="share.js?v=19"></script>
 <script src="linkout.js?v=1"></script>
 <script src="modcod.js?v=1"></script>
 <script>
@@ -815,6 +834,7 @@ function compute(){
 
   drawChart();
   computePassBudget();
+  solveTarget();
 }
 
 /* ── Orbit geometry ────────────────────────────────── */
@@ -825,18 +845,24 @@ function slantRange(h, elevDeg){
   return Math.sqrt(Rs*Rs-(RE*Math.cos(E))**2)-RE*Math.sin(E);
 }
 
-/* ── Single-link elevation chart ──────────────────── */
-function marginForDistance(d){
-  const txP  = toDBW(num('txPower'),$('txPowerUnit').value);
-  const eirp = txP+num('txGain')-num('txLoss');
+/* ── Single-link margin model (chart + reverse solver) ──
+   One code path with per-variable overrides, so the elevation chart and
+   the solver always include everything compute() includes (interference,
+   sky-noise coupling, …). */
+function marginModel(ov={}){
+  const txP  = ov.txPdBW!==undefined ? ov.txPdBW : toDBW(num('txPower'),$('txPowerUnit').value);
+  const txG  = ov.txGain!==undefined ? ov.txGain : num('txGain');
+  const rxG  = ov.rxGain!==undefined ? ov.rxGain : num('rxGain');
+  const d    = ov.dist  !==undefined ? ov.dist   : num('dist');
+  const Rb   = ov.rate  !==undefined ? ov.rate   : rateBps(num('rate'),$('rateUnit').value);
+  const eirp = txP+txG-num('txLoss');
   const f    = freqMHz(num('freq'),$('freqUnit').value);
   const fspl = (f>0&&d>0)?32.44+20*Math.log10(d)+20*Math.log10(f):0;
   const extra= num('atmLoss')+num('rainLoss')+num('polLoss')+num('pointLoss');
   const dT   = $('rainNoise')?.value==='on' ? (num('skyTm')||275)*(1-Math.pow(10,-(num('atmLoss')+num('rainLoss'))/10)) : 0;
   const Teff = num('sysTemp')+dT;
-  const gt   = num('rxGain')-num('rxLoss')-(Teff>0?10*Math.log10(Teff):0);
+  const gt   = rxG-num('rxLoss')-(Teff>0?10*Math.log10(Teff):0);
   const cn0  = eirp-(fspl+extra)+gt-K_BOLTZMANN_DBW;
-  const Rb   = rateBps(num('rate'),$('rateUnit').value);
   const ebn0 = Rb>0?cn0-10*Math.log10(Rb):0;
   const sel  = $('modcod').selectedOptions[0];
   const specEff = ($('modcod').value!=='custom' && parseFloat(sel.dataset.bps) && parseFloat(sel.dataset.cr))
@@ -844,6 +870,88 @@ function marginForDistance(d){
   const bwHz = specEff>0 ? Rb/specEff*(1+num('rolloff')) : NaN;
   const intf = interfCombine(cn0, Rb, bwHz, aggCI(['ciAdj','ciXpol','ciIm']));
   return ebn0-intf.d-num('reqEbN0')-num('implLoss');
+}
+function marginForDistance(d){ return marginModel({dist:d}); }
+
+/* ── Reverse solver: hit a target margin ────────────────
+   Every solved-for variable is monotonic in margin, so plain bisection
+   (80 iterations, ≪1 ms) is exact enough and needs no derivatives. */
+function solveBisect(fn, lo, hi, target){
+  let flo=fn(lo);
+  const fhi=fn(hi);
+  if((flo-target)*(fhi-target)>0) return NaN;
+  for(let i=0;i<80;i++){
+    const mid=(lo+hi)/2, fm=fn(mid);
+    if((flo-target)*(fm-target)<=0){ hi=mid; } else { lo=mid; flo=fm; }
+  }
+  return (lo+hi)/2;
+}
+let solveState=null; // {field, value} pending for applySolve()
+function fmtRate(bps){
+  return bps>=1e9?(bps/1e9).toFixed(3)+' Gbps':bps>=1e6?(bps/1e6).toFixed(3)+' Mbps':bps>=1e3?(bps/1e3).toFixed(2)+' kbps':bps.toFixed(1)+' bps';
+}
+function solveTarget(){
+  const box=$('solveResult'); if(!box) return;
+  const target=parseFloat($('solveMargin')?.value); const mode=$('solveFor')?.value;
+  if(!isFinite(target)){ box.innerHTML=''; return; }
+  solveState=null;
+  const ok=(html,field,value)=>{
+    if(field!==undefined) solveState={field,value};
+    box.innerHTML=`<div class="margin-box margin-good" style="font-size:.95rem">${html}${field!==undefined?` &nbsp;<button type="button" onclick="applySolve()" style="padding:3px 10px;border:1px solid rgba(255,255,255,.6);background:transparent;color:inherit;border-radius:6px;cursor:pointer;font-size:.8rem">${t('Apply','填入')}</button>`:''}</div>`;
+  };
+  const fail=html=>{ box.innerHTML=`<div class="margin-box margin-bad" style="font-size:.95rem">${html}</div>`; };
+  const tgt=t(`for ≥ ${target} dB margin`,`(目标余量 ≥ ${target} dB)`);
+  if(mode==='rate'){
+    if(marginModel({rate:1})<target){ fail(t(`Even 1 bps cannot reach ${target} dB margin — improve EIRP or G/T.`,`即使 1 bps 也达不到 ${target} dB 余量——需提升 EIRP 或 G/T。`)); return; }
+    if(marginModel({rate:1e12})>=target){ ok(t(`Any data rate up to 1 Tbps meets ${target} dB margin.`,`高达 1 Tbps 的数据率均满足 ${target} dB 余量。`)); return; }
+    const x=solveBisect(x=>marginModel({rate:Math.pow(10,x)}),0,12,target);
+    const Rb=Math.pow(10,x);
+    ok(`${t('Max data rate','最大数据率')} ${tgt}: <b>${fmtRate(Rb)}</b>`,'rate',Rb);
+  } else if(mode==='txPower'){
+    if(marginModel({txPdBW:60})<target){ fail(t(`Even 1 MW cannot reach ${target} dB margin.`,`即使 1 MW 也达不到 ${target} dB 余量。`)); return; }
+    if(marginModel({txPdBW:-40})>=target){ ok(t(`Any power ≥ 0.1 mW meets ${target} dB margin.`,`≥ 0.1 mW 的任意功率均满足 ${target} dB 余量。`)); return; }
+    const p=solveBisect(p=>marginModel({txPdBW:p}),-40,60,target);
+    const w=Math.pow(10,p/10);
+    ok(`${t('Min transmit power','最小发射功率')} ${tgt}: <b>${p.toFixed(2)} dBW</b> (${w<1?(w*1000).toFixed(1)+' mW':w.toFixed(2)+' W'})`,'txPower',p);
+  } else if(mode==='txGain'||mode==='rxGain'){
+    const name=mode==='txGain'?t('Min Tx antenna gain','最小发射天线增益'):t('Min Rx antenna gain','最小接收天线增益');
+    if(marginModel({[mode]:80})<target){ fail(t(`Even 80 dBi cannot reach ${target} dB margin.`,`即使 80 dBi 也达不到 ${target} dB 余量。`)); return; }
+    if(marginModel({[mode]:-20})>=target){ ok(t(`Any gain ≥ −20 dBi meets ${target} dB margin.`,`≥ −20 dBi 的任意增益均满足 ${target} dB 余量。`)); return; }
+    const g=solveBisect(g=>marginModel({[mode]:g}),-20,80,target);
+    ok(`${name} ${tgt}: <b>${g.toFixed(2)} dBi</b>`,mode,g);
+  } else if(mode==='dist'){
+    if(marginModel({dist:1})<target){ fail(t(`Margin below ${target} dB even at 1 km range.`,`即使 1 km 斜距余量也低于 ${target} dB。`)); return; }
+    if(marginModel({dist:1e6})>=target){ ok(t(`Any range up to 10⁶ km meets ${target} dB margin.`,`高达 10⁶ km 的斜距均满足 ${target} dB 余量。`)); return; }
+    const x=solveBisect(x=>marginModel({dist:Math.pow(10,x)}),0,6,target);
+    const dMax=Math.pow(10,x);
+    let elevNote='';
+    const alt=num('altitude');
+    if(alt>0){
+      if(dMax>=slantRange(alt,0.1)) elevNote=' · '+t(`covers the whole pass at ${alt} km altitude`,`在 ${alt} km 轨道高度可覆盖整个过境`);
+      else if(dMax<slantRange(alt,90)) elevNote=' · '+t(`shorter than the zenith range at ${alt} km altitude!`,`小于 ${alt} km 高度的天顶距离!`);
+      else{
+        const e=solveBisect(e=>slantRange(alt,e),0.1,90,dMax);
+        if(isFinite(e)) elevNote=' · '+t(`at ${alt} km altitude → elevation ≥ ${e.toFixed(1)}°`,`在 ${alt} km 高度 → 需仰角 ≥ ${e.toFixed(1)}°`);
+      }
+    }
+    ok(`${t('Max slant range','最大斜距')} ${tgt}: <b>${dMax.toFixed(0)} km</b>${elevNote}`,'dist',dMax);
+  }
+}
+function applySolve(){
+  if(!solveState) return;
+  const {field,value}=solveState;
+  if(field==='rate'){
+    const u=$('rateUnit').value;
+    $('rate').value=parseFloat((u==='Mbps'?value/1e6:u==='kbps'?value/1e3:value).toPrecision(6));
+  } else if(field==='txPower'){
+    const u=$('txPowerUnit').value;
+    $('txPower').value=parseFloat((u==='dBW'?value:u==='dBm'?value+30:Math.pow(10,value/10)).toPrecision(6));
+  } else if(field==='txGain'||field==='rxGain'){
+    $(field).value=value.toFixed(2);
+  } else if(field==='dist'){
+    $('dist').value=value.toFixed(0);
+  }
+  compute();
 }
 
 function drawChart(){
