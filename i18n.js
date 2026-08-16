@@ -31,7 +31,7 @@
     "Doppler Results":"多普勒结果","Doppler Shift vs Time (overhead pass)":"多普勒频移 vs 时间(过顶)",
     "Two-Line Element (TLE)":"两行根数(TLE)","Ground Station":"地面站","Upcoming Passes":"未来过境",
     "Feed / Line before LNA":"LNA 之前的馈线 / 线损","LNA & Receiver":"LNA 与接收机",
-    "Antenna":"天线","Link & Site":"链路与站点","Rain":"降雨","Surface Atmosphere":"地面大气",
+    "Antenna":"天线","Link & Site":"链路与站点","Link":"链路","Rain":"降雨","Surface Atmosphere":"地面大气",
     "Controls":"控制","BER Curves":"BER 曲线","Required Eb/N₀ @ target BER":"目标 BER 下所需 Eb/N₀",
     "IEEE Radio & Radar Band Designations":"IEEE 无线电与雷达波段划分",
     "Common Satellite Up/Downlink Pairs":"常见卫星上/下行配对","📖 How to use":"📖 使用说明",
