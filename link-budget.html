@@ -706,7 +706,10 @@ const K_BOLTZMANN_DBW = -228.6;
 function toDBW(val, unit){
   if(unit==='dBW') return val;
   if(unit==='dBm') return val-30;
-  if(unit==='W')   return 10*Math.log10(Math.max(val,1e-12));
+  // 0 or negative watts has no dBW value. Clamping to 1e-12 used to report
+  // −120 dBW, which reads as a real (if tiny) transmitter instead of an
+  // invalid entry; NaN propagates to the results and shows as "–".
+  if(unit==='W')   return val>0 ? 10*Math.log10(val) : NaN;
   return val;
 }
 function freqMHz(val,unit){
@@ -771,8 +774,19 @@ function compute(){
   const cr    = parseFloat(sel.dataset.cr);
   const isCustom = $('modcod').value === 'custom';
 
+  /* Every logarithmic term below needs a strictly positive argument. These
+     used to fall back to 0, which is not a neutral value: an FSPL of 0 dB
+     reads as a perfectly ordinary number and turns a nonsense scenario into
+     a link that "closes". NaN propagates through the arithmetic instead, so
+     each result shows "–" and the verdict box names what to fix. */
+  const badInputs = [];
+  if(!(f>0))    badInputs.push(t('frequency','频率'));
+  if(!(d>0))    badInputs.push(t('slant range','斜距'));
+  if(!(Rb>0))   badInputs.push(t('data rate','数据率'));
+  if(!isFinite(txP)) badInputs.push(t('transmit power','发射功率'));
+
   const eirp   = txP + txG - txL;
-  const fspl   = (f>0&&d>0) ? 32.44+20*Math.log10(d)+20*Math.log10(f) : 0;
+  const fspl   = (f>0&&d>0) ? 32.44+20*Math.log10(d)+20*Math.log10(f) : NaN;
   const extra  = atm+rain+pol+point;
   const totL   = fspl+extra;
   // Rain/atm absorption also raises the sky-noise temperature seen by a
@@ -786,9 +800,10 @@ function compute(){
      so the line loss must NOT also be taken off the gain. Doing both
      double-counted it and understated G/T by rxLoss dB. G/T is invariant
      between reference planes; mixing the two is what broke it. */
-  const gt     = rxG-(Teff>0 ? 10*Math.log10(Teff) : 0);
+  const gt     = Teff>0 ? rxG-10*Math.log10(Teff) : NaN;
+  if(!(Teff>0)) badInputs.push(t('system noise temperature','系统噪声温度'));
   const cn0    = eirp-totL+gt-K_BOLTZMANN_DBW;
-  const ebn0   = Rb>0 ? cn0-10*Math.log10(Rb) : 0;
+  const ebn0   = Rb>0 ? cn0-10*Math.log10(Rb) : NaN;
 
   const specEff = (!isCustom&&bps&&cr) ? bps*cr : NaN;
   const symRate = specEff>0 ? Rb/specEff : NaN;
@@ -802,12 +817,12 @@ function compute(){
   const f2 = x => (Math.round(x*100)/100).toFixed(2);
   const fd = x  => isFinite(x) ? f2(x) : '–';
 
-  $('r_eirp').textContent    = f2(eirp);
-  $('r_fspl').textContent    = f2(fspl);
-  $('r_totloss').textContent = f2(totL);
-  $('r_gt').textContent      = f2(gt);
-  $('r_cn0').textContent     = f2(cn0);
-  $('r_ebn0').textContent    = f2(ebn0);
+  $('r_eirp').textContent    = fd(eirp);
+  $('r_fspl').textContent    = fd(fspl);
+  $('r_totloss').textContent = fd(totL);
+  $('r_gt').textContent      = fd(gt);
+  $('r_cn0').textContent     = fd(cn0);
+  $('r_ebn0').textContent    = fd(ebn0);
   $('r_speceff').textContent = fd(specEff);
   $('r_bw').textContent      = isFinite(bwHz) ? f2(bwHz/1e6) : '–';
   $('r_cn').textContent      = fd(cnRx);
@@ -826,34 +841,44 @@ function compute(){
   const rnBox=$('rn_summary');
   if(rnBox){
     rnBox.innerHTML = rnOn
-      ? t(`Sky-noise rise ΔT = <b>+${dT.toFixed(0)} K</b> (from ${f2(atm+rain)} dB absorptive) → T<sub>sys</sub> ${Teff.toFixed(0)} K, G/T ${Tsys>0?'−'+f2(10*Math.log10(Teff/Tsys)):'–'} dB`,
-          `天空噪声抬升 ΔT = <b>+${dT.toFixed(0)} K</b>(由 ${f2(atm+rain)} dB 吸收性损耗)→ T<sub>sys</sub> ${Teff.toFixed(0)} K,G/T ${Tsys>0?'−'+f2(10*Math.log10(Teff/Tsys)):'–'} dB`)
+      ? t(`Sky-noise rise ΔT = <b>+${dT.toFixed(0)} K</b> (from ${f2(atm+rain)} dB absorptive) → T<sub>sys</sub> ${fd(Teff)} K, G/T ${Tsys>0?'−'+f2(10*Math.log10(Teff/Tsys)):'–'} dB`,
+          `天空噪声抬升 ΔT = <b>+${dT.toFixed(0)} K</b>(由 ${f2(atm+rain)} dB 吸收性损耗)→ T<sub>sys</sub> ${fd(Teff)} K,G/T ${Tsys>0?'−'+f2(10*Math.log10(Teff/Tsys)):'–'} dB`)
       : t('Clear-sky Tsys used as entered (coupling off).','按晴空 Tsys 计算(耦合关闭)。');
   }
 
   const box = $('marginBox');
-  box.className = 'margin-box '+(margin>=3?'margin-good':margin>=0?'margin-warn':'margin-bad');
-  const verdict = margin>=3 ? t('✓ Link closes with comfortable margin','✓ 链路闭合，余量充足')
-                : margin>=0 ? t('⚠ Link closes but margin is tight','⚠ 链路勉强闭合，余量偏紧')
-                : t('✗ Link does NOT close','✗ 链路无法闭合');
-  box.innerHTML = `${t('Link margin','链路余量')}: <span id="r_margin">${f2(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
+  if(!isFinite(margin)){
+    // Never render a verdict from an unusable scenario — "✗ Link does NOT
+    // close" on a blank data rate looks like an engineering result.
+    box.className = 'margin-box margin-warn';
+    box.innerHTML = `${t('Link margin','链路余量')}: <span id="r_margin">–</span> dB &nbsp;·&nbsp; `
+      + (badInputs.length
+          ? t('Needs a positive ','请先填写正的 ')+badInputs.join(t(', ','、'))
+          : t('Incomplete inputs','输入不完整'));
+  } else {
+    box.className = 'margin-box '+(margin>=3?'margin-good':margin>=0?'margin-warn':'margin-bad');
+    const verdict = margin>=3 ? t('✓ Link closes with comfortable margin','✓ 链路闭合，余量充足')
+                  : margin>=0 ? t('⚠ Link closes but margin is tight','⚠ 链路勉强闭合，余量偏紧')
+                  : t('✗ Link does NOT close','✗ 链路无法闭合');
+    box.innerHTML = `${t('Link margin','链路余量')}: <span id="r_margin">${f2(margin)}</span> dB &nbsp;·&nbsp; ${verdict}`;
+  }
 
   const rows = [
-    [t('Transmit power','发射功率'),               f2(txP)+' dBW'],
+    [t('Transmit power','发射功率'),               fd(txP)+' dBW'],
     [t('Tx antenna gain','发射天线增益'),           '+'+f2(txG)+' dBi'],
     [t('Tx line loss','发射线损'),                  '−'+f2(txL)+' dB'],
-    [t('= EIRP','= EIRP'),                         f2(eirp)+' dBW'],
-    [t('Free space path loss','自由空间路径损耗'),  '−'+f2(fspl)+' dB'],
+    [t('= EIRP','= EIRP'),                         fd(eirp)+' dBW'],
+    [t('Free space path loss','自由空间路径损耗'),  '−'+fd(fspl)+' dB'],
     [t('Atmospheric / rain / pol / pointing','大气/雨/极化/指向'), '−'+f2(extra)+' dB'],
     [t('Rx antenna gain','接收天线增益'),           '+'+f2(rxG)+' dBi'],
     [t('Rx line loss (already in T_sys)','接收线损(已计入 T_sys)'), f2(rxL)+' dB'],
     [t('System noise temp (clear sky, at aperture)','系统噪温(晴空,口面参考)'), f2(Tsys)+' K'],
     [t('Rain/atm sky-noise rise ΔT','雨/大气噪声抬升 ΔT'), rnOn?'+'+dT.toFixed(0)+' K':t('off','未启用')],
-    [t('Effective noise temp','等效系统噪温'),      f2(Teff)+' K ('+f2(10*Math.log10(Teff||1))+' dB)'],
-    [t('= G/T','= G/T'),                           f2(gt)+' dB/K'],
+    [t('Effective noise temp','等效系统噪温'),      Teff>0?f2(Teff)+' K ('+f2(10*Math.log10(Teff))+' dB)':'–'],
+    [t('= G/T','= G/T'),                           fd(gt)+' dB/K'],
     [t('Boltzmann constant','玻尔兹曼常数'),        f2(K_BOLTZMANN_DBW)+' dBW/K/Hz'],
-    [t('= C/N₀','= C/N₀'),                        f2(cn0)+' dB-Hz'],
-    [t('Data rate','数据率'),                       (Rb/1e6).toFixed(3)+' Mbps ('+f2(10*Math.log10(Rb||1))+' dB)'],
+    [t('= C/N₀','= C/N₀'),                        fd(cn0)+' dB-Hz'],
+    [t('Data rate','数据率'),                       Rb>0?(Rb/1e6).toFixed(3)+' Mbps ('+f2(10*Math.log10(Rb))+' dB)':'–'],
     [t('Modulation / coding','调制/编码'),          isCustom?'custom':sel.textContent.trim()+' ('+bps+' bit/sym × '+cr+')'],
     [t('Spectral efficiency','频谱效率'),           fd(specEff)+' bit/s/Hz'],
     [t('Occupied bandwidth','占用带宽'),            isFinite(bwHz)?f2(bwHz/1e6)+' MHz':'–'],
@@ -861,11 +886,11 @@ function compute(){
     [t('Aggregate C/I','合计 C/I'),                isFinite(intf.ci)?f2(intf.ci)+' dB':t('not included','未计入')],
     [t('C/(N+I)','C/(N+I)'),                      fd(intf.cni)+' dB'],
     [t('C/N required','所需 C/N'),                 fd(cnReq)+' dB'],
-    [t('= Eb/N₀ received','= 接收 Eb/N₀'),        f2(ebn0)+' dB'],
+    [t('= Eb/N₀ received','= 接收 Eb/N₀'),        fd(ebn0)+' dB'],
     [t('Interference degradation','干扰恶化量'),   '−'+f2(intf.d)+' dB'],
     [t('Required Eb/N₀','所需 Eb/N₀'),            '−'+f2(reqEb)+' dB'],
     [t('Implementation loss','实现损耗'),           '−'+f2(impl)+' dB'],
-    [t('= LINK MARGIN','= 链路余量'),              f2(margin)+' dB'],
+    [t('= LINK MARGIN','= 链路余量'),              fd(margin)+' dB'],
   ];
   $('breakdown').innerHTML = rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
 
@@ -894,13 +919,13 @@ function marginModel(ov={}){
   const Rb   = ov.rate  !==undefined ? ov.rate   : rateBps(num('rate'),$('rateUnit').value);
   const eirp = txP+txG-num('txLoss');
   const f    = freqMHz(num('freq'),$('freqUnit').value);
-  const fspl = (f>0&&d>0)?32.44+20*Math.log10(d)+20*Math.log10(f):0;
+  const fspl = (f>0&&d>0)?32.44+20*Math.log10(d)+20*Math.log10(f):NaN;
   const extra= num('atmLoss')+num('rainLoss')+num('polLoss')+num('pointLoss');
   const dT   = $('rainNoise')?.value==='on' ? (num('skyTm')||275)*(1-Math.pow(10,-(num('atmLoss')+num('rainLoss'))/10)) : 0;
   const Teff = num('sysTemp')+dT;
-  const gt   = rxG-(Teff>0?10*Math.log10(Teff):0);   // aperture-referred, see compute()
+  const gt   = Teff>0?rxG-10*Math.log10(Teff):NaN;   // aperture-referred + NaN guards, see compute()
   const cn0  = eirp-(fspl+extra)+gt-K_BOLTZMANN_DBW;
-  const ebn0 = Rb>0?cn0-10*Math.log10(Rb):0;
+  const ebn0 = Rb>0?cn0-10*Math.log10(Rb):NaN;
   const sel  = $('modcod').selectedOptions[0];
   const specEff = ($('modcod').value!=='custom' && parseFloat(sel.dataset.bps) && parseFloat(sel.dataset.cr))
     ? parseFloat(sel.dataset.bps)*parseFloat(sel.dataset.cr) : NaN;
@@ -916,6 +941,10 @@ function marginForDistance(d){ return marginModel({dist:d}); }
 function solveBisect(fn, lo, hi, target){
   let flo=fn(lo);
   const fhi=fn(hi);
+  // A non-finite endpoint means the model itself has invalid inputs. Every
+  // comparison below would then be false and the loop would walk lo up to
+  // hi and return it as if it were a root, so bail out explicitly.
+  if(!isFinite(flo)||!isFinite(fhi)) return NaN;
   if((flo-target)*(fhi-target)>0) return NaN;
   for(let i=0;i<80;i++){
     const mid=(lo+hi)/2, fm=fn(mid);
@@ -999,6 +1028,15 @@ function drawChart(){
   const h=num('altitude');
   const pts=[];
   for(let e=1;e<=90;e++) pts.push([e,marginForDistance(slantRange(h,e))]);
+  // An unusable scenario makes every point NaN; the axis ticks would then be
+  // labelled "NaN" over an empty plot. Say why the curve is missing instead.
+  if(!pts.some(p=>isFinite(p[1]))){
+    ctx.fillStyle='#697086';ctx.font='13px -apple-system,Segoe UI,Roboto,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(t('Margin curve needs a valid frequency, range, rate and noise temperature.',
+                   '余量曲线需要有效的频率、斜距、数据率与噪声温度。'), W/2, H/2);
+    return;
+  }
   let mins=Math.min(...pts.map(p=>p[1]),0),maxs=Math.max(...pts.map(p=>p[1]),3);
   const pad=(maxs-mins)*0.1||1;mins-=pad;maxs+=pad;
   const x=e=>padL+(e/90)*plotW;
@@ -1104,7 +1142,7 @@ function computeTTCLink(pre, distKm, ov={}){
   const eirp = txP + n('txGain') - n('txLoss');
   const freq = freqMHz(n('freq'), s('freqUnit'));
   const addL = n('addLoss');
-  const fspl = (freq>0&&distKm>0) ? 32.44+20*Math.log10(distKm)+20*Math.log10(freq) : 0;
+  const fspl = (freq>0&&distKm>0) ? 32.44+20*Math.log10(distKm)+20*Math.log10(freq) : NaN;
   const totL = fspl+addL;
   // Rain sky-noise coupling (fields exist on the dl_ column only; the
   // satellite Rx on the uplink already looks at the warm Earth, so the
@@ -1112,7 +1150,7 @@ function computeTTCLink(pre, distKm, ov={}){
   const rnOn = s('rainNoise')==='on';
   const dT   = rnOn ? (n('skyTm')||275)*(1-Math.pow(10,-n('absLoss')/10)) : 0;
   const Tsys = n('sysTemp')+dT;
-  const gt   = n('rxGain')-(Tsys>0?10*Math.log10(Tsys):0);   // aperture-referred, see compute()
+  const gt   = Tsys>0?n('rxGain')-10*Math.log10(Tsys):NaN;   // aperture-referred + NaN guards, see compute()
   const cn0  = eirp-totL+gt-K_BOLTZMANN_DBW;
   const Rb   = ov.RbBps!==undefined ? ov.RbBps : rateBps(n('rate'), s('rateUnit'));
 
@@ -1122,7 +1160,7 @@ function computeTTCLink(pre, distKm, ov={}){
   const split    = ttcPowerSplit(scheme, n('modIdx'), rngOn, n('rngIdx'));
   const pdDb     = 10*Math.log10(Math.max(split.pd,1e-12));
 
-  const ebn0 = Rb>0 ? cn0+pdDb-10*Math.log10(Rb) : 0;
+  const ebn0 = Rb>0 ? cn0+pdDb-10*Math.log10(Rb) : NaN;
 
   // Interference: C/I is total-carrier to interference, referenced to the
   // bit-rate bandwidth; the data channel sees Eb/I0 = C/I + data fraction.
@@ -1200,6 +1238,8 @@ function updateTTCUi(pre){
 /* Margin-box severity: a carrier loop that can't lock kills the link;
    a failed ranging channel degrades a green link to amber. */
 function ttcBoxClass(L){
+  // An unusable scenario is not a failing link — don't paint it red.
+  if(!isFinite(L.margin)) return 'margin-warn';
   if(!L.loopOk) return 'margin-bad';
   let cls = L.margin>=3?'margin-good':L.margin>=0?'margin-warn':'margin-bad';
   if(L.rngEnabled && !L.rngOk && cls==='margin-good') cls='margin-warn';
@@ -1234,32 +1274,32 @@ function computeTTC(){
   const fd = x => isFinite(x) ? f2(x) : '–';
 
   // UL result
-  $('ul_r_eirp').textContent = f2(ul.eirp);
-  $('ul_r_fspl').textContent = f2(ul.fspl);
-  $('ul_r_gt').textContent   = f2(ul.gt);
-  $('ul_r_cn0').textContent  = f2(ul.cn0);
-  $('ul_r_ebn0').textContent = f2(ul.ebn0);
+  $('ul_r_eirp').textContent = fd(ul.eirp);
+  $('ul_r_fspl').textContent = fd(ul.fspl);
+  $('ul_r_gt').textContent   = fd(ul.gt);
+  $('ul_r_cn0').textContent  = fd(ul.cn0);
+  $('ul_r_ebn0').textContent = fd(ul.ebn0);
   $('ul_r_ebni').textContent = fd(ul.ebni);
   $('ul_r_pcn0').textContent = fd(ul.pcN0);
   $('ul_r_loop').textContent = fd(ul.loopSnr);
   $('ul_r_prn0').textContent = fd(ul.prN0);
   const ulBox=$('ul_marginBox');
   ulBox.className='margin-box '+ttcBoxClass(ul);
-  ulBox.innerHTML=`${t('TC Uplink margin','TC 上行余量')}: <span id="ul_r_margin">${f2(ul.margin)}</span> dB${ttcBoxExtras(ul,f2)}`;
+  ulBox.innerHTML=`${t('TC Uplink margin','TC 上行余量')}: <span id="ul_r_margin">${fd(ul.margin)}</span> dB${isFinite(ul.margin)?ttcBoxExtras(ul,f2):' · '+t('check frequency, range, rate, power and noise temperature','请检查频率、斜距、数据率、功率与噪声温度')}`;
 
   // DL result
-  $('dl_r_eirp').textContent = f2(dl.eirp);
-  $('dl_r_fspl').textContent = f2(dl.fspl);
-  $('dl_r_gt').textContent   = f2(dl.gt);
-  $('dl_r_cn0').textContent  = f2(dl.cn0);
-  $('dl_r_ebn0').textContent = f2(dl.ebn0);
+  $('dl_r_eirp').textContent = fd(dl.eirp);
+  $('dl_r_fspl').textContent = fd(dl.fspl);
+  $('dl_r_gt').textContent   = fd(dl.gt);
+  $('dl_r_cn0').textContent  = fd(dl.cn0);
+  $('dl_r_ebn0').textContent = fd(dl.ebn0);
   $('dl_r_ebni').textContent = fd(dl.ebni);
   $('dl_r_pcn0').textContent = fd(dl.pcN0);
   $('dl_r_loop').textContent = fd(dl.loopSnr);
   $('dl_r_prn0').textContent = fd(dl.prN0);
   const dlBox=$('dl_marginBox');
   dlBox.className='margin-box '+ttcBoxClass(dl);
-  dlBox.innerHTML=`${t('TM Downlink margin','TM 下行余量')}: <span id="dl_r_margin">${f2(dl.margin)}</span> dB${ttcBoxExtras(dl,f2)}`;
+  dlBox.innerHTML=`${t('TM Downlink margin','TM 下行余量')}: <span id="dl_r_margin">${fd(dl.margin)}</span> dB${isFinite(dl.margin)?ttcBoxExtras(dl,f2):' · '+t('check frequency, range, rate, power and noise temperature','请检查频率、斜距、数据率、功率与噪声温度')}`;
 
   // Summary
   const minM = Math.min(ul.margin, dl.margin);
@@ -1273,15 +1313,15 @@ function computeTTC(){
 
   $('ttc_summary_grid').innerHTML=`<div class="resgrid">
     <div class="metric"><div class="k">${t('TC Uplink Margin','TC 上行余量')}</div>
-      <div class="v" style="color:${ul.margin>=3?'var(--good)':ul.margin>=0?'var(--warn)':'var(--bad)'}">${f2(ul.margin)} <span class="u">dB</span></div></div>
+      <div class="v" style="color:${!isFinite(ul.margin)?'var(--muted)':ul.margin>=3?'var(--good)':ul.margin>=0?'var(--warn)':'var(--bad)'}">${fd(ul.margin)} <span class="u">dB</span></div></div>
     <div class="metric"><div class="k">${t('TM Downlink Margin','TM 下行余量')}</div>
-      <div class="v" style="color:${dl.margin>=3?'var(--good)':dl.margin>=0?'var(--warn)':'var(--bad)'}">${f2(dl.margin)} <span class="u">dB</span></div></div>
+      <div class="v" style="color:${!isFinite(dl.margin)?'var(--muted)':dl.margin>=3?'var(--good)':dl.margin>=0?'var(--warn)':'var(--bad)'}">${fd(dl.margin)} <span class="u">dB</span></div></div>
     <div class="metric"><div class="k">${t('Limiting direction','链路瓶颈')}</div>
       <div class="v" style="font-size:1rem">${lim}</div></div>
     <div class="metric"><div class="k">${t('TC EIRP (Ground)','TC EIRP（地面）')}</div>
-      <div class="v">${f2(ul.eirp)} <span class="u">dBW</span></div></div>
+      <div class="v">${fd(ul.eirp)} <span class="u">dBW</span></div></div>
     <div class="metric"><div class="k">${t('TM EIRP (Satellite)','TM EIRP（卫星）')}</div>
-      <div class="v">${f2(dl.eirp)} <span class="u">dBW</span></div></div>
+      <div class="v">${fd(dl.eirp)} <span class="u">dBW</span></div></div>
     <div class="metric"><div class="k">${t('Contact time / pass','过境时长 / 次')}</div>
       <div class="v">${(tc/60).toFixed(1)} <span class="u">min</span></div></div>
   </div>`;
@@ -1404,6 +1444,14 @@ function drawTTCChart(alt){
     dlPts.push([e,computeTTCLink('dl_',d).margin]);
   }
   const all=[...ulPts.map(p=>p[1]),...dlPts.map(p=>p[1])];
+  // Same guard as drawChart(): all-NaN would label the axes "NaN".
+  if(!all.some(v=>isFinite(v))){
+    ctx.fillStyle='#697086';ctx.font='13px -apple-system,Segoe UI,Roboto,sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(t('Margin curves need valid frequency, range, rate, power and noise temperature.',
+                   '余量曲线需要有效的频率、斜距、数据率、功率与噪声温度。'), W/2, H/2);
+    return;
+  }
   let mins=Math.min(...all,0),maxs=Math.max(...all,3);
   const pad=(maxs-mins)*0.1||1;mins-=pad;maxs+=pad;
   const x=e=>padL+(e/90)*plotW;
@@ -1516,9 +1564,13 @@ function exportPDF(){
       [T('Occupied bandwidth','占用带宽'), rv('r_bw')+' MHz'],
       [T('Link margin','链路余量'),        rv('r_margin')+' dB'],
     ];
-    const m=parseFloat(rv('r_margin'))||-99;
-    const vcls=m>=3?'good':m>=0?'warn':'bad';
-    const vtxt=m>=3?T('✓ Link closes — comfortable margin','✓ 链路闭合，余量充足')
+    // rv() reads the rendered cell, which is "–" when the scenario is not
+    // computable. parseFloat gives NaN there and the old ||-99 turned that
+    // into a confident "does NOT close" verdict on a blank input.
+    const m=parseFloat(rv('r_margin'));
+    const vcls=!isFinite(m)?'warn':m>=3?'good':m>=0?'warn':'bad';
+    const vtxt=!isFinite(m)?T('Not computable — check the inputs','无法计算——请检查输入')
+               :m>=3?T('✓ Link closes — comfortable margin','✓ 链路闭合，余量充足')
                :m>=0?T('⚠ Link closes — margin tight','⚠ 链路勉强闭合，余量偏紧')
                :T('✗ Link does NOT close','✗ 链路无法闭合');
     const chartEl=$('chart');
@@ -1558,11 +1610,12 @@ function exportPDF(){
     const lim=ulM<=dlM?T('TC Uplink ↑','TC 上行 ↑'):T('TM Downlink ↓','TM 下行 ↓');
     const loopBad=['ul_','dl_'].some(pre=>{const v=rv(pre+'r_loop');return v!=='–'&&parseFloat(v)<10;});
     const rngBad=['ul_','dl_'].some(pre=>{const v=rv(pre+'r_prn0');return v!=='–'&&nv(pre+'ranging')==='on'&&parseFloat(v)<parseFloat(nv(pre+'reqPrN0'));});
-    let vcls=minM>=3?'good':minM>=0?'warn':'bad';
-    if(loopBad) vcls='bad'; else if(rngBad&&vcls==='good') vcls='warn';
-    let vtxt=minM>=3&&!loopBad?T('✓ TT&C system closes','✓ TT&C 链路闭合'):minM>=0&&!loopBad?T('⚠ TT&C margin tight','⚠ TT&C 余量偏紧'):T('✗ TT&C does NOT close','✗ TT&C 链路不通');
-    if(loopBad) vtxt+=' — '+T('carrier loop SNR below 10 dB threshold','载波环 SNR 低于 10 dB 门限');
-    if(rngBad)  vtxt+=' — '+T('ranging Pr/N₀ below requirement','测距 Pr/N₀ 低于要求');
+    let vcls=!isFinite(minM)?'warn':minM>=3?'good':minM>=0?'warn':'bad';
+    if(isFinite(minM)){ if(loopBad) vcls='bad'; else if(rngBad&&vcls==='good') vcls='warn'; }
+    let vtxt=!isFinite(minM)?T('Not computable — check the inputs','无法计算——请检查输入')
+             :minM>=3&&!loopBad?T('✓ TT&C system closes','✓ TT&C 链路闭合'):minM>=0&&!loopBad?T('⚠ TT&C margin tight','⚠ TT&C 余量偏紧'):T('✗ TT&C does NOT close','✗ TT&C 链路不通');
+    if(isFinite(minM)&&loopBad) vtxt+=' — '+T('carrier loop SNR below 10 dB threshold','载波环 SNR 低于 10 dB 门限');
+    if(isFinite(minM)&&rngBad)  vtxt+=' — '+T('ranging Pr/N₀ below requirement','测距 Pr/N₀ 低于要求');
     const resRows=(pre,m)=>{
       const out=[['EIRP',rv(pre+'r_eirp')+' dBW'],['FSPL',rv(pre+'r_fspl')+' dB'],['G/T',rv(pre+'r_gt')+' dB/K'],['C/N₀',rv(pre+'r_cn0')+' dB-Hz'],['Eb/N₀',rv(pre+'r_ebn0')+' dB']];
       if(rv(pre+'r_ebni')!=='–') out.push(['Eb/(N₀+I₀)',rv(pre+'r_ebni')+' dB']);
