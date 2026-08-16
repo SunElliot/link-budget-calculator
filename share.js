@@ -1,6 +1,11 @@
 /* SatTools shareable-link helper.
    Serializes every id'd input/select/textarea into the URL query string and
-   restores them on load, so a specific calculation can be shared by link. */
+   restores them on load, so a specific calculation can be shared by link.
+
+   No Share button is rendered — the top bar deliberately keeps only the
+   language toggle — but apply() still runs on every page load, so
+   hand-built ?id=value links and the jump-out round trip in linkout.js
+   keep working. */
 (function(){
   function collect(){
     const p = new URLSearchParams();
@@ -16,30 +21,16 @@
     p.forEach((v,k)=>{
       const el = document.getElementById(k);
       if(!el) return;
-      if(el.type === 'checkbox') el.checked = (v === '1'); else el.value = v;
+      if(el.type === 'checkbox'){ el.checked = (v === '1'); any = true; return; }
+      // A <select> assigned a value no <option> carries silently goes to
+      // selectedIndex −1, and the calculators read selectedOptions[0].dataset
+      // straight away — a stale or hand-edited link would throw there and kill
+      // the whole compute() pass. Ignore values the select can't represent.
+      if(el.tagName === 'SELECT' && ![...el.options].some(o=>o.value === v)) return;
+      el.value = v;
       any = true;
     });
     return any;
   }
-  function initButton(){
-    return; // Share button hidden — top bar keeps only the language toggle
-    const nav = document.querySelector('.topnav');
-    if(!nav) return;
-    const btn = document.createElement('button');
-    btn.className = 'sharebtn';
-    btn.type = 'button';
-    btn.textContent = '🔗 Share';
-    btn.title = 'Copy a link to this exact calculation';
-    btn.addEventListener('click', ()=>{
-      const qs = collect();
-      const url = location.origin + location.pathname + (qs ? '?' + qs : '');
-      history.replaceState(null, '', url);
-      const reset = ()=>{ btn.textContent = '✓ Link copied!'; setTimeout(()=>btn.textContent='🔗 Share', 1600); };
-      if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(url).then(reset, reset);
-      } else { reset(); }
-    });
-    nav.appendChild(btn);
-  }
-  window.ShareTool = { collect, apply, initButton };
+  window.ShareTool = { collect, apply, initButton(){} };
 })();

@@ -1,4 +1,4 @@
-const CACHE = 'sattools-v18';
+const CACHE = 'sattools-v19';
 const ASSETS = [
   './',
   './index.html',
@@ -16,6 +16,7 @@ const ASSETS = [
   './bands.html',
   './styles.css',
   './i18n.js',
+  './a11y.js',
   './share.js',
   './linkout.js',
   './modcod.js',
@@ -39,8 +40,44 @@ self.addEventListener('activate', e => {
   );
 });
 
+/* Two strategies, because the two kinds of request want opposite things:
+
+   - HTML documents: network-first. A pure cache-first SW pins every visitor
+     to whatever HTML was cached on their first visit, so a deployed fix only
+     reaches them after a CACHE bump *and* two reloads. Network-first serves
+     fresh HTML when online and falls back to the cache offline.
+
+   - Everything else (CSS/JS/icons): cache-first, but matched with
+     ignoreSearch. The pages load these as `styles.css?v=21`, `share.js?v=21`
+     etc. while ASSETS precaches the bare paths — an exact-URL match misses
+     every one of them, which used to leave the "offline" app with no CSS and
+     no JS at all. The ?v= query is the cache-buster for the CACHE bump, so
+     ignoring it here is exactly right: a new version ships a new CACHE name,
+     which re-fetches all of ASSETS anyway. */
 self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET') return;                       // never touch POST/PUT
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;        // leave cross-origin alone
+
+  const isDoc = req.mode === 'navigate' ||
+                (req.headers.get('accept') || '').includes('text/html');
+
+  if (isDoc) {
+    e.respondWith(
+      fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req, { ignoreSearch: true })
+                       .then(hit => hit || caches.match('./index.html')))
+    );
+    return;
+  }
+
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+    caches.match(req, { ignoreSearch: true }).then(hit => hit || fetch(req))
   );
 });

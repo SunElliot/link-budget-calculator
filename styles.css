@@ -66,8 +66,13 @@ th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
 td.num{text-align:right;font-variant-numeric:tabular-nums}
 td:last-child{text-align:right;font-variant-numeric:tabular-nums}
-.adslot{margin:18px 0;min-height:90px;display:flex;align-items:center;justify-content:center;
+/* Ad slots stay in the markup so they can be filled later, but the AdSense
+   script in each <head> is still commented out — until it is live, an empty
+   dashed "Ad placeholder" box just makes a finished site look unfinished.
+   To enable: uncomment the adsbygoogle script and drop this display:none. */
+.adslot{display:none;margin:18px 0;min-height:90px;align-items:center;justify-content:center;
         background:#fff;border:1px dashed #cfd4dc;border-radius:12px;color:var(--muted);font-size:.8rem}
+label[for]{cursor:pointer}
 .preset-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;justify-content:center}
 .preset-bar button{background:#fff;border:1px solid var(--line);color:var(--txt);
      padding:7px 13px;border-radius:20px;font-size:.83rem;cursor:pointer;box-shadow:var(--shadow)}
