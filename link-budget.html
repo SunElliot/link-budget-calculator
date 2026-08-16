@@ -677,33 +677,73 @@ const K_BOLTZMANN_DBW = -228.6;
    applied to the uplink copy and not the downlink one would have left the
    two links silently disagreeing about the same code.
 
-   ebn0 = typical required information-bit Eb/N0 (dB), CCSDS 130.1-G /
-   230.1-G class curves. Read the caveat before trusting a digit: the source
-   comment claimed "BER ≈ 1e-5" for the whole list, which is right for the
-   uncoded entry — Q(sqrt(2Eb/N0)) = 1e-5 gives 9.588 dB — but CCSDS commonly
-   plots turbo and LDPC performance as FRAME error rate rather than BER, so
-   the metric is probably not uniform across this table. That last point is
-   an expectation, not a verified fact: it needs the source document to
-   settle, and settling it may change digits. None of the values violates
-   its Shannon limit, and the three turbo entries sit a consistent 1.50 /
-   1.55 / 1.58 dB above theirs, which is the signature of one coherent
-   source; what is missing is the issue number, figure number and decoder
-   conditions (soft/hard decision, iteration count) needed to cite it.
+   ebn0 = required information-bit Eb/N0 (dB). Every entry was checked against
+   the standard on 2026-08-16; `cite`, `at` and `std` record that check so it
+   never has to be redone from scratch:
+
+     cite  document, issue and figure/section the curve lives in
+     at    the error-rate metric and decoder conditions the number belongs to
+     std   the value read from that source, when it differs from ebn0
+
+   The headline result: the old comment's blanket "BER ~ 1e-5" was wrong. Only
+   four of the ten entries are BER 1e-5 numbers. The turbo rows come from a
+   BER 1e-6 / FER 1e-4 statement, and both LDPC rows match FER 1e-6. Mixing
+   metrics in one dropdown is the real defect here, not the digits.
+
+   Every ebn0 is at or above its source value, i.e. the table is uniformly
+   conservative — a link that closes here closes against the standard too — so
+   the values are LEFT AS AUTHORED. Do not "correct" them downward without
+   deciding, deliberately, that you want the tool to report the standard's
+   nominal thresholds instead of a margined design value.
+
+   Source curves assume ideal synchronization and independent symbol errors.
+   Rate-1/2 binary-input AWGN capacity is 0.2 dB (130.1-G-3, 3.3.2); the
+   corresponding limits are -0.5 dB at rate 1/3 and -1.1 dB at rate 1/6.
    Confirm against the actual mission spec before flying anything. */
 const TTC_CODING = [
   {grp:'TC / simple', opts:[
-    {v:'uncoded',    ebn0:9.6, label:'Uncoded PCM (BER 1e-5)'},
-    {v:'bch',        ebn0:8.3, label:'CCSDS BCH(63,56) SEC'},
-    {v:'ldpc-short', ebn0:5.5, label:'CCSDS LDPC(128,64) TC'},
+    {v:'uncoded',    ebn0:9.6, label:'Uncoded PCM (BER 1e-5)',
+     cite:'closed form; 130.1-G-3 fig 3-5 "UNCODED"', at:'BER 1e-5',
+     note:'Q(sqrt(2Eb/N0))=1e-5 gives 9.588 dB; the figure reads 9.56. Exact.'},
+    {v:'bch',        ebn0:8.3, label:'CCSDS BCH(63,56) SEC',
+     cite:'230.1-G-3 fig 11-7', at:'BER 1e-5', std:8.0,
+     note:'SEC (error-correcting) mode per 231.0-B-4 3.3.2. Figure read is '+
+          '+/-0.2 dB. BCH in TED mode has NEGATIVE coding gain - do not '+
+          'substitute it. Source reads 8.7 dB at BER 1e-6.'},
+    {v:'ldpc-short', ebn0:5.5, label:'CCSDS LDPC(128,64) TC',
+     cite:'230.1-G-3 fig 11-7', at:'BER 1e-5, flooding BP decoder', std:5.0,
+     note:'Source reads 5.2 dB at BER 1e-6.'},
   ]},
   {grp:'CCSDS TM coding', opts:[
-    {v:'conv12',  ebn0:4.5, label:'Conv K=7 R=1/2'},
-    {v:'convrs',  ebn0:2.6, label:'Conv + RS(255,223)'},
-    {v:'turbo12', ebn0:1.5, label:'Turbo 1/2 (8920)'},
-    {v:'turbo13', ebn0:1.0, label:'Turbo 1/3 (8920)'},
-    {v:'turbo16', ebn0:0.5, label:'Turbo 1/6 (8920)'},
-    {v:'ldpc12',  ebn0:2.0, label:'LDPC 1/2 AR4JA (k=1024)'},
-    {v:'ldpc78',  ebn0:4.0, label:'LDPC 7/8 C2 (8160,7136)'},
+    {v:'conv12',  ebn0:4.5, label:'Conv K=7 R=1/2',
+     cite:'130.1-G-3 fig 3-5', at:'BER 1e-5, unquantized soft decision', std:4.1,
+     note:'fig 4-6/4-7 show 3-bit and 8-bit quantization costing a few tenths, '+
+          'which plausibly accounts for the gap - NOT verified.'},
+    {v:'convrs',  ebn0:2.6, label:'Conv + RS(255,223)',
+     cite:'130.1-G-3 fig 3-5 (ideal interleaver), fig 6-7 (finite I)',
+     at:'BER 1e-5', std:2.2,
+     note:'2.2 is the ideal/infinite interleaver. fig 6-7 gives ~2.3 at I=5 '+
+          'and ~2.6 at I=2, so 2.6 corresponds to a shallow interleaver.'},
+    {v:'turbo12', ebn0:1.5, label:'Turbo 1/2 (8920)',
+     cite:'130.1-G-3 7.4.1, fig 7-9', at:'BER 1e-6 ~ FER 1e-4, 10 iterations', std:1.1},
+    {v:'turbo13', ebn0:1.0, label:'Turbo 1/3 (8920)',
+     cite:'130.1-G-3 7.4.1, fig 7-9', at:'BER 1e-6 ~ FER 1e-4, 10 iterations', std:0.4},
+    {v:'turbo16', ebn0:0.5, label:'Turbo 1/6 (8920)',
+     cite:'130.1-G-3 7.4.1, fig 7-9', at:'BER 1e-6 ~ FER 1e-4, 10 iterations', std:-0.1,
+     note:'7.4.1 quotes 1.1/0.4/-0.1 dB for rates 1/2, 1/3, 1/6. Block length '+
+          '8920 is a valid CCSDS size per 131.0-B-5 (1784/3568/7136/8920).'},
+    {v:'ldpc12',  ebn0:2.0, label:'LDPC 1/2 AR4JA (k=1024)',
+     cite:'130.1-G-3 fig 8-8, rightmost red group', at:'FER 1e-6', std:2.0,
+     note:'Matches the source almost exactly, but at FER 1e-6, not BER 1e-5. '+
+          'Same figure reads BER 1e-5 = 1.74, FER 1e-5 = 1.87, BER 1e-6 = 1.89. '+
+          'Needs >50 iterations and >=8-bit quantization to avoid the error '+
+          'floor (130.1-G-3, 8.7).'},
+    {v:'ldpc78',  ebn0:4.0, label:'LDPC 7/8 C2 (8160,7136)',
+     cite:'130.1-G-3 fig 8-8, black curve', at:'FER 1e-6', std:4.0,
+     note:'(8160,7136) confirmed by 131.0-B-5 7.3.5 - expurgated, shortened and '+
+          'extended from the basic (8176,7156) code. Same metric as ldpc12, so '+
+          'those two rows are at least mutually consistent. Source reads '+
+          'BER 1e-5 = 3.76, BER 1e-6 = 3.83.'},
   ]},
 ];
 
