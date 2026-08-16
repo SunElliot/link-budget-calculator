@@ -751,68 +751,87 @@ function interfCombine(cn0, Rb, bwHz, ci){
   return {d:cnB-cni, ci, cni};
 }
 
+/* ── Single-link model ──────────────────────────────
+   The one place the single-link equations live. compute() renders it, and
+   marginModel()/marginForDistance() sample it for the elevation chart and
+   the reverse solver. These used to be two hand-synchronised copies of the
+   same chain, so every fix had to be applied twice or the displayed result,
+   the plotted curve and the solved answer would quietly disagree. (They had
+   already drifted: marginModel() derived the occupied bandwidth without
+   compute()'s symbol-rate guard.)
+
+   Pure: it takes values and returns values, touching no DOM. */
+function singleLinkModel(p){
+  const eirp   = p.txP + p.txG - p.txL;
+  const fspl   = (p.f>0&&p.d>0) ? 32.44+20*Math.log10(p.d)+20*Math.log10(p.f) : NaN;
+  const extra  = p.atm+p.rain+p.pol+p.point;
+  const totL   = fspl+extra;
+  // Rain/atm absorption also raises the sky-noise temperature seen by a
+  // receiver looking through it: ΔT = T_m·(1 − 10^(−A_abs/10)), with
+  // A_abs the absorptive losses only (gas + rain; pol/pointing excluded).
+  const dT     = p.rnOn ? (p.skyTm||275)*(1-Math.pow(10,-(p.atm+p.rain)/10)) : 0;
+  const Teff   = p.Tsys + dT;
+  /* G/T is referred to the antenna aperture: T_sys already carries the feed
+     loss's noise contribution (L−1)·T_phys, exactly as gt.html reports it,
+     so the line loss must NOT also be taken off the gain. G/T is invariant
+     between reference planes; mixing the two is what used to break it. */
+  const gt     = Teff>0 ? p.rxG-10*Math.log10(Teff) : NaN;
+  const cn0    = eirp-totL+gt-K_BOLTZMANN_DBW;
+  const ebn0   = p.Rb>0 ? cn0-10*Math.log10(p.Rb) : NaN;
+
+  const specEff = (!p.isCustom&&p.bps&&p.cr) ? p.bps*p.cr : NaN;
+  const symRate = specEff>0 ? p.Rb/specEff : NaN;
+  const bwHz    = symRate>0 ? symRate*(1+p.alpha) : NaN;
+  const cnRx    = bwHz>0 ? cn0-10*Math.log10(bwHz) : NaN;
+  const cnReq   = specEff>0 ? p.reqEb+10*Math.log10(specEff/(1+p.alpha)) : NaN;
+
+  const intf   = interfCombine(cn0, p.Rb, bwHz, p.ci);
+  const margin = ebn0-intf.d-p.reqEb-p.impl;
+  return {eirp,fspl,extra,totL,dT,Teff,gt,cn0,ebn0,specEff,symRate,bwHz,cnRx,cnReq,intf,margin};
+}
+/* Read the single-link form. `ov` replaces one field by name so the solver
+   and the chart can sweep a variable without writing it into the DOM. */
+function singleLinkInputs(ov={}){
+  const sel = $('modcod').selectedOptions[0];
+  return {
+    txP:   ov.txPdBW!==undefined ? ov.txPdBW : toDBW(num('txPower'), $('txPowerUnit').value),
+    txG:   ov.txGain!==undefined ? ov.txGain : num('txGain'),
+    txL:   num('txLoss'),
+    f:     freqMHz(num('freq'), $('freqUnit').value),
+    d:     ov.dist!==undefined ? ov.dist : num('dist'),
+    atm:   num('atmLoss'), rain: num('rainLoss'),
+    pol:   num('polLoss'), point: num('pointLoss'),
+    rxG:   ov.rxGain!==undefined ? ov.rxGain : num('rxGain'),
+    Tsys:  num('sysTemp'), rxL: num('rxLoss'),
+    Rb:    ov.rate!==undefined ? ov.rate : rateBps(num('rate'), $('rateUnit').value),
+    reqEb: num('reqEbN0'), impl: num('implLoss'), alpha: num('rolloff'),
+    rnOn:  $('rainNoise')?.value==='on', skyTm: num('skyTm'),
+    isCustom: $('modcod').value==='custom',
+    bps:   parseFloat(sel.dataset.bps), cr: parseFloat(sel.dataset.cr),
+    ci:    aggCI(['ciAdj','ciXpol','ciIm']),
+    sel,
+  };
+}
+
 /* ── Single-link compute ───────────────────────────── */
 function compute(){
-  const txP   = toDBW(num('txPower'), $('txPowerUnit').value);
-  const txG   = num('txGain');
-  const txL   = num('txLoss');
-  const f     = freqMHz(num('freq'), $('freqUnit').value);
-  const d     = num('dist');
-  const atm   = num('atmLoss');
-  const rain  = num('rainLoss');
-  const pol   = num('polLoss');
-  const point = num('pointLoss');
-  const rxG   = num('rxGain');
-  const Tsys  = num('sysTemp');
-  const rxL   = num('rxLoss');
-  const Rb    = rateBps(num('rate'), $('rateUnit').value);
-  const reqEb = num('reqEbN0');
-  const impl  = num('implLoss');
-  const alpha = num('rolloff');
-  const sel   = $('modcod').selectedOptions[0];
-  const bps   = parseFloat(sel.dataset.bps);
-  const cr    = parseFloat(sel.dataset.cr);
-  const isCustom = $('modcod').value === 'custom';
+  const inp = singleLinkInputs();
+  const m   = singleLinkModel(inp);
+  // Bound back to the names the rendering below already uses.
+  const {txP,txG,txL,f,d,atm,rain,pol,point,rxG,Tsys,rxL,Rb,reqEb,impl,alpha,isCustom,bps,cr,rnOn,sel} = inp;
+  const {eirp,fspl,extra,totL,dT,Teff,gt,cn0,ebn0,specEff,bwHz,cnRx,cnReq,intf,margin} = m;
 
-  /* Every logarithmic term below needs a strictly positive argument. These
-     used to fall back to 0, which is not a neutral value: an FSPL of 0 dB
-     reads as a perfectly ordinary number and turns a nonsense scenario into
-     a link that "closes". NaN propagates through the arithmetic instead, so
-     each result shows "–" and the verdict box names what to fix. */
+  /* Every logarithmic term needs a strictly positive argument. These used to
+     fall back to 0, which is not a neutral value: an FSPL of 0 dB reads as a
+     perfectly ordinary number and turns a nonsense scenario into a link that
+     "closes". NaN propagates through the arithmetic instead, so each result
+     shows "–" and the verdict box names what to fix. */
   const badInputs = [];
   if(!(f>0))    badInputs.push(t('frequency','频率'));
   if(!(d>0))    badInputs.push(t('slant range','斜距'));
   if(!(Rb>0))   badInputs.push(t('data rate','数据率'));
   if(!isFinite(txP)) badInputs.push(t('transmit power','发射功率'));
-
-  const eirp   = txP + txG - txL;
-  const fspl   = (f>0&&d>0) ? 32.44+20*Math.log10(d)+20*Math.log10(f) : NaN;
-  const extra  = atm+rain+pol+point;
-  const totL   = fspl+extra;
-  // Rain/atm absorption also raises the sky-noise temperature seen by a
-  // receiver looking through it: ΔT = T_m·(1 − 10^(−A_abs/10)), with
-  // A_abs the absorptive losses only (gas + rain; pol/pointing excluded).
-  const rnOn   = $('rainNoise')?.value==='on';
-  const dT     = rnOn ? (num('skyTm')||275)*(1-Math.pow(10,-(atm+rain)/10)) : 0;
-  const Teff   = Tsys + dT;
-  /* G/T is referred to the antenna aperture: T_sys already carries the feed
-     loss's noise contribution (L−1)·T_phys, exactly as gt.html reports it,
-     so the line loss must NOT also be taken off the gain. Doing both
-     double-counted it and understated G/T by rxLoss dB. G/T is invariant
-     between reference planes; mixing the two is what broke it. */
-  const gt     = Teff>0 ? rxG-10*Math.log10(Teff) : NaN;
   if(!(Teff>0)) badInputs.push(t('system noise temperature','系统噪声温度'));
-  const cn0    = eirp-totL+gt-K_BOLTZMANN_DBW;
-  const ebn0   = Rb>0 ? cn0-10*Math.log10(Rb) : NaN;
-
-  const specEff = (!isCustom&&bps&&cr) ? bps*cr : NaN;
-  const symRate = specEff>0 ? Rb/specEff : NaN;
-  const bwHz    = symRate>0 ? symRate*(1+alpha) : NaN;
-  const cnRx    = bwHz>0 ? cn0-10*Math.log10(bwHz) : NaN;
-  const cnReq   = specEff>0 ? reqEb+10*Math.log10(specEff/(1+alpha)) : NaN;
-
-  const intf   = interfCombine(cn0, Rb, bwHz, aggCI(['ciAdj','ciXpol','ciIm']));
-  const margin = ebn0-intf.d-reqEb-impl;
 
   const f2 = x => (Math.round(x*100)/100).toFixed(2);
   const fd = x  => isFinite(x) ? f2(x) : '–';
@@ -912,26 +931,7 @@ function slantRange(h, elevDeg){
    the solver always include everything compute() includes (interference,
    sky-noise coupling, …). */
 function marginModel(ov={}){
-  const txP  = ov.txPdBW!==undefined ? ov.txPdBW : toDBW(num('txPower'),$('txPowerUnit').value);
-  const txG  = ov.txGain!==undefined ? ov.txGain : num('txGain');
-  const rxG  = ov.rxGain!==undefined ? ov.rxGain : num('rxGain');
-  const d    = ov.dist  !==undefined ? ov.dist   : num('dist');
-  const Rb   = ov.rate  !==undefined ? ov.rate   : rateBps(num('rate'),$('rateUnit').value);
-  const eirp = txP+txG-num('txLoss');
-  const f    = freqMHz(num('freq'),$('freqUnit').value);
-  const fspl = (f>0&&d>0)?32.44+20*Math.log10(d)+20*Math.log10(f):NaN;
-  const extra= num('atmLoss')+num('rainLoss')+num('polLoss')+num('pointLoss');
-  const dT   = $('rainNoise')?.value==='on' ? (num('skyTm')||275)*(1-Math.pow(10,-(num('atmLoss')+num('rainLoss'))/10)) : 0;
-  const Teff = num('sysTemp')+dT;
-  const gt   = Teff>0?rxG-10*Math.log10(Teff):NaN;   // aperture-referred + NaN guards, see compute()
-  const cn0  = eirp-(fspl+extra)+gt-K_BOLTZMANN_DBW;
-  const ebn0 = Rb>0?cn0-10*Math.log10(Rb):NaN;
-  const sel  = $('modcod').selectedOptions[0];
-  const specEff = ($('modcod').value!=='custom' && parseFloat(sel.dataset.bps) && parseFloat(sel.dataset.cr))
-    ? parseFloat(sel.dataset.bps)*parseFloat(sel.dataset.cr) : NaN;
-  const bwHz = specEff>0 ? Rb/specEff*(1+num('rolloff')) : NaN;
-  const intf = interfCombine(cn0, Rb, bwHz, aggCI(['ciAdj','ciXpol','ciIm']));
-  return ebn0-intf.d-num('reqEbN0')-num('implLoss');
+  return singleLinkModel(singleLinkInputs(ov)).margin;
 }
 function marginForDistance(d){ return marginModel({dist:d}); }
 
