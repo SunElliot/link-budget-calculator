@@ -122,7 +122,8 @@
       <p>Even with no rain or cloud, the atmosphere absorbs radio energy through two gases:
       <strong>oxygen</strong> (with a strong absorption complex around 60 GHz and weaker effects below)
       and <strong>water vapour</strong> (with a notable absorption line at <strong>22.235 GHz</strong>).
-      This calculator implements the <strong>ITU-R P.676</strong> Annex 2 method.</p>
+      This calculator implements the <strong>ITU-R P.676-11</strong> Annex 2 method — the approximate
+      equivalent-height method, pinned to that revision because Annex 2 was restructured in P.676-12.</p>
       <h2>What it computes</h2>
       <p><strong>Specific attenuation</strong> γ = γ_o + γ_w (dB/km) at your surface conditions, then the
       <strong>zenith</strong> attenuation via equivalent heights (A = γ_o·h_o + γ_w·h_w) and the
@@ -131,14 +132,18 @@
       22 GHz water line and for low elevation angles or humid sites. Add it alongside the
       <a href="rain.html" style="color:var(--accent)">rain-fade</a> term in your
       <a href="link-budget.html" style="color:var(--accent)">link budget</a>. This implementation is valid
-      for 1–54 GHz (below the 60 GHz oxygen complex). All computation runs locally in your browser.</p>
+      for <strong>1–54 GHz</strong> (below the 60 GHz oxygen complex) and for elevation angles of
+      <strong>5°–90°</strong>, which is the range over which Annex 2's cosecant law holds; lower angles
+      need the full path integration of Annex 1, so an elevation below 5° is raised to 5° and flagged.
+      Zenith attenuation from this method is accurate to about ±10% for dry air and ±5% for water vapour
+      up to roughly 10 km altitude. All computation runs locally in your browser.</p>
     </div>
     <div class="article zh-only">
       <h2>关于气体(晴空)衰减</h2>
-      <p>即使没有降雨或云层,大气也会通过两种气体吸收无线电能量:<strong>氧气</strong>(在 60 GHz 附近有强吸收复合带,其下方也有较弱效应)和<strong>水汽</strong>(在 <strong>22.235 GHz</strong> 有一条显著吸收线)。本计算器实现 <strong>ITU-R P.676</strong> 附件 2 方法。</p>
+      <p>即使没有降雨或云层,大气也会通过两种气体吸收无线电能量:<strong>氧气</strong>(在 60 GHz 附近有强吸收复合带,其下方也有较弱效应)和<strong>水汽</strong>(在 <strong>22.235 GHz</strong> 有一条显著吸收线)。本计算器实现 <strong>ITU-R P.676-11</strong> 附件 2 方法(等效高度近似法)。锁定该版本是因为附件 2 在 P.676-12 中已被重构。</p>
       <h2>计算内容</h2>
       <p><strong>比衰减</strong> γ = γ_o + γ_w(dB/km),基于你的地面条件;再通过等效高度得<strong>天顶</strong>衰减(A = γ_o·h_o + γ_w·h_w),以及仰角 θ 下的<strong>斜路径</strong>损耗 A / sin(θ)。</p>
-      <p>在 Ku/Ka 波段,气体损耗相比雨衰较小,但并非可忽略——尤其在 22 GHz 水汽线附近、低仰角或潮湿站点。把它与<a href="rain.html" style="color:var(--accent)">雨衰</a>项一起加进你的<a href="link-budget.html" style="color:var(--accent)">链路预算</a>。本实现适用于 1–54 GHz(60 GHz 氧气复合带以下)。全部计算在你的浏览器本地完成。</p>
+      <p>在 Ku/Ka 波段,气体损耗相比雨衰较小,但并非可忽略——尤其在 22 GHz 水汽线附近、低仰角或潮湿站点。把它与<a href="rain.html" style="color:var(--accent)">雨衰</a>项一起加进你的<a href="link-budget.html" style="color:var(--accent)">链路预算</a>。本实现适用于 <strong>1–54 GHz</strong>(60 GHz 氧气复合带以下)与 <strong>5°–90°</strong> 仰角——后者是附件 2 余割定律成立的范围;更低的仰角需要附件 1 的完整路径积分,因此低于 5° 的输入会被提升到 5° 并给出提示。本方法的天顶衰减在约 10 km 高度以内,干空气精度约 ±10%、水汽约 ±5%。全部计算在你的浏览器本地完成。</p>
     </div>
   </div>
 </div>
@@ -153,9 +158,15 @@
 <script>
 const $=id=>document.getElementById(id);
 const num=id=>parseFloat($(id).value)||0;
+/* Normalized pressure and temperature ratios, ITU-R P.676-11 Annex 2:
+   r_p is the *total* (dry air + water vapour) surface pressure against the
+   standard sea-level 1013.25 hPa, r_t is 288 K over the surface temperature.
+   Both are shared by every equation below, so they are defined once —
+   writing 1013.25 in three places is how these drift apart. */
+const rp_=p=>p/1013.25, rt_=t=>288/(273+t);
 function phi(rp,rt,a,b,c,d){return Math.pow(rp,a)*Math.pow(rt,b)*Math.exp(c*(1-rp)+d*(1-rt));}
 function gammaO(f,p,t){
-  const rp=p/1013, rt=288/(273+t);
+  const rp=rp_(p), rt=rt_(t);
   const x1=phi(rp,rt,0.0717,-1.8132,0.0156,-1.6515);
   const x2=phi(rp,rt,0.5146,-4.6368,-0.1921,-5.7416);
   const x3=phi(rp,rt,0.3414,-6.5851,0.2130,-8.5854);
@@ -164,7 +175,7 @@ function gammaO(f,p,t){
 }
 function g(f,fi){return 1+Math.pow((f-fi)/(f+fi),2);}
 function gammaW(f,p,t,rho){
-  const rp=p/1013, rt=288/(273+t);
+  const rp=rp_(p), rt=rt_(t);
   const n1=0.955*rp*Math.pow(rt,0.68)+0.006*rho;
   const n2=0.735*rp*Math.pow(rt,0.5)+0.0353*Math.pow(rt,4)*rho;
   const S=
@@ -179,9 +190,27 @@ function gammaW(f,p,t,rho){
    +8.3328e4*n2*Math.exp(0.99*(1-rt))/Math.pow(f-1780,2)*g(f,1780);
   return S*f*f*Math.pow(rt,2.5)*rho*1e-4;
 }
+/* Equivalent heights, ITU-R P.676-11 Annex 2: eq (25a) for oxygen, eq (26)
+   for water vapour.
+
+   h_o carries three frequency-dependent correction terms that this page used
+   to omit, keeping only the leading 6.1/(1 + 0.17·r_p^-1.1):
+     t1 — the 60 GHz oxygen complex, negligible below ~40 GHz but worth
+          +8.5% at the 54 GHz edge of the γ_o equation's validity
+     t2 — the 118.75 GHz line, ~1e-4 over this page's range
+     t3 — the broad low-frequency correction, about −0.6% at 20 GHz
+   Dropping them understated h_o — and so the zenith and slant loss — by up
+   to ~5% near 54 GHz. eq (25a) also caps h_o at 10.7·r_p^0.3 for f < 70 GHz. */
 function heights(f,p,t){
-  const rp=p/1013;
-  const ho=6.1/(1+0.17*Math.pow(rp,-1.1));
+  const rp=rp_(p);
+  const t1=4.64/(1+0.066*Math.pow(rp,-2.3))
+          *Math.exp(-Math.pow((f-59.7)/(2.87+12.4*Math.exp(-7.9*rp)),2));
+  const t2=0.14*Math.exp(2.12*rp)/(Math.pow(f-118.75,2)+0.031*Math.exp(2.2*rp));
+  const t3=0.0114/(1+0.14*Math.pow(rp,-2.6))*f
+          *(-0.0247+0.0001*f+1.61e-6*f*f)
+          /(1-0.0169*f+4.1e-5*f*f+3.2e-7*f*f*f);
+  let ho=6.1/(1+0.17*Math.pow(rp,-1.1))*(1+t1+t2+t3);
+  if(f<70) ho=Math.min(ho,10.7*Math.pow(rp,0.3));
   const sw=1.013/(1+Math.exp(-8.6*(rp-0.57)));
   const hw=1.66*(1+1.39*sw/(Math.pow(f-22.235,2)+2.56*sw)
                   +3.37*sw/(Math.pow(f-183.31,2)+4.69*sw)
@@ -190,7 +219,11 @@ function heights(f,p,t){
 }
 function compute(){
   const f=Math.min(Math.max(num('freq'),1),54);
-  const th=Math.max(num('elev'),3);
+  /* The cosecant law of Annex 2 is defined for 5°–90°. Below 5° the ray
+     bending and Earth curvature that only Annex 1's full path integration
+     accounts for start to dominate, so clamp instead of extrapolating into
+     a regime this method does not cover — and say so when it bites. */
+  const thIn=num('elev'), th=Math.min(Math.max(thIn,5),90);
   const p=num('p'), tempC=num('t'), rho=Math.max(num('rho'),0);
   const go=gammaO(f,p,tempC), gw=gammaW(f,p,tempC,rho), {ho,hw}=heights(f,p,tempC);
   const zen=go*ho+gw*hw;
@@ -201,7 +234,11 @@ function compute(){
   $('r_gt').textContent=f3(go+gw);
   $('r_zen').textContent=f2(zen);
   $('r_slant').textContent=f2(slant);
-  $('note').textContent=t('Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).','在 '+f+' GHz / '+th+'° 仰角下,给链路预算增加约 '+f2(slant)+' dB 晴空气体损耗(与雨衰独立)。');
+  const clamped=thIn<5
+    ? t(' Elevation was raised to 5° — ITU-R P.676 Annex 2 does not cover lower angles.',
+        ' 仰角已提升到 5° —— ITU-R P.676 附件 2 不适用于更低的仰角。')
+    : '';
+  $('note').textContent=t('Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).','在 '+f+' GHz / '+th+'° 仰角下,给链路预算增加约 '+f2(slant)+' dB 晴空气体损耗(与雨衰独立)。')+clamped;
   const rows=[
     [t('Oxygen specific γ_o','氧气比衰减 γ_o'),f3(go)+' dB/km'],
     [t('Water-vapour specific γ_w','水汽比衰减 γ_w'),f3(gw)+' dB/km'],
