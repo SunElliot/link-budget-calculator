@@ -1,4 +1,7 @@
-const CACHE = 'sattools-v19';
+/* Bump the version here in lockstep with the ?v=NN cache-buster on
+   styles.css, i18n.js, a11y.js and share.js across every page. */
+const CACHE_PREFIX = 'sattools-';
+const CACHE = CACHE_PREFIX + 'v22';
 const ASSETS = [
   './',
   './index.html',
@@ -32,10 +35,15 @@ self.addEventListener('install', e => {
   );
 });
 
+/* Only ever delete this project's own caches. Cache Storage is keyed per
+   origin, not per path, and every GitHub Pages project site of the same
+   account shares https://<user>.github.io — so an unfiltered sweep here
+   would wipe the sibling sites' caches on every deploy of this one. */
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE)
+                      .map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -48,7 +56,7 @@ self.addEventListener('activate', e => {
      fresh HTML when online and falls back to the cache offline.
 
    - Everything else (CSS/JS/icons): cache-first, but matched with
-     ignoreSearch. The pages load these as `styles.css?v=21`, `share.js?v=21`
+     ignoreSearch. The pages load these as `styles.css?v=NN`, `share.js?v=NN`
      etc. while ASSETS precaches the bare paths — an exact-URL match misses
      every one of them, which used to leave the "offline" app with no CSS and
      no JS at all. The ?v= query is the cache-buster for the CACHE bump, so
