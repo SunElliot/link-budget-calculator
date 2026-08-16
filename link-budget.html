@@ -453,26 +453,9 @@
           <div class="row" id="ul_row_loopBw"><label>Carrier loop bandwidth B<sub>L</sub><span class="hint">Hz, one-sided</span></label><input type="number" id="ul_loopBw" value="100" step="any"></div>
           <div class="row">
             <label>Coding<span class="hint">auto-sets required Eb/N₀</span></label>
-            <select id="ul_coding" style="width:190px;text-align:left">
-              <!-- data-ebn0 = typical required information-bit Eb/N0 (dB) at BER ≈ 1e-5,
-                   reference design values from CCSDS 130.1-G / 230.1-G class curves —
-                   confirm against the actual mission spec. -->
-              <optgroup label="TC / simple">
-                <option value="uncoded"    data-ebn0="9.6" selected>Uncoded PCM (BER 1e-5)</option>
-                <option value="bch"        data-ebn0="8.3">CCSDS BCH(63,56) SEC</option>
-                <option value="ldpc-short" data-ebn0="5.5">CCSDS LDPC(128,64) TC</option>
-              </optgroup>
-              <optgroup label="CCSDS TM coding">
-                <option value="conv12"  data-ebn0="4.5">Conv K=7 R=1/2</option>
-                <option value="convrs"  data-ebn0="2.6">Conv + RS(255,223)</option>
-                <option value="turbo12" data-ebn0="1.5">Turbo 1/2 (8920)</option>
-                <option value="turbo13" data-ebn0="1.0">Turbo 1/3 (8920)</option>
-                <option value="turbo16" data-ebn0="0.5">Turbo 1/6 (8920)</option>
-                <option value="ldpc12"  data-ebn0="2.0">LDPC 1/2 AR4JA (k=1024)</option>
-                <option value="ldpc78"  data-ebn0="4.0">LDPC 7/8 C2 (8160,7136)</option>
-              </optgroup>
-              <option value="custom">Custom (set Eb/N₀ below)</option>
-            </select>
+            <!-- Options are built from the single TTC_CODING table in the script
+                 below, which both this select and dl_coding share. -->
+            <select id="ul_coding" style="width:190px;text-align:left"></select>
           </div>
           <div class="row"><label>Required Eb/N₀<span class="hint">dB</span></label><input type="number" id="ul_reqEbN0" value="9.6" step="any"></div>
           <div class="row" id="ul_row_ranging">
@@ -573,23 +556,8 @@
           <div class="row" id="dl_row_loopBw"><label>Carrier loop bandwidth B<sub>L</sub><span class="hint">Hz, one-sided</span></label><input type="number" id="dl_loopBw" value="100" step="any"></div>
           <div class="row">
             <label>Coding<span class="hint">auto-sets required Eb/N₀</span></label>
-            <select id="dl_coding" style="width:190px;text-align:left">
-              <optgroup label="TC / simple">
-                <option value="uncoded"    data-ebn0="9.6" selected>Uncoded PCM (BER 1e-5)</option>
-                <option value="bch"        data-ebn0="8.3">CCSDS BCH(63,56) SEC</option>
-                <option value="ldpc-short" data-ebn0="5.5">CCSDS LDPC(128,64) TC</option>
-              </optgroup>
-              <optgroup label="CCSDS TM coding">
-                <option value="conv12"  data-ebn0="4.5">Conv K=7 R=1/2</option>
-                <option value="convrs"  data-ebn0="2.6">Conv + RS(255,223)</option>
-                <option value="turbo12" data-ebn0="1.5">Turbo 1/2 (8920)</option>
-                <option value="turbo13" data-ebn0="1.0">Turbo 1/3 (8920)</option>
-                <option value="turbo16" data-ebn0="0.5">Turbo 1/6 (8920)</option>
-                <option value="ldpc12"  data-ebn0="2.0">LDPC 1/2 AR4JA (k=1024)</option>
-                <option value="ldpc78"  data-ebn0="4.0">LDPC 7/8 C2 (8160,7136)</option>
-              </optgroup>
-              <option value="custom">Custom (set Eb/N₀ below)</option>
-            </select>
+            <!-- Built from TTC_CODING, same table as ul_coding — see the script below. -->
+            <select id="dl_coding" style="width:190px;text-align:left"></select>
           </div>
           <div class="row"><label>Required Eb/N₀<span class="hint">dB</span></label><input type="number" id="dl_reqEbN0" value="9.6" step="any"></div>
           <div class="row" id="dl_row_ranging">
@@ -702,6 +670,61 @@ const $  = id => document.getElementById(id);
 const nv = id => { const el=$(id); return el ? el.value : ''; };
 const rv = id => { const el=$(id); return el ? el.textContent : '–'; };
 const K_BOLTZMANN_DBW = -228.6;
+
+/* ── TT&C coding thresholds — ONE table, two selects ────────────────
+   ul_coding and dl_coding used to carry byte-identical copies of these ten
+   options. These are hand-authored reference constants, so a correction
+   applied to the uplink copy and not the downlink one would have left the
+   two links silently disagreeing about the same code.
+
+   ebn0 = typical required information-bit Eb/N0 (dB), CCSDS 130.1-G /
+   230.1-G class curves. Read the caveat before trusting a digit: the source
+   comment claimed "BER ≈ 1e-5" for the whole list, which is right for the
+   uncoded entry — Q(sqrt(2Eb/N0)) = 1e-5 gives 9.588 dB — but CCSDS commonly
+   plots turbo and LDPC performance as FRAME error rate rather than BER, so
+   the metric is probably not uniform across this table. That last point is
+   an expectation, not a verified fact: it needs the source document to
+   settle, and settling it may change digits. None of the values violates
+   its Shannon limit, and the three turbo entries sit a consistent 1.50 /
+   1.55 / 1.58 dB above theirs, which is the signature of one coherent
+   source; what is missing is the issue number, figure number and decoder
+   conditions (soft/hard decision, iteration count) needed to cite it.
+   Confirm against the actual mission spec before flying anything. */
+const TTC_CODING = [
+  {grp:'TC / simple', opts:[
+    {v:'uncoded',    ebn0:9.6, label:'Uncoded PCM (BER 1e-5)'},
+    {v:'bch',        ebn0:8.3, label:'CCSDS BCH(63,56) SEC'},
+    {v:'ldpc-short', ebn0:5.5, label:'CCSDS LDPC(128,64) TC'},
+  ]},
+  {grp:'CCSDS TM coding', opts:[
+    {v:'conv12',  ebn0:4.5, label:'Conv K=7 R=1/2'},
+    {v:'convrs',  ebn0:2.6, label:'Conv + RS(255,223)'},
+    {v:'turbo12', ebn0:1.5, label:'Turbo 1/2 (8920)'},
+    {v:'turbo13', ebn0:1.0, label:'Turbo 1/3 (8920)'},
+    {v:'turbo16', ebn0:0.5, label:'Turbo 1/6 (8920)'},
+    {v:'ldpc12',  ebn0:2.0, label:'LDPC 1/2 AR4JA (k=1024)'},
+    {v:'ldpc78',  ebn0:4.0, label:'LDPC 7/8 C2 (8160,7136)'},
+  ]},
+];
+
+/* MUST run while the document is still parsing. i18n.js captures translatable
+   text nodes once, in its DOMContentLoaded handler, and later language toggles
+   only rewrite that snapshot — six of these option labels are DICT keys, so an
+   option injected after capture() would stay English forever and no error would
+   say so. Calling this at top level here is what keeps it early enough; do not
+   move it inside a DOMContentLoaded or load handler. */
+function buildCodingSelects(){
+  // toFixed(1): every value above is quoted to 0.1 dB, and a bare 1 in place of
+  // 1.0 would drop that precision from the rendered attribute. parseFloat reads
+  // both the same, but the digits are the record here.
+  const html = TTC_CODING.map(g =>
+      `<optgroup label="${g.grp}">` +
+      g.opts.map(o => `<option value="${o.v}" data-ebn0="${o.ebn0.toFixed(1)}">${o.label}</option>`).join('') +
+      `</optgroup>`
+    ).join('') + `<option value="custom">Custom (set Eb/N₀ below)</option>`;
+  ['ul_coding','dl_coding'].forEach(id => { const s=$(id); if(s) s.innerHTML = html; });
+}
+buildCodingSelects();
 
 function toDBW(val, unit){
   if(unit==='dBW') return val;
