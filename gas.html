@@ -224,11 +224,29 @@ function compute(){
      accounts for start to dominate, so clamp instead of extrapolating into
      a regime this method does not cover — and say so when it bites. */
   const thIn=num('elev'), th=Math.min(Math.max(thIn,5),90);
-  const p=num('p'), tempC=num('t'), rho=Math.max(num('rho'),0);
+  /* Pressure and temperature were the only inputs here with no guard at all:
+     freq and elev are clamped above, rho has a zero floor. Both feed r_p =
+     p/1013 and r_t = 288/(273+t), which the Annex 2 equations raise to
+     fractional powers, so neither has a meaningful value outside the physical
+     domain. A blank pressure box read as 0 hPa and produced a confident
+     0.025 dB of zenith loss at 20 GHz — no warning, just a plausible small
+     number. A temperature at or below absolute zero flipped r_t negative or
+     divided by zero and put a bare "NaN" in every cell.
+
+     Same treatment as link-budget.html's unusable inputs: the term evaluates
+     to NaN, the cells render "–", and the note names what to fix. */
+  const pIn=num('p'), tIn=num('t');
+  const badInputs=[];
+  if(!(pIn>0))       badInputs.push(t('pressure','压力'));
+  if(!(tIn>-273.15)) badInputs.push(t('temperature','温度'));
+  const p     = pIn>0       ? pIn : NaN;
+  const tempC = tIn>-273.15 ? tIn : NaN;
+  const rho=Math.max(num('rho'),0);
   const go=gammaO(f,p,tempC), gw=gammaW(f,p,tempC,rho), {ho,hw}=heights(f,p,tempC);
   const zen=go*ho+gw*hw;
   const slant=zen/Math.sin(th*Math.PI/180);
-  const f3=x=>x.toFixed(4), f2=x=>x.toFixed(3);
+  const fd=(x,n)=>isFinite(x)?x.toFixed(n):'–';
+  const f3=x=>fd(x,4), f2=x=>fd(x,3);
   $('r_go').textContent=f3(go);
   $('r_gw').textContent=f3(gw);
   $('r_gt').textContent=f3(go+gw);
@@ -238,12 +256,15 @@ function compute(){
     ? t(' Elevation was raised to 5° — ITU-R P.676 Annex 2 does not cover lower angles.',
         ' 仰角已提升到 5° —— ITU-R P.676 附件 2 不适用于更低的仰角。')
     : '';
-  $('note').textContent=t('Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).','在 '+f+' GHz / '+th+'° 仰角下,给链路预算增加约 '+f2(slant)+' dB 晴空气体损耗(与雨衰独立)。')+clamped;
+  $('note').textContent = badInputs.length
+    ? t('Enter a physically valid '+badInputs.join(' and ')+' — pressure must be above 0 hPa and temperature above −273.15 °C.',
+        '请填写物理上有效的'+badInputs.join('和')+'——压力须大于 0 hPa,温度须高于 −273.15 °C。')
+    : t('Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).','在 '+f+' GHz / '+th+'° 仰角下,给链路预算增加约 '+f2(slant)+' dB 晴空气体损耗(与雨衰独立)。')+clamped;
   const rows=[
     [t('Oxygen specific γ_o','氧气比衰减 γ_o'),f3(go)+' dB/km'],
     [t('Water-vapour specific γ_w','水汽比衰减 γ_w'),f3(gw)+' dB/km'],
-    [t('Oxygen equivalent height h_o','氧气等效高度 h_o'),ho.toFixed(3)+' km'],
-    [t('Water-vapour equivalent height h_w','水汽等效高度 h_w'),hw.toFixed(3)+' km'],
+    [t('Oxygen equivalent height h_o','氧气等效高度 h_o'),fd(ho,3)+' km'],
+    [t('Water-vapour equivalent height h_w','水汽等效高度 h_w'),fd(hw,3)+' km'],
     [t('Zenith attenuation γ_o·h_o + γ_w·h_w','天顶衰减 γ_o·h_o + γ_w·h_w'),f2(zen)+' dB'],
     [t('Slant-path (÷ sin θ)','斜路径(÷ sin θ)'),f2(slant)+' dB'],
   ];
