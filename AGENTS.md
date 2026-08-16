@@ -27,11 +27,20 @@ Miss one and the failure is silent. `noise-figure.html` shipped absent from
 2. `sw.js` — add it to `ASSETS`, and bump `CACHE`
 3. `sitemap.xml` — add the `<url>` entry
 4. `i18n.js` — add its `<h1>`, subtitle and card titles to `DICT`
-5. **`aside.sidebar > ul.toolnav` on all thirteen pages** — every page carries
-   its own full copy of the tool list, grouped by `li.grp` heading, and marks
-   the current page with `class="active"`. There is no shared include, so a new
-   tool means thirteen edits and thirteen correct `active` markers.
+5. **`aside.sidebar > ul.toolnav` on all twelve calculator pages** — every
+   calculator carries its own full copy of the tool list, grouped by `li.grp`
+   heading, and marks the current page with `class="active"`. There is no
+   shared include, so a new tool means twelve edits and twelve correct
+   `active` markers, plus a thirteenth edit adding a `.tcard` to
+   `index.html`'s gallery.
    (`nav.topnav` is only the brand link home — it is not the tool nav.)
+
+   **`index.html` is the hub and is deliberately exempt from `ul.toolnav`.**
+   Its `aside.sidebar` holds the `data-cat` category *filter* that drives the
+   gallery, and its body already lists every tool as a `.tcard`; a toolnav
+   would be a third copy of the same links on one page, with no "current
+   tool" to mark `active`. Audits keep re-reporting this as a missing nav —
+   it is not one. Add the card, not a toolnav.
 
 ### i18n is keyed on the English source text
 
@@ -61,6 +70,16 @@ cache-buster that is bumped **in lockstep across every page**, together with the
 `CACHE` name in `sw.js`, in the same commit. Half-bumped versions are the
 classic way to ship a broken deploy here. `linkout.js` carries its own
 independent version and is not part of that lockstep.
+
+The lockstep is about the **version number**, not about every page loading
+every asset. `share.js` is loaded by eleven pages, and that is correct:
+loading it does nothing on its own — it only defines `window.ShareTool`, and
+each page must call `ShareTool.apply()` itself. `bands.html` has no `id`'d
+form control at all, and `index.html` has only the `#q` search box, so
+neither has state to serialize. Audits report the 11-vs-13 gap as a lockstep
+violation; it is not. Adding `share.js` to those two pages would be dead
+weight unless someone also wants `?q=` deep links on the gallery, which is a
+new feature, not a fix.
 
 ### Markup contract that a11y.js depends on
 
