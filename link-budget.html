@@ -1238,12 +1238,12 @@ function updateTTCUi(pre){
 /* Margin-box severity: a carrier loop that can't lock kills the link;
    a failed ranging channel degrades a green link to amber. */
 function ttcBoxClass(L){
-  // An unusable scenario is not a failing link — don't paint it red.
-  if(!isFinite(L.margin)) return 'margin-warn';
-  if(!L.loopOk) return 'margin-bad';
-  let cls = L.margin>=3?'margin-good':L.margin>=0?'margin-warn':'margin-bad';
-  if(L.rngEnabled && !L.rngOk && cls==='margin-good') cls='margin-warn';
-  return cls;
+  // Same closure definition as the solver: green only when every applicable
+  // gate clears with 3 dB to spare, and an indeterminate gate is neutral
+  // rather than red — it is an input problem, not a failing link.
+  const s3=ttcClosureSlack(L,3), s0=ttcClosureSlack(L,0);
+  if(!isFinite(s0)) return 'margin-warn';
+  return s3>=0 ? 'margin-good' : s0>=0 ? 'margin-warn' : 'margin-bad';
 }
 function ttcBoxExtras(L, f2){
   let extra='';
@@ -1306,10 +1306,20 @@ function computeTTC(){
   const lim  = ul.margin<=dl.margin ? t('TC Uplink ↑','TC 上行 ↑') : t('TM Downlink ↓','TM 下行 ↓');
   const tc   = passContactTime(alt, elev);
   const issues=[];
-  if(!ul.loopOk) issues.push(t('TC carrier loop below threshold','TC 载波环低于门限'));
-  if(!dl.loopOk) issues.push(t('TM carrier loop below threshold','TM 载波环低于门限'));
-  if(ul.rngEnabled && !ul.rngOk) issues.push(t('TC ranging Pr/N₀ short','TC 测距 Pr/N₀ 不足'));
-  if(dl.rngEnabled && !dl.rngOk) issues.push(t('TM ranging Pr/N₀ short','TM 测距 Pr/N₀ 不足'));
+  /* "below threshold" and "cannot be evaluated" are different findings; the
+     old code reported both as a failing gate. A blank loop bandwidth is an
+     input to fix, not a loop that is too noisy. */
+  for(const [L,tc] of [[ul,true],[dl,false]]){
+    const who=tc?'TC':'TM', zh=tc?'TC':'TM';
+    if(L.residual && !isFinite(L.loopSnr))
+      issues.push(t(`${who} carrier loop not computable (needs a positive loop bandwidth)`,`${zh} 载波环无法计算(需要正的环路带宽)`));
+    else if(L.residual && !L.loopOk)
+      issues.push(t(`${who} carrier loop below threshold`,`${zh} 载波环低于门限`));
+    if(L.rngEnabled && !isFinite(L.rngMargin))
+      issues.push(t(`${who} ranging not computable`,`${zh} 测距无法计算`));
+    else if(L.rngEnabled && !L.rngOk)
+      issues.push(t(`${who} ranging Pr/N₀ short`,`${zh} 测距 Pr/N₀ 不足`));
+  }
 
   $('ttc_summary_grid').innerHTML=`<div class="resgrid">
     <div class="metric"><div class="k">${t('TC Uplink Margin','TC 上行余量')}</div>
@@ -1327,16 +1337,26 @@ function computeTTC(){
   </div>`;
 
   const sbox=$('ttc_summary_box');
-  const loopFail = !ul.loopOk || !dl.loopOk;
-  let scls = minM>=3?'margin-good':minM>=0?'margin-warn':'margin-bad';
-  if(loopFail) scls='margin-bad';
-  else if(issues.length && scls==='margin-good') scls='margin-warn';
-  sbox.className='margin-box '+scls;
+  // Closure for the system is the worse of the two links, judged by the same
+  // gate-aware slack the solver and the margin boxes use.
+  const sysSlack0=Math.min(ttcClosureSlack(ul,0), ttcClosureSlack(dl,0));
+  const sysSlack3=Math.min(ttcClosureSlack(ul,3), ttcClosureSlack(dl,3));
+  const closes=isFinite(sysSlack0) && sysSlack0>=0;
+  sbox.className='margin-box '+(!isFinite(sysSlack0)?'margin-warn'
+                              : sysSlack3>=0?'margin-good'
+                              : sysSlack0>=0?'margin-warn':'margin-bad');
   const issueTxt = issues.length ? ' &nbsp;·&nbsp; ⚠ '+issues.join(' · ') : '';
-  sbox.innerHTML=t(
-    `TT&C system ${minM>=0&&!loopFail?'closes':'does <b>not</b> close'} — min margin <span>${f2(minM)}</span> dB (${lim} limits) &nbsp;·&nbsp; slant range ${dist.toFixed(0)} km${issueTxt}`,
-    `TT&C 系统${minM>=0&&!loopFail?'链路闭合':'链路<b>不通</b>'} — 最小余量 <span>${f2(minM)}</span> dB（${lim} 为瓶颈）&nbsp;·&nbsp; 斜距 ${dist.toFixed(0)} km${issueTxt}`
-  );
+  sbox.innerHTML = !isFinite(sysSlack0)
+    ? t(`TT&C system — <b>not computable</b>; ${ttcBindingNote(dist,0)} &nbsp;·&nbsp; slant range ${dist.toFixed(0)} km${issueTxt}`,
+        `TT&C 系统 — <b>无法计算</b>；${ttcBindingNote(dist,0)} &nbsp;·&nbsp; 斜距 ${dist.toFixed(0)} km${issueTxt}`)
+    : t(`TT&C system ${closes?'closes':'does <b>not</b> close'} — min margin <span>${fd(minM)}</span> dB (${lim} limits) &nbsp;·&nbsp; slant range ${dist.toFixed(0)} km${issueTxt}`,
+        `TT&C 系统${closes?'链路闭合':'链路<b>不通</b>'} — 最小余量 <span>${fd(minM)}</span> dB（${lim} 为瓶颈）&nbsp;·&nbsp; 斜距 ${dist.toFixed(0)} km${issueTxt}`);
+
+  /* Stash the closure decision so the PDF reports exactly what the page
+     showed. It used to re-derive the gates by parsing rendered cells, which
+     made a "–" read as a passing gate — a third copy of the rule that could
+     disagree with the other two. */
+  lastTTCClosure={slack0:sysSlack0, slack3:sysSlack3, issues:issues.slice(), lim, minM};
 
   drawTTCChart(alt);
   ttcSolveTarget();
@@ -1348,21 +1368,47 @@ function computeTTC(){
    (SNR ≥ LOOP_SNR_MIN) and ranging (Pr/N₀) hard gates pass — slack is
    the worst of the three, and every solved variable is monotonic in it. */
 let ttcSolveState=null; // {field, value} pending for applyTTCSolve()
+let lastTTCClosure=null; // set by computeTTC(), read by the PDF export
+
+/* ── The single definition of "this TT&C link closes" ──
+   Every consumer — the reverse solver, the margin boxes, the summary
+   verdict and the elevation chart — goes through ttcGateTerms(). Each
+   applicable constraint becomes a slack in dB, so closure is one monotonic
+   number: the minimum term, positive when everything is met and negative
+   by however much the binding constraint falls short.
+
+   A gate that APPLIES but has no finite value is indeterminate, not absent.
+   The old solver skipped such a gate with an isFinite() guard, which read as
+   "unconstrained", while loopOk/rngOk read the very same NaN as a failure —
+   so a blank carrier-loop bandwidth made the verdict box say the loop was
+   below threshold while the solver reported the link could be closed. NaN
+   now propagates out of the minimum and every consumer reports "not
+   computable" together. */
+function ttcGateTerms(L, target){
+  const terms=[[L.margin-target, t('data channel','数据信道')]];
+  if(L.residual)
+    terms.push([isFinite(L.loopSnr) ? L.loopSnr-LOOP_SNR_MIN : NaN, t('carrier loop','载波环')]);
+  if(L.rngEnabled)
+    terms.push([isFinite(L.rngMargin) ? L.rngMargin : NaN, t('ranging','测距')]);
+  return terms;
+}
+/* Worst slack across every applicable gate. NaN if any of them is
+   indeterminate — Math.min would happily ignore a NaN, so test explicitly. */
+function ttcClosureSlack(L, target){
+  const vals=ttcGateTerms(L,target).map(x=>x[0]);
+  return vals.some(v=>!isFinite(v)) ? NaN : Math.min(...vals);
+}
 function ttcSlack(pre, dist, ov, target){
-  const L=computeTTCLink(pre, dist, ov);
-  let sl=L.margin-target;
-  if(L.residual && isFinite(L.loopSnr)) sl=Math.min(sl, L.loopSnr-LOOP_SNR_MIN);
-  if(L.rngEnabled && isFinite(L.rngMargin)) sl=Math.min(sl, L.rngMargin);
-  return sl;
+  return ttcClosureSlack(computeTTCLink(pre, dist, ov), target);
 }
 /* Which link+constraint is binding at this distance (for the elev solve note). */
 function ttcBindingNote(dist, target){
   const parts=[];
   for(const [pre,name] of [['ul_',t('TC Uplink','TC 上行')],['dl_',t('TM Downlink','TM 下行')]]){
-    const L=computeTTCLink(pre,dist,{});
-    const terms=[[L.margin-target,t('data channel','数据信道')]];
-    if(L.residual && isFinite(L.loopSnr)) terms.push([L.loopSnr-LOOP_SNR_MIN,t('carrier loop','载波环')]);
-    if(L.rngEnabled && isFinite(L.rngMargin)) terms.push([L.rngMargin,t('ranging','测距')]);
+    const terms=ttcGateTerms(computeTTCLink(pre,dist,{}), target);
+    // An indeterminate gate is the thing to report before any shortfall.
+    const nd=terms.find(x=>!isFinite(x[0]));
+    if(nd) return name+' · '+nd[1]+' '+t('(not computable)','(无法计算)');
     terms.sort((a,b)=>a[0]-b[0]);
     parts.push([terms[0][0], name+' · '+terms[0][1]]);
   }
@@ -1397,7 +1443,12 @@ function ttcSolveTarget(){
       // Loop & ranging don't depend on data rate — if a gate fails, say so
       // instead of reporting a meaningless "even 1 bps" data-margin failure.
       const gate=computeTTCLink(pre,dist,{RbBps:1});
-      if(gate.residual && isFinite(gate.loopSnr) && gate.loopSnr<LOOP_SNR_MIN){ fail(t(`${linkName}: carrier loop SNR is below threshold — no data rate can close this link.`,`${linkName}:载波环 SNR 低于门限——任何数据率都无法闭合该链路。`)); return; }
+      // Rate-independent gates: at 1 bps the data channel cannot be the
+      // binding term, so anything still short here can never be fixed by
+      // lowering the rate. Use the shared terms so a gate that cannot be
+      // evaluated is reported rather than skipped.
+      if(gate.residual && !isFinite(gate.loopSnr)){ fail(t(`${linkName}: carrier loop SNR cannot be evaluated — check the loop bandwidth.`,`${linkName}:载波环 SNR 无法计算——请检查环路带宽。`)); return; }
+      if(gate.residual && gate.loopSnr<LOOP_SNR_MIN){ fail(t(`${linkName}: carrier loop SNR is below threshold — no data rate can close this link.`,`${linkName}:载波环 SNR 低于门限——任何数据率都无法闭合该链路。`)); return; }
       if(gate.rngEnabled && gate.rngMargin<0){ fail(t(`${linkName}: ranging Pr/N₀ is short — reducing data rate cannot fix it.`,`${linkName}:测距 Pr/N₀ 不足——降低数据率无法弥补。`)); return; }
       const sl=x=>ttcSlack(pre,dist,{RbBps:Math.pow(10,x)},target);
       if(sl(0)<0){ fail(t(`${linkName}: even 1 bps cannot reach ${target} dB margin.`,`${linkName}:即使 1 bps 也达不到 ${target} dB 余量。`)); return; }
@@ -1437,11 +1488,15 @@ function drawTTCChart(alt){
   const plotW=W-padL-padR,plotH=H-padT-padB;
   ctx.clearRect(0,0,W,H);
 
-  const ulPts=[],dlPts=[];
+  /* The curve shows the data margin, but "closes at this elevation" is the
+     gate-aware question — the carrier loop and ranging must clear too. Sweep
+     both so the plotted line and the crossing marker cannot disagree. */
+  const ulPts=[],dlPts=[],ulSlack=[],dlSlack=[];
   for(let e=1;e<=90;e++){
     const d=slantRange(alt,e);
-    ulPts.push([e,computeTTCLink('ul_',d).margin]);
-    dlPts.push([e,computeTTCLink('dl_',d).margin]);
+    const Lu=computeTTCLink('ul_',d), Ld=computeTTCLink('dl_',d);
+    ulPts.push([e,Lu.margin]);   ulSlack.push([e,ttcClosureSlack(Lu,0)]);
+    dlPts.push([e,Ld.margin]);   dlSlack.push([e,ttcClosureSlack(Ld,0)]);
   }
   const all=[...ulPts.map(p=>p[1]),...dlPts.map(p=>p[1])];
   // Same guard as drawChart(): all-NaN would label the axes "NaN".
@@ -1482,12 +1537,27 @@ function drawTTCChart(alt){
   ctx.strokeStyle='#2563eb';ctx.lineWidth=2.5;ctx.beginPath();
   dlPts.forEach((p,i)=>{const xx=x(p[0]),yy=y(p[1]);i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.stroke();
 
-  const cross=pts=>{for(const p of pts){if(p[1]>=0)return p[0];}return null;};
-  const eUL=cross(ulPts),eDL=cross(dlPts);
+  // Crossing is taken from the gate-aware slack, not the bare margin: a link
+  // whose carrier loop never locks does not "close" at any elevation, however
+  // comfortable the data margin looks on the curve.
+  const cross=pts=>{for(const p of pts){if(isFinite(p[1])&&p[1]>=0)return p[0];}return null;};
+  const eUL=cross(ulSlack),eDL=cross(dlSlack);
   [[eUL,'#16a34a'],[eDL,'#2563eb']].forEach(([e,c])=>{
     if(!e)return;ctx.strokeStyle=c;ctx.setLineDash([2,3]);ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(x(e),padT);ctx.lineTo(x(e),H-padB);ctx.stroke();ctx.setLineDash([]);
   });
+
+  /* Flag the case the curve cannot show: margin alone would have closed but a
+     hard gate blocks it, so the green/blue line reads better than reality. */
+  const marginCross=pts=>{for(const p of pts){if(isFinite(p[1])&&p[1]>=0)return p[0];}return null;};
+  const gated=[[marginCross(ulPts),eUL],[marginCross(dlPts),eDL]]
+    .some(([m,g])=>m!=null && (g==null || g>m));
+  if(gated){
+    ctx.fillStyle='#d97706';ctx.font='11px -apple-system,Segoe UI,Roboto,sans-serif';
+    ctx.textAlign='right';ctx.textBaseline='top';
+    ctx.fillText(t('⚠ a hard gate closes later than the margin curve suggests',
+                   '⚠ 硬门限比余量曲线更晚满足'), W-padR, padT+2);
+  }
 
   const fmt=e=>e==null?t('never','永不'):'≥ '+e+'°';
   $('ttc-elev-summary').innerHTML=
@@ -1608,14 +1678,16 @@ function exportPDF(){
     const dlM=parseFloat(rv('dl_r_margin'));
     const minM=Math.min(ulM,dlM);
     const lim=ulM<=dlM?T('TC Uplink ↑','TC 上行 ↑'):T('TM Downlink ↓','TM 下行 ↓');
-    const loopBad=['ul_','dl_'].some(pre=>{const v=rv(pre+'r_loop');return v!=='–'&&parseFloat(v)<10;});
-    const rngBad=['ul_','dl_'].some(pre=>{const v=rv(pre+'r_prn0');return v!=='–'&&nv(pre+'ranging')==='on'&&parseFloat(v)<parseFloat(nv(pre+'reqPrN0'));});
-    let vcls=!isFinite(minM)?'warn':minM>=3?'good':minM>=0?'warn':'bad';
-    if(isFinite(minM)){ if(loopBad) vcls='bad'; else if(rngBad&&vcls==='good') vcls='warn'; }
-    let vtxt=!isFinite(minM)?T('Not computable — check the inputs','无法计算——请检查输入')
-             :minM>=3&&!loopBad?T('✓ TT&C system closes','✓ TT&C 链路闭合'):minM>=0&&!loopBad?T('⚠ TT&C margin tight','⚠ TT&C 余量偏紧'):T('✗ TT&C does NOT close','✗ TT&C 链路不通');
-    if(isFinite(minM)&&loopBad) vtxt+=' — '+T('carrier loop SNR below 10 dB threshold','载波环 SNR 低于 10 dB 门限');
-    if(isFinite(minM)&&rngBad)  vtxt+=' — '+T('ranging Pr/N₀ below requirement','测距 Pr/N₀ 低于要求');
+    // Reuse the page's own gate-aware decision instead of re-deriving it
+    // from rendered text (see lastTTCClosure in computeTTC).
+    const cl=lastTTCClosure;
+    const s0=cl?cl.slack0:NaN, s3=cl?cl.slack3:NaN;
+    let vcls=!isFinite(s0)?'warn':s3>=0?'good':s0>=0?'warn':'bad';
+    let vtxt=!isFinite(s0)?T('Not computable — check the inputs','无法计算——请检查输入')
+             :s3>=0?T('✓ TT&C system closes','✓ TT&C 链路闭合')
+             :s0>=0?T('⚠ TT&C margin tight','⚠ TT&C 余量偏紧')
+             :T('✗ TT&C does NOT close','✗ TT&C 链路不通');
+    if(cl&&cl.issues.length) vtxt+=' — '+cl.issues.join('; ');
     const resRows=(pre,m)=>{
       const out=[['EIRP',rv(pre+'r_eirp')+' dBW'],['FSPL',rv(pre+'r_fspl')+' dB'],['G/T',rv(pre+'r_gt')+' dB/K'],['C/N₀',rv(pre+'r_cn0')+' dB-Hz'],['Eb/N₀',rv(pre+'r_ebn0')+' dB']];
       if(rv(pre+'r_ebni')!=='–') out.push(['Eb/(N₀+I₀)',rv(pre+'r_ebni')+' dB']);
@@ -1641,7 +1713,7 @@ function exportPDF(){
           <h2 style="color:#1d4ed8">${T('TM Downlink Results','TM 下行结果')}</h2>
           ${tbl([T('Metric','指标'),T('Value','数值')],rows(resRows('dl_',dlM)))}</div>
       </div>
-      <div class="verdict ${vcls}">${vtxt} — ${T('Min margin','最小余量')}: ${minM.toFixed(2)} dB — ${T('Limiting','瓶颈')}: ${lim}</div>
+      <div class="verdict ${vcls}">${vtxt} — ${T('Min margin','最小余量')}: ${isFinite(minM)?minM.toFixed(2):'–'} dB — ${T('Limiting','瓶颈')}: ${lim}</div>
       <h2>${T('Link Margin vs Elevation','余量-仰角曲线')} — TC / TM</h2>${cImg}`;
   }
 
@@ -1720,8 +1792,9 @@ function readTTCResults(){
   const minM=Math.min(ulM,dlM);
   const lim=ulM<=dlM?t('TC Uplink ↑','TC 上行 ↑'):t('TM Downlink ↓','TM 下行 ↓');
   const dbOr=(id,unit)=>{const v=rv(id);return v==='–'?'–':v+' '+unit;};
-  return [[t('TC Uplink margin','TC 上行余量'),ulM.toFixed(2)+' dB'],[t('TM Downlink margin','TM 下行余量'),dlM.toFixed(2)+' dB'],
-    [t('Min margin','最小余量'),minM.toFixed(2)+' dB'],[t('Limiting','瓶颈'),lim],
+  const dB=v=>isFinite(v)?v.toFixed(2)+' dB':'–';
+  return [[t('TC Uplink margin','TC 上行余量'),dB(ulM)],[t('TM Downlink margin','TM 下行余量'),dB(dlM)],
+    [t('Min margin','最小余量'),dB(minM)],[t('Limiting','瓶颈'),lim],
     [t('TC loop SNR','TC 载波环 SNR'),dbOr('ul_r_loop','dB')],[t('TM loop SNR','TM 载波环 SNR'),dbOr('dl_r_loop','dB')],
     [t('TC ranging Pr/N₀','TC 测距 Pr/N₀'),dbOr('ul_r_prn0','dB-Hz')],[t('TM ranging Pr/N₀','TM 测距 Pr/N₀'),dbOr('dl_r_prn0','dB-Hz')]];
 }
