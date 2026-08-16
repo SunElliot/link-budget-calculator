@@ -252,7 +252,7 @@
     "VHF–W band reference with IEEE designations and satellite up/downlink pairs.":"VHF–W 波段速查,含 IEEE 划分与卫星上/下行配对。",
     // ---- gallery home (cards, categories, head) ----
     "Satellite Communication Tools":"卫星通信工具",
-    "Free browser-based calculators for LEO smallsat and ground-station link design — no signup, nothing uploaded.":"面向 LEO 小卫星与地面站链路设计的免费在线计算器 — 免注册,数据不上传。",
+    "Free browser-based calculators for LEO smallsat and ground-station link design — no signup, no analytics.":"面向 LEO 小卫星与地面站链路设计的免费在线计算器 — 免注册,无分析追踪。",
     "Categories":"分类","All tools":"全部工具","← All tools":"← 全部工具","Link Analysis":"链路分析",
     "Orbit & Tracking":"轨道与跟踪","Hardware":"硬件","Reference":"参考",
     "Link Budget":"链路预算","Doppler Shift":"多普勒频移","Pass Predictor":"过顶预测",
@@ -261,10 +261,10 @@
     "No tools match your search.":"没有匹配的工具。",
     // ---- footers ----
     "SatTools · Free satellite communication calculators · LEO / smallsat / ground station · runs entirely in your browser.":"SatTools · 免费卫星通信计算器 · LEO / 小卫星 / 地面站 · 完全在浏览器中运行。",
-    "Free satellite link budget calculator · Computes EIRP, FSPL, G/T, C/N₀, Eb/N₀ and margin · No data leaves your browser.":"免费卫星链路预算计算器 · 计算 EIRP、FSPL、G/T、C/N₀、Eb/N₀ 与余量 · 数据不离开你的浏览器。",
-    "Free LEO Doppler shift calculator · orbital velocity, max Doppler, Doppler rate, pass curve · nothing leaves your browser.":"免费 LEO 多普勒频移计算器 · 轨道速度、最大多普勒、多普勒变化率、过境曲线 · 数据不上传。",
+    "Free satellite link budget calculator · TT&C uplink/downlink analysis · PDF export · runs entirely in your browser.":"免费卫星链路预算计算器 · 测控上/下行分析 · PDF 导出 · 完全在浏览器中运行。",
+    "Free LEO Doppler shift calculator · orbital velocity, max Doppler, Doppler rate, pass curve · runs entirely in your browser.":"免费 LEO 多普勒频移计算器 · 轨道速度、最大多普勒、多普勒变化率、过境曲线 · 完全在浏览器中运行。",
     "Free TLE satellite pass predictor · SGP4 via satellite.js · runs entirely in your browser.":"免费 TLE 卫星过顶预测 · 基于 satellite.js 的 SGP4 · 完全在浏览器中运行。",
-    "Free parabolic antenna calculator · gain, beamwidth, aperture, far-field · nothing leaves your browser.":"免费抛物面天线计算器 · 增益、波束宽度、口径、远场 · 数据不上传。",
+    "Free parabolic antenna calculator · gain, beamwidth, aperture, far-field · runs entirely in your browser.":"免费抛物面天线计算器 · 增益、波束宽度、口径、远场 · 完全在浏览器中运行。",
     "Free G/T figure-of-merit calculator · system noise temperature cascade · runs entirely in your browser.":"免费 G/T 品质因数计算器 · 系统噪温级联 · 完全在浏览器中运行。",
     "Free rain attenuation calculator · ITU-R P.838 + P.618 · specific attenuation & slant-path fade · runs in your browser.":"免费雨衰计算器 · ITU-R P.838 + P.618 · 比衰减与斜路径衰减 · 在浏览器中运行。",
     "Free atmospheric gaseous attenuation calculator · ITU-R P.676 · oxygen + water vapour · runs in your browser.":"免费大气气体衰减计算器 · ITU-R P.676 · 氧气 + 水汽 · 在浏览器中运行。",

@@ -41,8 +41,13 @@ Chinese translation — the key stops matching and the text just stays English.
 Whenever you touch a translated string, update the `DICT` key in the same edit.
 
 Units and symbols (dB, dBi, GHz, EIRP, QPSK) are deliberately left untranslated.
-Long SEO articles, footers, and dynamically generated results stay English by
-design — do not "fix" that.
+Long SEO articles and dynamically generated results stay English by design — do
+not "fix" that.
+
+Footers **are** translated: `DICT` carries a `// ---- footers ----` block with an
+entry per page, and all thirteen currently match their page. (This file used to
+claim footers stay English; that was wrong, and `link-budget.html`'s footer went
+untranslated for a while because its key had drifted out of sync with the page.)
 
 There is a second, separate mechanism for whole blocks: `.en-only` / `.zh-only`
 elements toggled by `body.lang-zh` in CSS, for prose that has to be authored
@@ -86,13 +91,25 @@ try to derive them from `modcod.js`.
 
 ### The privacy claim is load-bearing
 
-Every page's footer says the calculation runs entirely in the visitor's browser
-and nothing leaves it. There is no backend, no analytics, and no telemetry. The
-AdSense tag is present but commented out, and `.adslot` is hidden until it goes
-live. Any code that sends user input anywhere would make published copy false —
-don't add it.
+Every page's footer says the calculation **runs entirely in the visitor's
+browser**. That is a claim about where computation happens, and it is true:
+there is no backend, no analytics, and no telemetry. The AdSense tag is present
+but commented out, and `.adslot` is hidden until it goes live. Any code that
+sends user input to a service would make published copy false — don't add it.
 
-`linkout.js` follows the same principle: state moves between tools only on an
+The footers deliberately do **not** claim that nothing is transmitted. They used
+to ("nothing leaves your browser", "No data leaves your browser") and that
+wording was retired on 2026-08-16, because it was not true: `jumpOut()` in
+`link-budget.html` puts the user's frequency into a query string and navigates,
+and `linkout.js` returns via `?apply=<field>&value=<n>`. A query string travels
+in the HTTP request line, so those values reach the GitHub Pages access log.
+Do not restore the absolute wording while that round trip uses query strings.
+
+Moving the round trip to a URL **fragment** (`#…`, which browsers never send to
+the server) would make the stronger claim true again, and is the fix to make if
+the absolute wording is ever wanted back.
+
+`linkout.js` is otherwise privacy-tight: state moves between tools only on an
 explicit jump-out round trip from `link-budget.html`. Opening a tool page
 directly stores and broadcasts nothing.
 
