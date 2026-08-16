@@ -49,10 +49,19 @@
     {id:'dbpsk',name:'DBPSK',       k:1, color:'#65a30d', f:db=>0.5*Math.exp(-g(db))},
   ];
 
-  // Smallest Eb/N0 (dB) at which f(db) <= target. NaN if unreachable by hi.
+  /* Smallest Eb/N0 (dB) at which f(db) <= target, by bisection.
+     Both ends are checked, because bisection is only meaningful when the
+     root is inside the bracket: NaN when the target cannot be reached even
+     at hi, and NaN when it is already met at lo. The floor used to be -5 dB
+     with no lower check, so a target looser than the BER at -5 dB silently
+     returned "-5 dB required" instead of admitting the root was off-scale.
+     -20 dB is below 0.22 BER for every curve here — past a coin flip, so
+     nothing useful lives under it. */
   function reqEbN0(f,target){
     if(target<=0)return NaN;
-    let lo=-5,hi=50; if(f(hi)>target)return NaN;
+    let lo=-20,hi=50;
+    if(f(hi)>target)return NaN;
+    if(f(lo)<=target)return NaN;
     for(let i=0;i<60;i++){const m=(lo+hi)/2;(f(m)>target)?lo=m:hi=m;}
     return (lo+hi)/2;
   }
