@@ -15,9 +15,9 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sunelliot.github.io/link-budget-calculator/og.png">
-<link rel="stylesheet" href="styles.css?v=24">
-<script src="i18n.js?v=24"></script>
-<script src="a11y.js?v=24"></script>
+<link rel="stylesheet" href="styles.css?v=25">
+<script src="i18n.js?v=25"></script>
+<script src="a11y.js?v=25"></script>
 <meta name="theme-color" content="#16a34a">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -107,6 +107,7 @@
       <span class="en-only">Add stages in order from antenna port to demodulator input. Order matters — loss before the LNA hurts most.</span>
       <span class="zh-only">按天线端口到解调器输入的顺序添加各级。顺序很重要——LNA 之前的损耗影响最大。</span>
     </p>
+    <div class="row" style="max-width:420px"><label>Antenna noise temp T_A<span class="hint">K — sky seen by the antenna; leave 0 for receiver-only T_e</span></label><input type="number" id="ta" value="0" step="any"></div>
     <div class="stage-wrap">
       <table class="stage-tbl">
         <thead>
@@ -134,8 +135,12 @@
         <div class="v"><span id="r_nf">–</span> <span class="u">dB</span></div>
       </div>
       <div class="metric">
-        <div class="k">System noise temp T<sub>e</sub></div>
+        <div class="k">Receiver noise temp T<sub>e</sub></div>
         <div class="v"><span id="r_te">–</span> <span class="u">K</span></div>
+      </div>
+      <div class="metric">
+        <div class="k">System noise temp T<sub>sys</sub></div>
+        <div class="v"><span id="r_tsys">–</span> <span class="u">K</span></div>
       </div>
       <div class="metric">
         <div class="k">Total chain gain</div>
@@ -243,7 +248,7 @@
 
 <footer>Free cascaded noise figure calculator · Friis formula · RF chain noise temperature breakdown · runs entirely in your browser.</footer>
 
-<script src="share.js?v=24"></script>
+<script src="share.js?v=25"></script>
 <script src="linkout.js?v=1"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -366,11 +371,19 @@ function compute() {
   const f1 = x => x.toFixed(1);
   const f2 = x => x.toFixed(2);
 
+  /* teSys is the receiver chain alone. A link budget's T_sys is referred to
+     the antenna aperture and must also carry the sky the antenna is looking
+     at, so the hand-back is T_A + T_e — sending bare T_e would drop 50-200 K
+     on a typical LEO ground station and overstate G/T by well over a dB. */
+  const TA   = parseFloat($('ta').value) || 0;
+  const Tsys = TA + teSys;
+
   $('r_nf').textContent   = f2(cascNF);
   $('r_te').textContent   = f1(teSys);
+  $('r_tsys').textContent = f1(Tsys);
   $('r_gain').textContent = f2(totGain);
   $('r_n').textContent    = stages.length;
-  if(window.LinkOut) LinkOut.updateReturnBar(teSys);
+  if(window.LinkOut) LinkOut.updateReturnBar(Tsys);
 
   const dom  = bd.reduce((a, b) => a.teRef > b.teRef ? a : b, bd[0]);
   const domP = (dom.teRef / teSys * 100).toFixed(0);
@@ -440,11 +453,16 @@ $('addStage').addEventListener('click', () => {
   renderTable(); compute();
 });
 
+// T_A lives outside the stage table, so it needs its own listener — the
+// table's handler is bound per-row inside renderTable().
+$('ta').addEventListener('input', compute);
+
 // Init after i18n has set the language (i18n DOMContentLoaded fires first)
 document.addEventListener('DOMContentLoaded', () => {
   if (window.LinkOut) LinkOut.initReturnBar();
   applyPreset('sband');
-  if (window.ShareTool) ShareTool.apply();
+  // apply() can restore ?ta=… from a shared link, so recompute after it
+  if (window.ShareTool && ShareTool.apply()) compute();
   if (window.ShareTool) ShareTool.initButton();
   // Re-render on language switch so select options and dynamic text update
   if (window.onLang) window.onLang(() => { renderTable(); compute(); });

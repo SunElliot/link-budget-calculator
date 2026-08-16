@@ -1,7 +1,7 @@
 /* Bump the version here in lockstep with the ?v=NN cache-buster on
    styles.css, i18n.js, a11y.js and share.js across every page. */
 const CACHE_PREFIX = 'sattools-';
-const CACHE = CACHE_PREFIX + 'v24';
+const CACHE = CACHE_PREFIX + 'v25';
 const ASSETS = [
   './',
   './index.html',

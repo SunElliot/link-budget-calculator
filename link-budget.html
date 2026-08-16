@@ -15,9 +15,9 @@
 <meta property="og:title" content="Satellite Link Budget Calculator (LEO / Smallsat)">
 <meta property="og:description" content="TT&C uplink/downlink analysis, payload data budget and PDF export.">
 <meta property="og:type" content="website">
-<link rel="stylesheet" href="styles.css?v=24">
-<script src="i18n.js?v=24"></script>
-<script src="a11y.js?v=24"></script>
+<link rel="stylesheet" href="styles.css?v=25">
+<script src="i18n.js?v=25"></script>
+<script src="a11y.js?v=25"></script>
 <meta name="theme-color" content="#16a34a">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -169,8 +169,8 @@
       <div class="card">
         <h2><span class="dot"></span>Receiver</h2>
         <div class="row"><label>Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="rxGain" value="30" step="any"></div>
-        <div class="row"><label>System noise temperature<span class="hint">clear-sky, Kelvin (incl. LNA, sky, feed)</span></label><input type="number" id="sysTemp" value="200" step="any"></div>
-        <div class="row"><label>Rx line loss before LNA<span class="hint">dB</span></label><input type="number" id="rxLoss" value="0.5" step="any"></div>
+        <div class="row"><label>System noise temperature<span class="hint">clear-sky K, at the antenna aperture (incl. sky, feed, LNA)</span></label><input type="number" id="sysTemp" value="200" step="any"></div>
+        <div class="row"><label>Rx line loss before LNA<span class="hint">dB — already inside T_sys, not subtracted again</span></label><input type="number" id="rxLoss" value="0.5" step="any"></div>
         <div class="row">
           <label>Rain sky-noise coupling<span class="hint">rain/atm loss also heats the sky</span></label>
           <select id="rainNoise" style="width:190px;text-align:left">
@@ -338,7 +338,7 @@
         <h2>The equations used by this calculator</h2>
         <p><strong>EIRP</strong> = P<sub>tx</sub>(dBW) + G<sub>tx</sub>(dBi) − L<sub>tx</sub>(dB)</p>
         <p><strong>FSPL</strong> = 32.44 + 20·log₁₀(d<sub>km</sub>) + 20·log₁₀(f<sub>MHz</sub>) dB</p>
-        <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
+        <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − 10·log₁₀(T<sub>sys</sub>) dB/K &nbsp; — both terms at the <strong>antenna aperture</strong>, so T<sub>sys</sub> must already include the feed loss's (L−1)·T<sub>phys</sub> noise, as the <a href="gt.html" style="color:var(--accent)">G/T tool</a> reports it. The Rx line loss is not subtracted a second time.</p>
         <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k &nbsp; (k = −228.6 dBW/K/Hz)</p>
         <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
         <p><strong>ΔT<sub>sky</sub></strong> = T<sub>m</sub>·(1 − 10<sup>−A<sub>abs</sub>/10</sup>) — rain/gas absorption raises the receive noise temperature (downlink); G/T uses T<sub>sys</sub>+ΔT</p>
@@ -353,7 +353,7 @@
         <h2>本计算器使用的公式</h2>
         <p><strong>EIRP</strong> = P<sub>tx</sub>(dBW) + G<sub>tx</sub>(dBi) − L<sub>tx</sub>(dB)</p>
         <p><strong>FSPL</strong> = 32.44 + 20·log₁₀(d<sub>km</sub>) + 20·log₁₀(f<sub>MHz</sub>) dB</p>
-        <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − L<sub>rx</sub>(dB) − 10·log₁₀(T<sub>sys</sub>) dB/K</p>
+        <p><strong>G/T</strong> = G<sub>rx</sub>(dBi) − 10·log₁₀(T<sub>sys</sub>) dB/K &nbsp; —— 两项都参考<strong>天线口面</strong>，因此 T<sub>sys</sub> 必须已包含馈线损耗贡献的 (L−1)·T<sub>phys</sub> 噪声，即 <a href="gt.html" style="color:var(--accent)">G/T 工具</a>给出的那个值。接收线损不再二次扣除。</p>
         <p><strong>C/N₀</strong> = EIRP − L<sub>path</sub> + G/T − k &nbsp; (k = −228.6 dBW/K/Hz)</p>
         <p><strong>Eb/N₀</strong> = C/N₀ − 10·log₁₀(R<sub>b</sub>)</p>
         <p><strong>ΔT<sub>sky</sub></strong> = T<sub>m</sub>·(1 − 10<sup>−A<sub>abs</sub>/10</sup>) —— 雨/大气吸收同时抬升接收噪温(下行)，G/T 按 T<sub>sys</sub>+ΔT 计算</p>
@@ -427,8 +427,8 @@
           <div class="row"><label>Additional losses<span class="hint">dB (atm+rain+pol+pointing)</span></label><input type="number" id="ul_addLoss" value="2" step="any"></div>
           <div class="row"><label>Aggregate C/I<span class="hint">dB, 0 or blank = ignore</span></label><input type="number" id="ul_ci" value="0" step="any"></div>
           <div class="row"><label>Sat Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="ul_rxGain" value="3" step="any"></div>
-          <div class="row"><label>Sat noise temperature<span class="hint">K</span></label><input type="number" id="ul_sysTemp" value="500" step="any"></div>
-          <div class="row"><label>Rx line loss<span class="hint">dB</span></label><input type="number" id="ul_rxLoss" value="2" step="any"></div>
+          <div class="row"><label>Sat noise temperature<span class="hint">K, at the antenna aperture</span></label><input type="number" id="ul_sysTemp" value="500" step="any"></div>
+          <div class="row"><label>Rx line loss<span class="hint">dB — already inside T_sys</span></label><input type="number" id="ul_rxLoss" value="2" step="any"></div>
         </div>
 
         <div class="card">
@@ -538,7 +538,7 @@
           <div class="row"><label>Additional losses<span class="hint">dB (atm+rain+pol+pointing)</span></label><input type="number" id="dl_addLoss" value="2" step="any"></div>
           <div class="row"><label>Aggregate C/I<span class="hint">dB, 0 or blank = ignore</span></label><input type="number" id="dl_ci" value="0" step="any"></div>
           <div class="row"><label>Ground Rx antenna gain<span class="hint">dBi</span></label><input type="number" id="dl_rxGain" value="30" step="any"></div>
-          <div class="row"><label>Ground noise temperature<span class="hint">clear-sky, K</span></label><input type="number" id="dl_sysTemp" value="150" step="any"></div>
+          <div class="row"><label>Ground noise temperature<span class="hint">clear-sky K, at the antenna aperture</span></label><input type="number" id="dl_sysTemp" value="150" step="any"></div>
           <div class="row">
             <label>Rain sky-noise coupling<span class="hint">absorptive loss heats the sky</span></label>
             <select id="dl_rainNoise" style="width:190px;text-align:left">
@@ -548,7 +548,7 @@
           </div>
           <div class="row" id="dl_row_absLoss"><label>Absorptive loss part<span class="hint">dB of add. losses that absorb (rain+gas)</span></label><input type="number" id="dl_absLoss" value="1" step="any"></div>
           <div class="row" id="dl_row_skyTm"><label>Medium temperature T_m<span class="hint">K, ITU typ. 275</span></label><input type="number" id="dl_skyTm" value="275" step="any"></div>
-          <div class="row"><label>Rx line loss<span class="hint">dB</span></label><input type="number" id="dl_rxLoss" value="0.5" step="any"></div>
+          <div class="row"><label>Rx line loss<span class="hint">dB — already inside T_sys</span></label><input type="number" id="dl_rxLoss" value="0.5" step="any"></div>
         </div>
 
         <div class="card">
@@ -694,7 +694,7 @@
 
 <footer>Free satellite link budget calculator · TT&amp;C uplink/downlink analysis · PDF export · runs entirely in your browser.</footer>
 
-<script src="share.js?v=24"></script>
+<script src="share.js?v=25"></script>
 <script src="linkout.js?v=1"></script>
 <script src="modcod.js?v=1"></script>
 <script>
@@ -781,7 +781,12 @@ function compute(){
   const rnOn   = $('rainNoise')?.value==='on';
   const dT     = rnOn ? (num('skyTm')||275)*(1-Math.pow(10,-(atm+rain)/10)) : 0;
   const Teff   = Tsys + dT;
-  const gt     = rxG-rxL-(Teff>0 ? 10*Math.log10(Teff) : 0);
+  /* G/T is referred to the antenna aperture: T_sys already carries the feed
+     loss's noise contribution (L−1)·T_phys, exactly as gt.html reports it,
+     so the line loss must NOT also be taken off the gain. Doing both
+     double-counted it and understated G/T by rxLoss dB. G/T is invariant
+     between reference planes; mixing the two is what broke it. */
+  const gt     = rxG-(Teff>0 ? 10*Math.log10(Teff) : 0);
   const cn0    = eirp-totL+gt-K_BOLTZMANN_DBW;
   const ebn0   = Rb>0 ? cn0-10*Math.log10(Rb) : 0;
 
@@ -841,8 +846,8 @@ function compute(){
     [t('Free space path loss','自由空间路径损耗'),  '−'+f2(fspl)+' dB'],
     [t('Atmospheric / rain / pol / pointing','大气/雨/极化/指向'), '−'+f2(extra)+' dB'],
     [t('Rx antenna gain','接收天线增益'),           '+'+f2(rxG)+' dBi'],
-    [t('Rx line loss','接收线损'),                  '−'+f2(rxL)+' dB'],
-    [t('System noise temp (clear sky)','系统噪温(晴空)'), f2(Tsys)+' K'],
+    [t('Rx line loss (already in T_sys)','接收线损(已计入 T_sys)'), f2(rxL)+' dB'],
+    [t('System noise temp (clear sky, at aperture)','系统噪温(晴空,口面参考)'), f2(Tsys)+' K'],
     [t('Rain/atm sky-noise rise ΔT','雨/大气噪声抬升 ΔT'), rnOn?'+'+dT.toFixed(0)+' K':t('off','未启用')],
     [t('Effective noise temp','等效系统噪温'),      f2(Teff)+' K ('+f2(10*Math.log10(Teff||1))+' dB)'],
     [t('= G/T','= G/T'),                           f2(gt)+' dB/K'],
@@ -893,7 +898,7 @@ function marginModel(ov={}){
   const extra= num('atmLoss')+num('rainLoss')+num('polLoss')+num('pointLoss');
   const dT   = $('rainNoise')?.value==='on' ? (num('skyTm')||275)*(1-Math.pow(10,-(num('atmLoss')+num('rainLoss'))/10)) : 0;
   const Teff = num('sysTemp')+dT;
-  const gt   = rxG-num('rxLoss')-(Teff>0?10*Math.log10(Teff):0);
+  const gt   = rxG-(Teff>0?10*Math.log10(Teff):0);   // aperture-referred, see compute()
   const cn0  = eirp-(fspl+extra)+gt-K_BOLTZMANN_DBW;
   const ebn0 = Rb>0?cn0-10*Math.log10(Rb):0;
   const sel  = $('modcod').selectedOptions[0];
@@ -1107,7 +1112,7 @@ function computeTTCLink(pre, distKm, ov={}){
   const rnOn = s('rainNoise')==='on';
   const dT   = rnOn ? (n('skyTm')||275)*(1-Math.pow(10,-n('absLoss')/10)) : 0;
   const Tsys = n('sysTemp')+dT;
-  const gt   = n('rxGain')-n('rxLoss')-(Tsys>0?10*Math.log10(Tsys):0);
+  const gt   = n('rxGain')-(Tsys>0?10*Math.log10(Tsys):0);   // aperture-referred, see compute()
   const cn0  = eirp-totL+gt-K_BOLTZMANN_DBW;
   const Rb   = ov.RbBps!==undefined ? ov.RbBps : rateBps(n('rate'), s('rateUnit'));
 
