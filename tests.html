@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>SatTools — Regression Tests</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--line:#e6e8ec;--txt:#1b1f27;--muted:#697086;
+      --good:#16a34a;--bad:#dc2626;--warn:#d97706;--accent:#2563eb}
+*{box-sizing:border-box}
+body{margin:0;padding:24px;background:var(--bg);color:var(--txt);
+     font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1000px;margin:0 auto}
+h1{font-size:1.4rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 20px}
+#summary{padding:12px 16px;border-radius:9px;font-weight:700;margin:0 0 18px;
+         background:#eef0f4;border:1px solid var(--line)}
+#summary.pass{background:rgba(22,163,74,.10);border-color:rgba(22,163,74,.35);color:var(--good)}
+#summary.fail{background:rgba(220,38,38,.10);border-color:rgba(220,38,38,.35);color:var(--bad)}
+.grp{background:var(--card);border:1px solid var(--line);border-radius:10px;
+     padding:12px 16px;margin:0 0 12px}
+.grp h2{font-size:.95rem;margin:0 0 8px;display:flex;justify-content:space-between}
+.grp h2 .n{font-weight:500;color:var(--muted);font-size:.82rem}
+.case{display:flex;gap:8px;padding:3px 0;border-top:1px solid #f2f4f7;font-size:.86rem}
+.case:first-of-type{border-top:none}
+.case .st{flex:0 0 18px}
+.case .nm{flex:1}
+.case .dt{color:var(--muted);font-variant-numeric:tabular-nums;font-size:.8rem}
+.ok .st{color:var(--good)} .no .st{color:var(--bad)} .no .nm{color:var(--bad)}
+.note{background:#fff8e6;border:1px solid rgba(217,119,6,.3);color:#8a5a00;
+      padding:10px 14px;border-radius:8px;margin:0 0 18px;font-size:.86rem}
+code{background:#f2f4f7;padding:1px 5px;border-radius:4px;font-size:.85em}
+iframe{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🧪 SatTools Regression Tests</h1>
+<p class="sub">Zero dependencies. Exercises the shipped code — the calculator pages are loaded
+in hidden same-origin iframes and their real functions are called directly.</p>
+
+<div class="note">
+  Must be served over <code>http(s)</code> — <code>file://</code> blocks same-origin iframe
+  access. Locally: <code>python3 -m http.server</code>, then open
+  <code>http://localhost:8000/tests.html</code>. Not linked from the tool nav and excluded
+  from <code>sitemap.xml</code> on purpose; it is a development page, not a calculator.
+  <br><br>
+  <b>Service worker:</b> <code>sw.js</code> serves non-document requests cache-first, so a
+  worker left over from a previous visit can hand these tests a stale <code>modcod.js</code>
+  or a stale page and let them pass against code that is no longer on disk. The suite
+  therefore unregisters every worker and drops the <code>sattools-*</code> caches before it
+  reads anything, reloading once to escape an existing controller. That reload is expected.
+</div>
+
+<div id="summary">Running…</div>
+<div id="out"></div>
+</div>
+
+<!-- src is assigned from JS, after the service-worker guard has run. A static src
+     would start these loads (and their sw.js registrations) before the guard. -->
+<iframe id="fr_lb"  data-src="link-budget.html"></iframe>
+<iframe id="fr_gas" data-src="gas.html"></iframe>
+<iframe id="fr_gt"  data-src="gt.html"></iframe>
+<iframe id="fr_nf"  data-src="noise-figure.html"></iframe>
+<iframe id="fr_ber" data-src="ber.html"></iframe>
+
+<script>
+/* ── Tiny harness ───────────────────────────────────── */
+const OUT = document.getElementById('out');
+let passed = 0, failed = 0;
+let group = null;
+
+function describe(name){
+  group = document.createElement('div');
+  group.className = 'grp';
+  const h = document.createElement('h2');
+  const t = document.createElement('span'); t.textContent = name;
+  const n = document.createElement('span'); n.className = 'n';
+  h.append(t, n);
+  group.appendChild(h);
+  OUT.appendChild(group);
+  group._p = 0; group._f = 0;
+}
+function record(good, name, detail){
+  if(!group) describe('(ungrouped)');
+  const row = document.createElement('div');
+  row.className = 'case ' + (good ? 'ok' : 'no');
+  const st = document.createElement('span'); st.className = 'st'; st.textContent = good ? '✓' : '✗';
+  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = name;
+  const dt = document.createElement('span'); dt.className = 'dt'; dt.textContent = detail || '';
+  row.append(st, nm, dt);
+  group.appendChild(row);
+  good ? (passed++, group._p++) : (failed++, group._f++);
+  group.querySelector('.n').textContent = `${group._p} passed`
+    + (group._f ? `, ${group._f} failed` : '');
+}
+function ok(name, cond, detail){ record(cond === true, name, detail); }
+
+/* Every numeric assertion below goes through these two helpers, so they must not
+   accept a value that merely *looks* numeric:
+     - global isFinite() coerces, so isFinite("165.3") is true and a function that
+       returned a string would pass;
+     - global isFinite(undefined) is false, so a *deleted* result property used to
+       satisfy every "is not a number" assertion in the suite.
+   Both are therefore typeof-checked first and use Number.isFinite. */
+const isNum = v => typeof v === 'number';
+
+/* Compare to a reference value. tol is absolute unless it ends in '%'. */
+function near(name, got, want, tol){
+  let lim = tol === undefined ? 1e-9 : tol;
+  if(typeof lim === 'string' && lim.endsWith('%')) lim = Math.abs(want) * parseFloat(lim) / 100;
+  const good = isNum(got) && Number.isFinite(got)
+            && Number.isFinite(want) && Math.abs(got - want) <= lim;
+  record(good, name, `got ${fmt(got)}${isNum(got) ? '' : ` (${typeof got})`}`
+                   + `  want ${fmt(want)}±${fmt(lim)}`);
+}
+/* A value read back as formatted DOM text cannot be tighter than its own display
+   rounding, so assert exactly that: the text equals the reference rounded to dp. */
+function nearRounded(name, gotText, want, dp){
+  /* parseFloat alone would accept "142.39 broken" — the whole cell has to be a
+     clean number, or the page is rendering something this test cannot vouch for. */
+  const clean = typeof gotText === 'string' && /^\s*-?\d+(\.\d+)?\s*$/.test(gotText);
+  const got = clean ? parseFloat(gotText) : NaN;
+  const wantR = Math.round(want * 10 ** dp) / 10 ** dp;
+  const good = clean && Number.isFinite(got) && Math.abs(got - wantR) <= 10 ** -dp / 2 + 1e-12;
+  record(good, name, `text "${gotText}"  want ${wantR.toFixed(dp)} (=${fmt(want)} to ${dp} dp)`);
+}
+/* The contract is "this is a number with no finite value" — NaN or ±Infinity.
+   A missing property is a different (and worse) failure and must not pass here. */
+function isNaNv(name, got){
+  record(isNum(got) && !Number.isFinite(got), name,
+         `got ${fmt(got)} (${typeof got})`);
+}
+function fmt(v){
+  if(typeof v !== 'number') return String(v);
+  if(!isFinite(v)) return String(v);
+  return Math.abs(v) >= 1e5 || (v !== 0 && Math.abs(v) < 1e-3) ? v.toExponential(4) : String(+v.toFixed(6));
+}
+
+/* ── Loading, with deadlines and identity checks ────── */
+const TIMEOUT_MS = 20000;
+const withTimeout = (p, what) => Promise.race([p, new Promise((_, rej) =>
+  setTimeout(() => rej(new Error(`timed out after ${TIMEOUT_MS} ms: ${what}`)), TIMEOUT_MS))]);
+
+/* Accept: text/html puts the request on sw.js's network-first document path, so
+   even a worker that re-registers mid-run cannot answer this from its cache;
+   cache:'no-store' does the same for the plain HTTP cache. A 404 body is not
+   page content — fail instead of asserting against the error page.
+   The deadline covers reading the body too: a server that sends headers and then
+   stalls mid-body would otherwise hang forever inside r.text(). */
+async function text(p){
+  return withTimeout((async () => {
+    const r = await fetch(p, {cache:'no-store', headers:{'Accept':'text/html'}});
+    if(!r.ok) throw new Error(`${p} → HTTP ${r.status}`);
+    return r.text();
+  })(), `fetch ${p}`);
+}
+
+/* readyState 'complete' is also true of the initial about:blank document, so the
+   old shortcut could hand a test the wrong window. Assign src here and wait for
+   the load event we caused, then confirm the document that arrived is the one
+   asked for. */
+function frame(id){
+  const f = document.getElementById(id);
+  if(f._ready) return f._ready;
+  const want = f.dataset.src;
+  f._ready = withTimeout(new Promise((res, rej) => {
+    f.addEventListener('load', () => {
+      const w = f.contentWindow;
+      const got = w.location.pathname.split('/').pop();
+      got === want ? res(w) : rej(new Error(`${id} loaded "${got}", expected "${want}"`));
+    }, {once:true});
+    f.addEventListener('error', () => rej(new Error(`${id} failed to load ${want}`)), {once:true});
+    f.src = want;
+  }), `iframe ${id} → ${want}`);
+  return f._ready;
+}
+
+/* ── Shared parsing helpers ─────────────────────────── */
+const PAGES = ['index','link-budget','antenna','bands','ber','doppler','gas','gt',
+               'hpa-backoff','noise-figure','pass-prediction','phased-array','rain'];
+const TOOLS = PAGES.filter(p => p !== 'index');
+const LOCKSTEP = ['styles.css','i18n.js','a11y.js'];   // every page carries these
+/* share.js only defines window.ShareTool; a page must also call ShareTool.apply().
+   index.html has only the #q search box and bands.html has no id'd control at all,
+   so neither has state to serialize and neither loads it. That gap is intentional
+   and is asserted in both directions below. */
+const NO_SHARE = ['index','bands'];
+const SHARED_JS = ['i18n.js','a11y.js','share.js','linkout.js','modcod.js'];
+/* styles.css is fetched with them: a stylesheet issues requests of its own via
+   url() and @import, so it is in scope for the privacy invariant. */
+const SHARED_ASSETS = [...SHARED_JS, 'styles.css'];
+const SELF_HOST = /(^|\.)sunelliot\.github\.io$/;
+
+const HTML = {};          // page name → source text
+let SW = '', SITEMAP = '';
+const SCRIPTS = {};       // shared script name → source text
+
+const stripHtmlComments = s => s.replace(/<!--[\s\S]*?-->/g, '');
+const stripJsComments = s => s.replace(/\/\*[\s\S]*?\*\//g, '')
+                              .replace(/(^|[^:'"\\])\/\/.*$/gm, '$1');
+const dom = (s, type) => new DOMParser().parseFromString(s, type || 'text/html');
+const dec = s => { const d = document.createElement('textarea'); d.innerHTML = s; return d.value; };
+
+/* ── Service-worker guard ───────────────────────────── */
+const GUARD_KEY = 'sattools-tests-sw-cleared';
+
+async function clearServiceWorkers(){
+  /* GUARD_KEY is the record of what already happened this session; without
+     consulting it the early return below would report "none was registered"
+     on the reloaded pass, which is the opposite of the truth. */
+  const cleared = !!sessionStorage.getItem(GUARD_KEY);
+  if(!('serviceWorker' in navigator)) return {supported:false, controlled:false, cleared:false};
+  const regs = await navigator.serviceWorker.getRegistrations();
+  const controlled = !!navigator.serviceWorker.controller;
+  if(!regs.length && !controlled){
+    /* Clean. Disarm the guard so the NEXT load re-arms it — the iframes below
+       re-register sw.js, and the normal workflow is edit, then reload this tab.
+       Keeping the flag for the whole session would make that reload skip the
+       clearing and read the edited files through the worker installed a moment
+       ago. Each load can still reload at most once, so this cannot loop. */
+    sessionStorage.removeItem(GUARD_KEY);
+    return {supported:true, controlled:false, cleared};
+  }
+  if(cleared)
+    /* Already cleared once this session. Anything registered since came from an
+       iframe in this very run, and a fresh install re-fetches ASSETS from the
+       network, so its cache cannot be stale. */
+    return {supported:true, controlled, cleared:true};
+  await Promise.all(regs.map(r => r.unregister()));
+  if(window.caches){
+    const keys = await caches.keys();
+    await Promise.all(keys.filter(k => k.startsWith('sattools-')).map(k => caches.delete(k)));
+  }
+  sessionStorage.setItem(GUARD_KEY, '1');
+  location.reload();
+  /* Normally the navigation ends this document. If it is blocked or cancelled,
+     an unsettled promise would leave the page on "Running…" forever, so give up
+     loudly instead. */
+  return new Promise((_, rej) => setTimeout(
+    () => rej(new Error('reload after clearing the service worker never happened')),
+    TIMEOUT_MS));
+}
+
+/* ═══════════════════════════════════════════════════════
+   1. Site invariants — the drift AGENTS.md calls the
+      dominant risk in this repo. All checked by reading
+      the shipped files, not by trusting a convention.
+   ═══════════════════════════════════════════════════════ */
+let controlledAtRead = null;
+
+async function loadSources(){
+  /* Record the controller as it is at the moment the sources are actually read.
+     Asserting on it later would measure a different instant: the iframes below
+     re-register sw.js and it claims this page mid-run, which is harmless but
+     would make the assertion read as a failure. */
+  controlledAtRead = 'serviceWorker' in navigator
+    ? !!navigator.serviceWorker.controller : false;
+  /* Independent files, no ordering requirement — fetch them concurrently but
+     keep every later assertion reading from this map, so reporting stays
+     deterministic regardless of completion order. */
+  const pages = await Promise.all(PAGES.map(p => text(p + '.html')));
+  PAGES.forEach((p, i) => { HTML[p] = pages[i]; });
+  const [sw, sm, ...assets] = await Promise.all(
+    [text('sw.js'), text('sitemap.xml'), ...SHARED_ASSETS.map(s => text(s))]);
+  SW = sw; SITEMAP = sm;
+  SHARED_ASSETS.forEach((s, i) => { SCRIPTS[s] = assets[i]; });
+}
+
+function invEnvironment(state){
+  describe('Test environment — nothing is read through a stale worker');
+  ok('no service worker controls this page while the sources are read',
+     controlledAtRead === false,
+     state.cleared ? 'cleared a previous worker and reloaded once'
+                   : 'no worker was registered to begin with');
+  ok('all 13 pages, sw.js, sitemap.xml and 6 shared assets loaded',
+     PAGES.every(p => typeof HTML[p] === 'string' && HTML[p].length > 0)
+     && SW.length > 0 && SITEMAP.length > 0
+     && SHARED_ASSETS.every(s => (SCRIPTS[s] || '').length > 0));
+}
+
+function invAssetVersions(){
+  describe('Site invariants — asset version lockstep');
+  /* The old check compared only the versions it happened to find, so a page that
+     dropped a tag entirely still passed. Assert the whole expected matrix. */
+  const seen = new Set(), missing = [], unexpected = [], dupes = [];
+  /* Match on comment-stripped source and take EVERY occurrence, not the first:
+     a tag commented out still satisfies a raw substring match, and two different
+     versions of one asset on one page is precisely the half-bumped state this
+     invariant exists to catch. */
+  const refs = p => {
+    /* Real <link href>/<script src> only. A bare "styles.css?v=25" in body copy
+       or inside a JS string must not stand in for a tag that was deleted, and
+       DOMParser drops commented-out markup for free. */
+    const d = dom(HTML[p]);
+    return [...d.querySelectorAll('link[href], script[src]')]
+      .map(e => e.getAttribute('href') || e.getAttribute('src'));
+  };
+  const byPage = {};
+  PAGES.forEach(p => { byPage[p] = refs(p); });
+  const tags = (list, a) => list
+    .map(u => (u.match(new RegExp('(?:^|/)' + a.replace('.', '\\.') + '\\?v=(\\d+)$')) || [])[1])
+    .filter(v => v !== undefined);
+  for(const p of PAGES){
+    for(const a of [...LOCKSTEP, 'share.js']){
+      const v = tags(byPage[p], a);
+      const want = a !== 'share.js' || !NO_SHARE.includes(p);
+      if(!want){ if(v.length) unexpected.push(`${p}:${a}`); continue; }
+      if(!v.length){ missing.push(`${p}:${a}`); continue; }
+      if(new Set(v).size > 1) dupes.push(`${p}:${a}=${[...new Set(v)].join('/')}`);
+      v.forEach(x => seen.add(x));
+    }
+  }
+  ok('every page carries every core asset it is supposed to',
+     missing.length === 0, missing.length ? 'missing: ' + missing.join(', ') : '39 + 11 tags');
+  ok('share.js is absent exactly where it has no state to serialize',
+     unexpected.length === 0,
+     unexpected.length ? 'unexpected: ' + unexpected.join(', ') : 'not on ' + NO_SHARE.join(', '));
+  ok('no page carries two different versions of one asset',
+     dupes.length === 0, dupes.join(', '));
+  ok('all of them carry one and the same version',
+     seen.size === 1, `versions seen: ${[...seen].join(', ') || 'none'}`);
+
+  const swV = (stripJsComments(SW).match(/CACHE_PREFIX\s*\+\s*'v(\d+)'/)
+            || stripJsComments(SW).match(/sattools-v(\d+)/) || [])[1];
+  ok('sw.js CACHE is bumped in lockstep with them',
+     seen.size === 1 && swV === [...seen][0], `sw.js=v${swV}  pages=v${[...seen][0]}`);
+}
+
+function swAssets(){
+  /* Substring-matching the whole file would also be satisfied by a mention in a
+     comment, so read the ASSETS array itself. */
+  const m = stripJsComments(SW).match(/const\s+ASSETS\s*=\s*\[([\s\S]*?)\]/);
+  return m ? [...m[1].matchAll(/['"]([^'"]+)['"]/g)].map(x => x[1]) : null;
+}
+
+function invServiceWorker(){
+  describe('Site invariants — service worker precache');
+  const assets = swAssets();
+  ok('sw.js ASSETS array is parseable', Array.isArray(assets), assets ? `${assets.length} entries` : '');
+  if(!assets) return;
+  const norm = assets.map(a => a.replace(/^\.\//, ''));
+  for(const p of PAGES)
+    ok(`sw.js precaches ${p}.html`, norm.includes(`${p}.html`));
+  for(const s of SHARED_ASSETS)
+    ok(`sw.js precaches ${s}`, norm.includes(s));
+  ok('sw.js does not precache the test page', !norm.includes('tests.html'));
+  ok('every precached entry is unique', new Set(norm).size === norm.length);
+}
+
+function invSitemap(){
+  describe('Site invariants — sitemap coverage');
+  const xml = dom(SITEMAP, 'application/xml');
+  ok('sitemap.xml parses as XML', !xml.querySelector('parsererror'));
+  const locs = [...xml.querySelectorAll('loc')].map(l => l.textContent.trim());
+  ok('sitemap.xml has at least one <loc>', locs.length > 0, `${locs.length} entries`);
+  /* Comparing basenames alone would accept a wrong host or a wrong directory, so
+     pin the whole prefix first and only then look at which files are listed. */
+  const BASE = 'https://sunelliot.github.io/link-budget-calculator/';
+  const strays = locs.filter(u => u !== BASE && !/^[a-z-]+\.html$/.test(u.slice(BASE.length)));
+  ok('every <loc> is the site root or one page directly under it',
+     strays.length === 0, strays.join(', '));
+  const files = locs.map(u => u.replace(/\/$/, '/index.html').split('/').pop());
+  for(const p of PAGES)
+    ok(`sitemap.xml lists ${p === 'index' ? 'the home page' : p + '.html'}`,
+       files.includes(p + '.html'));
+  ok('sitemap.xml has no entry for a page that does not exist',
+     files.every(f => PAGES.includes(f.replace('.html', ''))),
+     files.filter(f => !PAGES.includes(f.replace('.html',''))).join(', '));
+  ok('sitemap.xml lists nothing twice', new Set(files).size === files.length);
+  ok('tests.html is deliberately absent from sitemap.xml', !files.includes('tests.html'));
+}
+
+function invToolNav(){
+  describe('Site invariants — tool nav');
+  /* There is no shared include: every calculator carries its own full copy of the
+     tool list and marks itself active, so this is twelve independent edits. */
+  for(const p of TOOLS){
+    const nav = dom(HTML[p]).querySelector('ul.toolnav');
+    if(!nav){ ok(`${p}.html has a tool nav`, false); continue; }
+    const links = [...nav.querySelectorAll('a[href]')].map(a => a.getAttribute('href'));
+    const missing = TOOLS.filter(t => !links.includes(`${t}.html`));
+    const extra = links.filter(h => !TOOLS.includes(h.replace('.html', '')));
+    ok(`${p}.html tool nav lists all 12 tools`, missing.length === 0,
+       missing.length ? 'missing: ' + missing.join(', ') : '');
+    ok(`${p}.html tool nav has no stray or duplicate link`,
+       extra.length === 0 && new Set(links).size === links.length,
+       extra.join(', '));
+    const active = [...nav.querySelectorAll('.active')].map(a => a.getAttribute('href'));
+    ok(`${p}.html marks exactly itself active`,
+       active.length === 1 && active[0] === `${p}.html`,
+       active.join(', ') || 'none');
+  }
+  ok('index.html is exempt from the tool nav by design',
+     !dom(HTML.index).querySelector('ul.toolnav'));
+}
+
+function invGallery(){
+  describe('Site invariants — index.html gallery');
+  /* AGENTS.md calls this the thirteenth edit when a tool is added. Without it a
+     new tool can be in all twelve navs, sw.js and sitemap.xml and still be
+     missing from the only page that is meant to list everything. */
+  const cards = [...dom(HTML.index).querySelectorAll('a.tcard')]
+    .map(a => a.getAttribute('href'));
+  const missing = TOOLS.filter(t => !cards.includes(`${t}.html`));
+  const extra = cards.filter(h => !TOOLS.includes(h.replace('.html', '')));
+  ok('index.html has one .tcard per calculator', missing.length === 0,
+     missing.length ? 'missing: ' + missing.join(', ') : `${cards.length} cards`);
+  ok('index.html gallery has no unknown card', extra.length === 0, extra.join(', '));
+  ok('index.html gallery lists nothing twice', new Set(cards).size === cards.length);
+}
+
+function invI18n(){
+  describe('Site invariants — i18n DICT coverage');
+  /* Keys that survive only inside a comment are not keys. */
+  const src = stripJsComments(SCRIPTS['i18n.js']);
+  const keys = new Set();
+  for(const m of src.matchAll(/"((?:[^"\\]|\\.)*)"\s*:\s*"(?:[^"\\]|\\.)*"/g)) keys.add(m[1]);
+  ok('i18n.js DICT parses to a non-trivial key set', keys.size > 100, `${keys.size} keys`);
+
+  const txt = el => el ? dec(el.innerHTML.replace(/<[^>]+>/g, '')).trim() : null;
+  const gaps = {h1: [], sub: [], card: [], foot: []};
+  for(const p of PAGES){
+    const d = dom(HTML[p]);
+    /* A page with no <h1> at all is a failure, not a row to skip — "absent"
+       must never read as "covered". index.html has no <header>, so it is the
+       one page exempt from the subtitle check, and that exemption is asserted
+       rather than assumed. */
+    const h1 = txt(d.querySelector('h1'));
+    if(!h1) gaps.h1.push(`${p}: no <h1>`);
+    else if(!keys.has(h1)) gaps.h1.push(p);
+    const sub = txt(d.querySelector('header > p'));
+    if(p === 'index'){
+      /* `sub` is '' for an empty <p>, which is falsy — check for the element
+         itself, or an empty header paragraph would read as "no subtitle". */
+      if(d.querySelector('header > p')) gaps.sub.push('index: unexpected header subtitle');
+    }
+    else if(!sub) gaps.sub.push(`${p}: no header subtitle`);
+    else if(!keys.has(sub)) gaps.sub.push(p);
+    for(const h of d.querySelectorAll('h2 > span.dot')){
+      const s = txt(h.parentElement);
+      if(!s || /\$\{/.test(s)) continue;
+      if(h.parentElement.querySelector('.en-only, .zh-only')) continue;
+      if(!keys.has(s)) gaps.card.push(`${p}: "${s}"`);
+    }
+    /* A page with no footer is a failure, not a row to skip — the old check
+       silently passed such a page. */
+    const feet = d.querySelectorAll('footer');
+    if(feet.length !== 1){ gaps.foot.push(`${p}: ${feet.length} footers`); continue; }
+    const f = txt(feet[0]);
+    if(!f) gaps.foot.push(`${p}: empty footer`);
+    else if(!keys.has(f)) gaps.foot.push(p);
+  }
+  ok('every page <h1> has a DICT key', gaps.h1.length === 0, gaps.h1.join(', '));
+  ok('every page subtitle has a DICT key', gaps.sub.length === 0, gaps.sub.join(', '));
+  ok('every static card title has a DICT key', gaps.card.length === 0, gaps.card.join(' · '));
+  ok('every page has exactly one footer, and it has a DICT key',
+     gaps.foot.length === 0, gaps.foot.join(', '));
+}
+
+function invPrivacy(){
+  describe('Site invariants — the privacy claim stays true');
+  /* The footers claim the calculation runs in the visitor's browser. They
+     deliberately do NOT claim that nothing is transmitted: jumpOut() and
+     linkout.js pass values through a query string, which reaches the server's
+     access log. Guard both halves — no absolute wording, and no code that
+     would make even the weaker claim false. */
+  const ABSOLUTE_EN = /leaves your browser|nothing uploaded|never uploaded|no data is sent/i;
+  const ABSOLUTE_ZH = /不会离开(你的)?浏览器|不上传任何|数据不会上传|绝不上传/;
+  for(const p of PAGES){
+    const f = dom(HTML[p]).querySelector('footer');
+    const s = f ? f.textContent : '';
+    ok(`${p}.html footer makes no absolute "nothing leaves" claim`,
+       !ABSOLUTE_EN.test(s) && !ABSOLUTE_ZH.test(s));
+  }
+  const dictZh = stripJsComments(SCRIPTS['i18n.js']);
+  ok('no Chinese DICT value carries the retired absolute wording',
+     !ABSOLUTE_ZH.test(dictZh));
+
+  /* The old check looked only at page HTML for three hostnames, so an
+     exfiltrating fetch() added to a shared script would have passed. */
+  const NET = /\bfetch\s*\(|XMLHttpRequest|sendBeacon|new\s+WebSocket|new\s+EventSource|WebTransport|navigator\.connection\.|importScripts\s*\(|new\s+Image\s*\(/;
+  /* Scan the RAW source, not the comment-stripped one. stripJsComments() is a
+     regex and does not understand strings, so `const s = " // "; fetch(x)`
+     would have the real call stripped away before the scan ever saw it. Scanning
+     raw can only over-report — a commented-out call trips it and a human clears
+     it — which is the right way round for a claim this load-bearing. */
+  const offenders = [];
+  for(const p of PAGES) if(NET.test(HTML[p])) offenders.push(p + '.html');
+  for(const s of SHARED_JS) if(NET.test(SCRIPTS[s])) offenders.push(s);
+  ok('no page or shared script mentions an outbound network API at all',
+     offenders.length === 0, offenders.join(', '));
+
+  /* A stylesheet can fetch too — url() and @import both issue requests. */
+  const css = stripJsComments(SCRIPTS['styles.css'] || '');
+  const cssHosts = [...css.matchAll(/(?:url\s*\(|@import\s+(?:url\s*\()?)\s*['"]?(https?:)?\/\/([^/'")]+)/gi)]
+    .map(m => m[2]).filter(h => !SELF_HOST.test(h));
+  ok('styles.css pulls nothing from a third-party host',
+     cssHosts.length === 0, [...new Set(cssHosts)].join(', '));
+
+  /* Namespace URIs (schema.org in JSON-LD, w3.org in SVG) are identifiers, not
+     requests. An active external resource would be. */
+  const ACTIVE = /<(?:script|img|iframe|link)\b[^>]*\b(?:src|href)\s*=\s*["']https?:\/\/([^/"']+)/gi;
+  const hosts = new Set();
+  for(const p of PAGES){
+    const clean = stripHtmlComments(HTML[p]);
+    for(const m of clean.matchAll(ACTIVE)) if(!SELF_HOST.test(m[1])) hosts.add(m[1]);
+  }
+  ok('no page loads an active resource from a third-party host',
+     hosts.size === 0, [...hosts].join(', '));
+  ok('the AdSense tag is present but inert on every page that carries it',
+     PAGES.every(p => !stripHtmlComments(HTML[p]).includes('googlesyndication')));
+}
+
+/* ═══════════════════════════════════════════════════════
+   2. modcod.js — the shared uncoded-AWGN BER source
+   ═══════════════════════════════════════════════════════ */
+async function modcodTests(){
+  const w = await frame('fr_ber');
+  const M = w.Modcod;
+  describe('modcod.js — Q function & BER references');
+  ok('window.Modcod is exposed', !!M);
+  if(!M) return;
+
+  /* Q(x) here is a rational approximation; the references are the exact
+     Gaussian tail probabilities, so the tolerance is the approximation's
+     stated accuracy (~1.5e-8 absolute), not a guess. */
+  near('Q(0) = 0.5', M.Q(0), 0.5, 1e-7);
+  near('Q(1) ≈ 0.158655', M.Q(1), 0.15865525, 1e-7);
+  near('Q(3) ≈ 1.3499e-3', M.Q(3), 1.3498980e-3, 1e-7);
+  ok('Q is monotonically decreasing', [0,1,2,3,4,5].every((x,i,a)=>i===0||M.Q(x)<M.Q(a[i-1])));
+
+  const ber = id => M.MODS.find(m => m.id === id).f;
+  /* Coherent BPSK/QPSK: BER = Q(sqrt(2·Eb/N0)). Reference is the closed form
+     itself, so this is an exact identity, not a fitted number. */
+  const closed = d => M.Q(Math.sqrt(2 * 10 ** (d / 10)));
+  ok('the BPSK/QPSK curve is exactly Q(√(2·Eb/N₀))',
+     [0, 3, 6, 9.6, 12].every(d => ber('bpsk')(d) === closed(d)));
+  near('BPSK BER at 9.6 dB ≈ 1e-5', ber('bpsk')(9.6), 1.0e-5, '6%');
+  /* Replaces a check that only compared the display-name string, which gave no
+     mathematical protection at all. */
+  ok('one entry covers both BPSK and QPSK, and it is that curve',
+     M.MODS.find(m => m.id === 'bpsk').name.replace(/\s/g, '') === 'BPSK/QPSK'
+     && !M.MODS.some(m => m.id === 'qpsk'));
+  ok('higher-order modulation needs more Eb/N₀ at the same BER',
+     ber('16qam')(8) > ber('8psk')(8) && ber('8psk')(8) > ber('bpsk')(8));
+  near('DBPSK at 10 dB = 0.5·exp(-10)', ber('dbpsk')(10), 0.5*Math.exp(-10), 1e-12);
+  ok('BER decreases monotonically with Eb/N0',
+     [0,2,4,6,8,10,12].every((d,i,a) => i === 0 || ber('bpsk')(d) < ber('bpsk')(a[i-1])));
+
+  describe('modcod.js — reqEbN0 root bracketing');
+  /* The 0.02 dB band is the precision of the quoted literal 9.588, not the
+     solver's — the bisection converges far tighter than that. The tight
+     statement of the same property is round-tripping it: feed the root back
+     into the curve and the BER must come out at the target, which no loose
+     tolerance can fake. */
+  near('reqEbN0(BPSK, 1e-5) ≈ 9.59 dB', M.reqEbN0(ber('bpsk'), 1e-5), 9.588, 0.02);
+  near('the root round-trips: BER(reqEbN0(t)) = t', ber('bpsk')(M.reqEbN0(ber('bpsk'), 1e-5)),
+       1e-5, 1e-8);
+  ok('round-tripping holds across the curve',
+     [1e-3, 1e-4, 1e-6, 1e-8].every(t => {
+       const d = M.reqEbN0(ber('bpsk'), t);
+       return Number.isFinite(d) && Math.abs(ber('bpsk')(d) / t - 1) < 1e-3;
+     }));
+  // A BER floor makes the target genuinely unreachable; real curves here
+  // underflow to 0 at 50 dB, so any positive target is reachable for them.
+  isNaNv('target below a curve\'s floor returns NaN', M.reqEbN0(()=>1e-6, 1e-9));
+  near('1e-30 is reachable for BPSK at ~18.2 dB', M.reqEbN0(ber('bpsk'), 1e-30), 18.18, 0.1);
+  isNaNv('non-positive target returns NaN', M.reqEbN0(ber('bpsk'), 0));
+  // Regression: a target already met at the -5 dB lower bound must not be
+  // reported as "needs -5 dB" (audit finding #16).
+  const loose = ber('dbpsk')(-20) * 1.5;   // looser than a coin flip
+  isNaNv('a target already met at the bracket floor is not reported as the floor',
+         M.reqEbN0(ber('dbpsk'), loose));
+  ok('the floor sits below a coin flip for every curve',
+     ['bpsk','dbpsk','bfsk','256qam'].every(id => ber(id)(-20) > 0.2));
+  near('widening the floor did not move a normal root',
+       M.reqEbN0(ber('bpsk'), 1e-5), 9.588, 0.02);
+}
+
+/* ═══════════════════════════════════════════════════════
+   3. gas.html — ITU-R P.676 Annex 2 (see the provenance
+      note below: which revision the specific-attenuation
+      fits come from is disputed and unverified)
+   ═══════════════════════════════════════════════════════ */
+async function gasTests(){
+  const w = await frame('fr_gas');
+  describe('gas.html — P.676 specific attenuation');
+  ok('gammaO / gammaW / heights are reachable',
+     typeof w.gammaO === 'function' && typeof w.gammaW === 'function'
+     && typeof w.heights === 'function');
+  if(typeof w.heights !== 'function') return;
+
+  const P = 1013.25, T = 15, RHO = 7.5;   // ITU reference atmosphere
+  /* Provenance, stated only as far as it has actually been checked:
+       - gas.html itself declares ITU-R P.676-11 Annex 2, pinned to that revision
+         because Annex 2 was restructured in P.676-12.
+       - What is verifiable here without the ITU text is the FORM: gammaO is the
+         two-term curve fit with the (54−f) denominator and the ξ1..ξ3 φ-factors;
+         gammaW is the nine-line summation (22.235 … 1780 GHz) with η1, η2;
+         heights() is the equivalent-height method with the t1/t2/t3 corrections
+         and the f<70 GHz cap at 10.7·r_p^0.3.
+       - Which revision numbers those specific-attenuation fits carry (P.676-10
+         vs -11) is DISPUTED and was not settled against the primary text; do not
+         treat the revision in this comment as verified. See the audit note.
+     The values below are SNAPSHOTS of this implementation at the reference
+     atmosphere, quoted to more digits than the formula's own accuracy so the
+     tolerance can catch a real edit. They are change-detectors: they prove the
+     shipped code has not moved, NOT that it matches any revision of the
+     standard. Tolerance is a few ulps of the quoted precision, not the 1–2%
+     that used to hide whole-digit drift. */
+  near('γ_o at 20 GHz = 0.01128599 dB/km', w.gammaO(20, P, T), 0.011285994, 5e-9);
+  near('γ_w at 20 GHz, 7.5 g/m³ = 0.10098060 dB/km', w.gammaW(20, P, T, RHO), 0.100980600, 5e-9);
+  near('γ_w is exactly zero at zero humidity', w.gammaW(20, P, T, 0), 0, 1e-12);
+  ok('γ_w rises with humidity',
+     w.gammaW(20,P,T,19.5) > w.gammaW(20,P,T,7.5) && w.gammaW(20,P,T,7.5) > w.gammaW(20,P,T,1.5));
+  ok('γ_o rises approaching the 60 GHz complex', w.gammaO(54,P,T) > w.gammaO(20,P,T));
+
+  describe('gas.html — P.676 eq (25a) oxygen equivalent height');
+  const h20 = w.heights(20, P, T).ho, h54 = w.heights(54, P, T).ho;
+  const lead = 6.1 / (1 + 0.17 * Math.pow(P/1013.25, -1.1));
+  // The (1 + t1 + t2 + t3) correction was missing entirely (audit finding #4).
+  // t3 dominates low, t1 (the 60 GHz complex) turns it positive near 54 GHz.
+  near('h_o at 20 GHz is 0.63583% below the bare leading term', h20/lead - 1, -0.0063583095, 1e-9);
+  near('h_o at 54 GHz is 5.49775% above it', h54/lead - 1, +0.0549775369, 1e-9);
+  ok('the correction is not missing (h_o differs from the leading term)',
+     Math.abs(h20 - lead) > 1e-6);
+  near('h_w at 20 GHz = 1.96331087 km', w.heights(20,P,T).hw, 1.963310871, 5e-9);
+  ok('h_o obeys the 10.7·r_p^0.3 cap for f < 70 GHz',
+     [1013.25,750,500,300,150].every(p => w.heights(54,p,T).ho <= 10.7*Math.pow(p/1013.25,0.3)+1e-9));
+  ok('h_o falls with pressure', w.heights(20,750,T).ho < w.heights(20,1013.25,T).ho);
+
+  describe('gas.html — validity domain');
+  const el = w.document.getElementById('elev');
+  const zen = w.gammaO(20,P,T)*w.heights(20,P,T).ho + w.gammaW(20,P,T,RHO)*w.heights(20,P,T).hw;
+  near('zenith attenuation at 20 GHz = 0.25672369 dB', zen, 0.256723687, 5e-9);
+  // Annex 2's cosecant law is defined for 5°–90° only (audit finding #4).
+  const slantAt = e => { el.value = e; el.dispatchEvent(new w.Event('input'));
+                         return w.document.getElementById('r_slant').textContent; };
+  const s5 = slantAt(5), s2 = slantAt(2);
+  ok('2° elevation is clamped to the 5° result', s2 === s5, `2° "${s2}" vs 5° "${s5}"`);
+  /* These come back as text rounded for display, so the honest bound is the
+     display rounding itself — not the 2% that let ~ten last digits drift. */
+  nearRounded('30° slant = zenith / sin(30°)', slantAt(30), zen/Math.sin(Math.PI/6), 3);
+  nearRounded('90° slant equals the zenith value', slantAt(90), zen, 3);
+  slantAt(2);   // read the note while the clamp is actually in effect
+  ok('a sub-5° entry is reported, not silently substituted',
+     /5°/.test(w.document.getElementById('note').textContent),
+     w.document.getElementById('note').textContent.slice(-46));
+  slantAt(30);
+  ok('a valid elevation carries no clamp notice',
+     !/raised to|提升到/.test(w.document.getElementById('note').textContent));
+}
+
+/* ═══════════════════════════════════════════════════════
+   4. link-budget.html — the single-link model
+   ═══════════════════════════════════════════════════════ */
+const LEO_S = {txP:10*Math.log10(2), txG:6, txL:1, f:2200, d:2000,
+               atm:0.5, rain:0, pol:0.5, point:0.5, rxG:30, Tsys:200, rxL:0.5,
+               Rb:1e6, reqEb:1.0, impl:1, alpha:0.2, rnOn:false, skyTm:275,
+               isCustom:false, bps:2, cr:0.75, ci:NaN};
+
+async function linkBudgetTests(){
+  const w = await frame('fr_lb');
+  describe('link-budget.html — single-link model');
+  ok('singleLinkModel is reachable and pure', typeof w.singleLinkModel === 'function');
+  if(typeof w.singleLinkModel !== 'function') return;
+
+  const m = w.singleLinkModel(LEO_S);
+  near('EIRP = 3.01 + 6 − 1', m.eirp, 10*Math.log10(2)+6-1, 1e-9);
+  /* FSPL = 32.44 + 20log10(f_MHz) + 20log10(d_km); reference computed from that
+     closed form here rather than copied from the page. */
+  near('FSPL at 2200 MHz / 2000 km = 32.44 + 20log₁₀f + 20log₁₀d', m.fspl,
+       32.44 + 20*Math.log10(2200) + 20*Math.log10(2000), 1e-12);
+  near('G/T = 30 − 10log10(200) ≈ 6.99 dB/K', m.gt, 30-10*Math.log10(200), 1e-9);
+  near('total loss = FSPL + 1.5 dB of atm/pol/pointing', m.totL, m.fspl+1.5, 1e-9);
+  /* C/N₀ = EIRP − L_total + G/T − k, with k = −228.6 dBW/K/Hz. */
+  near('C/N₀ = EIRP − L_total + G/T − k', m.cn0, m.eirp - m.totL + m.gt + 228.6, 1e-9);
+  near('Eb/N₀ ≈ 18.29 dB', m.ebn0, m.cn0-10*Math.log10(1e6), 1e-9);
+  near('margin = Eb/N₀ − req − impl', m.margin, m.ebn0-1.0-1, 1e-9);
+
+  // G/T is aperture-referred: the Rx line loss is inside T_sys and must not
+  // be taken off the gain a second time (audit finding #5).
+  ok('G/T does not subtract the Rx line loss again',
+     Math.abs(m.gt - (30-10*Math.log10(200))) < 1e-9
+     && Math.abs(m.gt - (30-0.5-10*Math.log10(200))) > 0.4);
+
+  describe('link-budget.html — invalid inputs are suppressed, not zeroed');
+  // A zero fallback used to read as a real number and close the link
+  // (audit finding #6). isNaNv now also rejects a *missing* property, which
+  // used to satisfy every one of these.
+  const bad = (over, fields) => {
+    const r = w.singleLinkModel({...LEO_S, ...over});
+    for(const f of fields) isNaNv(`${JSON.stringify(over)} → ${f} is not a number`, r[f]);
+  };
+  bad({f:0},      ['fspl','cn0','ebn0','margin']);
+  bad({d:0},      ['fspl','cn0','ebn0','margin']);
+  bad({d:-500},   ['fspl','cn0','ebn0','margin']);
+  bad({Tsys:0},   ['gt','cn0','ebn0','margin']);
+  bad({Tsys:-10}, ['gt','cn0','ebn0','margin']);
+  bad({Rb:0},     ['ebn0','margin']);
+  bad({txP:NaN},  ['eirp','cn0','margin']);
+  ok('FSPL survives when only the data rate is unusable',
+     Number.isFinite(w.singleLinkModel({...LEO_S, Rb:0}).fspl));
+  isNaNv('0 W transmit power has no dBW value', w.toDBW(0,'W'));
+  isNaNv('negative watts have no dBW value', w.toDBW(-5,'W'));
+  near('dBW passes through unchanged', w.toDBW(13,'dBW'), 13, 1e-12);
+  near('dBm converts by −30', w.toDBW(43,'dBm'), 13, 1e-12);
+
+  describe('link-budget.html — sky-noise coupling');
+  const dry = w.singleLinkModel({...LEO_S, rnOn:false, atm:0.5, rain:3});
+  const wet = w.singleLinkModel({...LEO_S, rnOn:true,  atm:0.5, rain:3});
+  ok('rain coupling raises T_eff', wet.Teff > dry.Teff);
+  ok('rain coupling lowers G/T', wet.gt < dry.gt);
+  near('ΔT = T_m·(1 − 10^(−A/10))', wet.dT, 275*(1-Math.pow(10,-3.5/10)), 1e-9);
+  near('coupling off means no rise', dry.dT, 0, 1e-12);
+
+  describe('link-budget.html — the model is the only copy (finding #8)');
+  // marginModel() must return exactly singleLinkModel().margin; they used to
+  // be two hand-synchronised copies of the whole chain. Requiring a finite
+  // result matters: the old "both non-finite counts as agreement" fallback
+  // also passed when both functions were deleted.
+  const viaModel = w.singleLinkModel(w.singleLinkInputs({})).margin;
+  const viaMargin = w.marginModel({});
+  ok('both routes produce a real margin from the page defaults',
+     Number.isFinite(viaModel) && Number.isFinite(viaMargin),
+     `${fmt(viaModel)} / ${fmt(viaMargin)}`);
+  near('marginModel() agrees with singleLinkModel() exactly', viaMargin, viaModel, 1e-12);
+  for(const d of [500, 2000, 5000, 38000]){
+    const a = w.singleLinkModel(w.singleLinkInputs({dist:d})).margin;
+    const b = w.marginModel({dist:d});
+    ok(`same margin at ${d} km`, Number.isFinite(a) && Number.isFinite(b)
+       && Math.abs(a-b) < 1e-12, `${fmt(a)} / ${fmt(b)}`);
+  }
+  ok('margin falls as range grows',
+     w.marginModel({dist:500}) > w.marginModel({dist:2000})
+     && w.marginModel({dist:2000}) > w.marginModel({dist:38000}));
+}
+
+/* ═══════════════════════════════════════════════════════
+   5. TT&C coded thresholds — the shipped CCSDS constants
+   ═══════════════════════════════════════════════════════ */
+/* Every row is a hand-authored constant from the cited CCSDS source; no closed
+   form reproduces them, so nothing but an explicit table can police them. The
+   dropdowns are the only reachable surface — TTC_CODING is a top-level `const`,
+   which does not become a window property. `at` records the metric the value is
+   quoted at, because several rows are FER, not BER, and mixing those silently
+   is exactly the drift this table is meant to prevent. */
+const TTC_THRESHOLDS = [
+  {v:'uncoded',    ebn0:9.6, grp:'TC / simple',      cite:'130.1-G-3 fig 3-5 "UNCODED"', at:'BER 1e-5'},
+  {v:'bch',        ebn0:8.3, grp:'TC / simple',      cite:'230.1-G-3 fig 11-7',          at:'BER 1e-5'},
+  {v:'ldpc-short', ebn0:5.5, grp:'TC / simple',      cite:'230.1-G-3 fig 11-7',          at:'BER 1e-5'},
+  {v:'conv12',     ebn0:4.5, grp:'CCSDS TM coding',  cite:'130.1-G-3 fig 3-5',           at:'BER 1e-5'},
+  {v:'convrs',     ebn0:2.6, grp:'CCSDS TM coding',  cite:'130.1-G-3 fig 6-7 (I=2)',     at:'BER 1e-5'},
+  {v:'turbo12',    ebn0:1.5, grp:'CCSDS TM coding',  cite:'130.1-G-3 7.4.1, fig 7-9',    at:'BER 1e-6'},
+  {v:'turbo13',    ebn0:1.0, grp:'CCSDS TM coding',  cite:'130.1-G-3 7.4.1, fig 7-9',    at:'BER 1e-6'},
+  {v:'turbo16',    ebn0:0.5, grp:'CCSDS TM coding',  cite:'130.1-G-3 7.4.1, fig 7-9',    at:'BER 1e-6'},
+  {v:'ldpc12',     ebn0:2.0, grp:'CCSDS TM coding',  cite:'130.1-G-3 fig 8-8',           at:'FER 1e-6'},
+  {v:'ldpc78',     ebn0:4.0, grp:'CCSDS TM coding',  cite:'130.1-G-3 fig 8-8',           at:'FER 1e-6'},
+];
+
+async function ttcCodingTests(){
+  const w = await frame('fr_lb');
+  describe('link-budget.html — CCSDS coded thresholds');
+  const read = id => {
+    const s = w.document.getElementById(id);
+    return s ? [...s.querySelectorAll('option')].map(o => ({
+      v: o.value, ebn0: o.getAttribute('data-ebn0'),
+      grp: o.parentElement.tagName === 'OPTGROUP' ? o.parentElement.label : null })) : null;
+  };
+  const ul = read('ul_coding'), dl = read('dl_coding');
+  ok('both TT&C coding dropdowns are built', !!ul && !!dl,
+     ul && dl ? `${ul.length} / ${dl.length} options` : '');
+  if(!ul || !dl) return;
+
+  ok('uplink and downlink are built from one table, not two',
+     JSON.stringify(ul) === JSON.stringify(dl));
+  ok('the option set is exactly the documented table plus Custom',
+     JSON.stringify(ul.map(o => o.v)) ===
+     JSON.stringify([...TTC_THRESHOLDS.map(t => t.v), 'custom']),
+     ul.map(o => o.v).join(','));
+
+  for(const t of TTC_THRESHOLDS){
+    const o = ul.find(x => x.v === t.v);
+    ok(`${t.v} = ${t.ebn0.toFixed(1)} dB Eb/N₀ (${t.cite}, ${t.at})`,
+       !!o && o.ebn0 === t.ebn0.toFixed(1), o ? `data-ebn0="${o.ebn0}"` : 'option missing');
+    ok(`${t.v} sits under "${t.grp}"`, !!o && o.grp === t.grp, o ? String(o.grp) : '');
+  }
+  /* toFixed(1) in buildCodingSelects is deliberate: every value is quoted to
+     0.1 dB and a bare "1" would drop that precision from the attribute. */
+  ok('every threshold keeps its 0.1 dB precision in the attribute',
+     ul.filter(o => o.v !== 'custom').every(o => /^-?\d+\.\d$/.test(o.ebn0)));
+  ok('Custom carries no threshold of its own',
+     ul.find(o => o.v === 'custom').ebn0 === null);
+
+  /* Coding gain must move the right way; a transposed pair would still satisfy
+     the per-row checks above only if both rows were edited together. */
+  const th = v => TTC_THRESHOLDS.find(t => t.v === v).ebn0;
+  ok('lower-rate turbo codes need less Eb/N₀ (1/6 < 1/3 < 1/2)',
+     th('turbo16') < th('turbo13') && th('turbo13') < th('turbo12'));
+  ok('concatenating RS with the convolutional code helps',
+     th('convrs') < th('conv12'));
+  ok('every coded option beats uncoded PCM',
+     TTC_THRESHOLDS.filter(t => t.v !== 'uncoded').every(t => t.ebn0 < th('uncoded')));
+}
+
+/* ═══════════════════════════════════════════════════════
+   6. TT&C hard gates — one definition of "closes"
+   ═══════════════════════════════════════════════════════ */
+async function ttcTests(){
+  const w = await frame('fr_lb');
+  describe('link-budget.html — TT&C gate-aware closure (finding #7)');
+  ok('ttcClosureSlack is reachable', typeof w.ttcClosureSlack === 'function');
+  if(typeof w.ttcClosureSlack !== 'function') return;
+
+  const L = o => ({margin:6, residual:true, loopSnr:14, rngEnabled:false,
+                   rngMargin:NaN, ...o});
+  near('suppressed carrier: only the data channel gates',
+       w.ttcClosureSlack(L({residual:false}), 0), 6, 1e-9);
+  near('data channel is binding when the loop has room',
+       w.ttcClosureSlack(L({loopSnr:20}), 0), 6, 1e-9);
+  near('carrier loop is binding when it is the worst term',
+       w.ttcClosureSlack(L({loopSnr:8}), 0), -2, 1e-9);
+  near('ranging shortfall is binding',
+       w.ttcClosureSlack(L({rngEnabled:true, rngMargin:-2}), 0), -2, 1e-9);
+  // An applicable gate with no finite value is indeterminate, not absent —
+  // the solver used to skip it while the verdict box called it a failure.
+  isNaNv('a non-finite carrier loop makes closure indeterminate',
+         w.ttcClosureSlack(L({loopSnr:NaN}), 0));
+  isNaNv('a non-finite ranging margin makes closure indeterminate',
+         w.ttcClosureSlack(L({rngEnabled:true, rngMargin:NaN}), 0));
+  ok('a gate that does not apply is ignored, not treated as NaN',
+     Number.isFinite(w.ttcClosureSlack(L({residual:false, loopSnr:NaN}), 0)));
+  near('the target shifts the data term only',
+       w.ttcClosureSlack(L({}), 3), 3, 1e-9);
+  near('slack is the minimum across every applicable gate',
+       w.ttcClosureSlack(L({loopSnr:11, rngEnabled:true, rngMargin:0.5}), 0), 0.5, 1e-9);
+}
+
+/* ═══════════════════════════════════════════════════════
+   7. Cross-tool round trip — gt.html → link-budget
+   ═══════════════════════════════════════════════════════ */
+async function crossToolTests(){
+  const wg = await frame('fr_gt'), wl = await frame('fr_lb');
+  describe('gt.html → link-budget.html — G/T round trip closes (finding #5)');
+  const d = wg.document;
+  const set = (id, v) => { const e = d.getElementById(id); e.value = v;
+                           e.dispatchEvent(new wg.Event('input')); };
+  // gt.html "3 m S-band" preset, stated explicitly so the test does not
+  // depend on the preset's contents.
+  set('gain',34); set('ta',50); set('lfeed',0.4); set('tp',290);
+  set('nflna',0.8); set('glna',35); set('nfrx',3);
+
+  const tsysText = d.getElementById('r_tsys').textContent;
+  const gtText = d.getElementById('r_gt').textContent;
+  const Tsys = parseFloat(tsysText);
+  const gtHere = parseFloat(gtText);
+  /* Snapshot of the shipped Friis cascade for this input set; a change-detector,
+     read back through the DOM so the bound is the display rounding. */
+  nearRounded('gt.html T_sys = 142.39 K', tsysText, 142.39, 2);
+  /* G/T is definitionally G − 10log10(T_sys), so this one is derived, not copied. */
+  nearRounded('gt.html G/T = 34 − 10log10(T_sys)', gtText, 34 - 10*Math.log10(Tsys), 2);
+
+  // The value gt.html hands back is aperture-referred; link-budget must read
+  // it on the same plane. Before the fix it came out rxLoss dB low.
+  const back = wl.singleLinkModel({...LEO_S, rxG:34, Tsys, rxL:0.5, rnOn:false}).gt;
+  near('the same T_sys gives the same G/T in link-budget', back, gtHere, 0.01);
+  ok('the round trip is not off by the Rx line loss',
+     Math.abs(back - (gtHere - 0.5)) > 0.4);
+
+  describe('noise-figure.html → link-budget.html — hand-back includes T_A');
+  const wn = await frame('fr_nf');
+  const dn = wn.document;
+  const ta = dn.getElementById('ta');
+  ok('noise-figure exposes an antenna noise temperature input', !!ta);
+  if(!ta) return;
+  const te = parseFloat(dn.getElementById('r_te').textContent);
+  ta.value = 0; ta.dispatchEvent(new wn.Event('input'));
+  near('with T_A = 0, T_sys equals the receiver T_e',
+       parseFloat(dn.getElementById('r_tsys').textContent), te, 0.05);
+  ta.value = 50; ta.dispatchEvent(new wn.Event('input'));
+  near('with T_A = 50 K, T_sys = T_A + T_e',
+       parseFloat(dn.getElementById('r_tsys').textContent), te + 50, 0.05);
+  ok('T_sys is the larger figure — handing back bare T_e understated it',
+     parseFloat(dn.getElementById('r_tsys').textContent) > te);
+}
+
+/* ── Run ────────────────────────────────────────────── */
+(async function(){
+  let state = {supported:false, controlled:false, cleared:false};
+  try {
+    state = await clearServiceWorkers();
+    await loadSources();
+  } catch(e){
+    describe('Startup — aborted');
+    record(false, 'could not read the shipped sources: ' + e.message, '');
+    const s = document.getElementById('summary');
+    s.className = 'fail';
+    s.textContent = `startup failed — ${failed} failed, ${passed} passed`;
+    document.title = '✗ startup failed — SatTools tests';
+    return;
+  }
+
+  const groups = [
+    () => invEnvironment(state), invAssetVersions, invServiceWorker, invSitemap,
+    invToolNav, invGallery, invI18n, invPrivacy,
+    modcodTests, gasTests, linkBudgetTests, ttcCodingTests, ttcTests, crossToolTests];
+  for(const g of groups){
+    try { await g(); }
+    catch(e){
+      if(!group || group._p + group._f > 0) describe((g.name || 'group') + ' — aborted');
+      record(false, 'threw: ' + e.message, '');
+    }
+  }
+  const s = document.getElementById('summary');
+  s.className = failed ? 'fail' : 'pass';
+  s.textContent = failed
+    ? `${failed} failed, ${passed} passed`
+    : `All ${passed} checks passed`;
+  document.title = (failed ? `✗ ${failed} failing` : `✓ ${passed} passing`) + ' — SatTools tests';
+})();
+</script>
+</body>
+</html>
