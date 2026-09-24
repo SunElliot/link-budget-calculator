@@ -181,6 +181,11 @@ function p618core(f,thDeg,R,latDeg,hs,hR,tauDeg){
   const k=(KH+KV+(KH-KV)*cos2*c2t)/2;
   const a=(KH*AH+KV*AV+(KH*AH-KV*AV)*cos2*c2t)/(2*k);
   const gR=k*Math.pow(R,a);
+  // ITU-R P.618-13 §2.2.1.1 step 2: "If hR − hs is less than or equal to
+  // zero, the predicted rain attenuation for any time percentage is zero and
+  // the following steps are not required." Carrying on used to feed a
+  // negative path length into the square roots below and print NaN.
+  if(!(hR-hs>0)) return {gR,LE:0,A001:0};
   const Ls=(hR-hs)/Math.sin(th), LG=Ls*Math.cos(th);
   const r=1/(1+0.78*Math.sqrt(LG*gR/f)-0.38*(1-Math.exp(-2*LG)));
   const zeta=Math.atan2((hR-hs),(LG*r));
@@ -192,6 +197,9 @@ function p618core(f,thDeg,R,latDeg,hs,hR,tauDeg){
 }
 function scaleTo(A001,p,thDeg,latDeg){
   const lat=Math.abs(latDeg), th=thDeg*Math.PI/180;
+  // Zero A0.01 (station above the rain height) stays zero at every p; the
+  // ln(A0.01) term below would otherwise turn 0 into NaN or ∞·0.
+  if(!(A001>0)) return 0;
   let beta; if(p>=1||lat>=36)beta=0; else if(thDeg>=25)beta=-0.005*(lat-36); else beta=-0.005*(lat-36)+1.8-4.25*Math.sin(th);
   return A001*Math.pow(p/0.01,-(0.655+0.033*Math.log(p)-0.045*Math.log(A001)-beta*(1-p)*Math.sin(th)));
 }
@@ -220,7 +228,10 @@ function compute(){
   const dT=275*(1-Math.pow(10,-Ap/10));
   $('r_dt').textContent=dT.toFixed(0);
   $('r_out').textContent=outageStr(p);
-  $('rnote').textContent=t('Add ~'+f2(Ap)+' dB of rain margin for '+avail+'% availability at '+f+' GHz — and on a downlink, the same rain raises the receive noise temperature by ~'+dT.toFixed(0)+' K (enable "Rain sky-noise coupling" in the Link Budget).','在 '+f+' GHz、可用度 '+avail+'% 下,给链路预算增加约 '+f2(Ap)+' dB 雨衰余量——下行链路中这场雨还会把接收噪温抬升约 '+dT.toFixed(0)+' K(可在链路预算页开启"雨致天空噪声耦合")。');
+  $('rnote').textContent = !(hR-hs>0)
+    ? t('The station is at or above the rain height ('+f2(hs)+' km ≥ '+f2(hR)+' km): per ITU-R P.618 step 2 there is no rain attenuation on this path.',
+        '地面站海拔不低于雨顶高度('+f2(hs)+' km ≥ '+f2(hR)+' km):按 ITU-R P.618 第 2 步,该路径无雨衰。')
+    : t('Add ~'+f2(Ap)+' dB of rain margin for '+avail+'% availability at '+f+' GHz — and on a downlink, the same rain raises the receive noise temperature by ~'+dT.toFixed(0)+' K (enable "Rain sky-noise coupling" in the Link Budget).','在 '+f+' GHz、可用度 '+avail+'% 下,给链路预算增加约 '+f2(Ap)+' dB 雨衰余量——下行链路中这场雨还会把接收噪温抬升约 '+dT.toFixed(0)+' K(可在链路预算页开启"雨致天空噪声耦合")。');
   const tb=$('avtab').querySelector('tbody'); tb.innerHTML='';
   [[99,1],[99.9,0.1],[99.99,0.01],[99.999,0.001]].forEach(([av,pp])=>{
     const a=scaleTo(core.A001,pp,th,lat);

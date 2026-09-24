@@ -218,7 +218,17 @@ function heights(f,p,t){
   return {ho,hw};
 }
 function compute(){
-  const f=Math.min(Math.max(num('freq'),1),54);
+  /* The γ_o expression used here (P.676-11 Annex 2, eq. 22a) is the f ≤ 54 GHz
+     branch only; above that Annex 2 switches to separate 54–60 / 60–62 / …
+     equations this page does not implement. Frequencies above 54 GHz used to
+     be clamped to 54 without a word — an 80 GHz entry reported the 24 dB
+     oxygen-edge loss for a band that actually sits in a ~1 dB window. Refuse
+     instead (NaN → "–", return bar disabled) and say why.
+     Below 1 GHz the 1 GHz value is kept: gaseous loss falls with frequency
+     there, so it is a small, conservative upper bound — but it is stated. */
+  const fIn=num('freq');
+  const fHigh=fIn>54, fLow=fIn>0&&fIn<1;
+  const f=(fHigh||!(fIn>0))?NaN:Math.max(fIn,1);
   /* The cosecant law of Annex 2 is defined for 5°–90°. Below 5° the ray
      bending and Earth curvature that only Annex 1's full path integration
      accounts for start to dominate, so clamp instead of extrapolating into
@@ -237,6 +247,7 @@ function compute(){
      to NaN, the cells render "–", and the note names what to fix. */
   const pIn=num('p'), tIn=num('t');
   const badInputs=[];
+  if(!(fIn>0))        badInputs.push(t('frequency','频率'));
   if(!(pIn>0))       badInputs.push(t('pressure','压力'));
   if(!(tIn>-273.15)) badInputs.push(t('temperature','温度'));
   const p     = pIn>0       ? pIn : NaN;
@@ -256,10 +267,17 @@ function compute(){
     ? t(' Elevation was raised to 5° — ITU-R P.676 Annex 2 does not cover lower angles.',
         ' 仰角已提升到 5° —— ITU-R P.676 附件 2 不适用于更低的仰角。')
     : '';
-  $('note').textContent = badInputs.length
-    ? t('Enter a physically valid '+badInputs.join(' and ')+' — pressure must be above 0 hPa and temperature above −273.15 °C.',
-        '请填写物理上有效的'+badInputs.join('和')+'——压力须大于 0 hPa,温度须高于 −273.15 °C。')
-    : t('Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).','在 '+f+' GHz / '+th+'° 仰角下,给链路预算增加约 '+f2(slant)+' dB 晴空气体损耗(与雨衰独立)。')+clamped;
+  const lowNote=fLow
+    ? t(' Below 1 GHz the 1 GHz value is shown — a conservative upper bound (gaseous loss only falls at lower frequencies).',
+        ' 低于 1 GHz 时按 1 GHz 计算——这是保守上界(更低频率的气体损耗只会更小)。')
+    : '';
+  $('note').textContent = fHigh && !badInputs.length
+    ? t('ITU-R P.676 Annex 2 as implemented here is valid only up to 54 GHz; '+fIn+' GHz is outside that range, so no value is given. Above 54 GHz use the line-by-line method of Annex 1.',
+        '本页实现的 ITU-R P.676 附件 2 仅适用于 54 GHz 以下;'+fIn+' GHz 超出该范围,故不给出结果。54 GHz 以上请用附件 1 的逐线计算法。')
+    : badInputs.length
+    ? t('Enter a physically valid '+badInputs.join(' and ')+' — frequency and pressure must be above 0 (GHz, hPa) and temperature above −273.15 °C.',
+        '请填写物理上有效的'+badInputs.join('和')+'——频率与压力须大于 0(GHz、hPa),温度须高于 −273.15 °C。')
+    : t('Add ~'+f2(slant)+' dB of clear-air gaseous loss at '+f+' GHz / '+th+'° elevation to your link budget (separate from rain).','在 '+f+' GHz / '+th+'° 仰角下,给链路预算增加约 '+f2(slant)+' dB 晴空气体损耗(与雨衰独立)。')+clamped+lowNote;
   const rows=[
     [t('Oxygen specific γ_o','氧气比衰减 γ_o'),f3(go)+' dB/km'],
     [t('Water-vapour specific γ_w','水汽比衰减 γ_w'),f3(gw)+' dB/km'],

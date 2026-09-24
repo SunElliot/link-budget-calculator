@@ -218,21 +218,27 @@
               <option value="u-64qam" data-bps="6" data-cr="1" data-ebn0="17.8">64QAM (uncoded)</option>
             </optgroup>
             <optgroup label="DVB-S2 LDPC+BCH (QEF)">
-              <option value="s2-qpsk12"  data-bps="2" data-cr="0.5"   data-ebn0="1.0">QPSK 1/2</option>
-              <option value="s2-qpsk34"  data-bps="2" data-cr="0.75"  data-ebn0="2.27">QPSK 3/4</option>
-              <option value="s2-qpsk56"  data-bps="2" data-cr="0.833" data-ebn0="2.96">QPSK 5/6</option>
-              <option value="s2-8psk23"  data-bps="3" data-cr="0.667" data-ebn0="3.61">8PSK 2/3</option>
-              <option value="s2-8psk34"  data-bps="3" data-cr="0.75"  data-ebn0="4.39" selected>8PSK 3/4</option>
-              <option value="s2-8psk56"  data-bps="3" data-cr="0.833" data-ebn0="5.37">8PSK 5/6</option>
-              <option value="s2-16a34"   data-bps="4" data-cr="0.75"  data-ebn0="5.44">16APSK 3/4</option>
-              <option value="s2-16a56"   data-bps="4" data-cr="0.833" data-ebn0="6.38">16APSK 5/6</option>
-              <option value="s2-32a34"   data-bps="5" data-cr="0.75"  data-ebn0="6.99">32APSK 3/4</option>
-              <option value="s2-32a56"   data-bps="5" data-cr="0.833" data-ebn0="8.08">32APSK 5/6</option>
+              <!-- ETSI EN 302 307-1 Table 13 (normal FECFRAME, no pilots, AWGN, QEF):
+                   data-eta is the table's spectral efficiency η, which carries the
+                   BCH, LDPC and PLHEADER overhead that bps×rate leaves out;
+                   data-ebn0 = Es/N0 − 10·log10(η), rounded UP to 0.01 dB.
+                   These used to be Es/N0 − 10·log10(bps×rate), i.e. 0.03–0.05 dB
+                   optimistic, and the symbol rate Rb/(bps×rate) ~1 % low. -->
+              <option value="s2-qpsk12"  data-bps="2" data-cr="0.5"   data-eta="0.988858" data-ebn0="1.05">QPSK 1/2</option>
+              <option value="s2-qpsk34"  data-bps="2" data-cr="0.75"  data-eta="1.487473" data-ebn0="2.31">QPSK 3/4</option>
+              <option value="s2-qpsk56"  data-bps="2" data-cr="0.833" data-eta="1.654663" data-ebn0="3.00">QPSK 5/6</option>
+              <option value="s2-8psk23"  data-bps="3" data-cr="0.667" data-eta="1.980636" data-ebn0="3.66">8PSK 2/3</option>
+              <option value="s2-8psk34"  data-bps="3" data-cr="0.75"  data-eta="2.228124" data-ebn0="4.44" selected>8PSK 3/4</option>
+              <option value="s2-8psk56"  data-bps="3" data-cr="0.833" data-eta="2.478562" data-ebn0="5.41">8PSK 5/6</option>
+              <option value="s2-16a34"   data-bps="4" data-cr="0.75"  data-eta="2.966728" data-ebn0="5.49">16APSK 3/4</option>
+              <option value="s2-16a56"   data-bps="4" data-cr="0.833" data-eta="3.300184" data-ebn0="6.43">16APSK 5/6</option>
+              <option value="s2-32a34"   data-bps="5" data-cr="0.75"  data-eta="3.703295" data-ebn0="7.05">32APSK 3/4</option>
+              <option value="s2-32a56"   data-bps="5" data-cr="0.833" data-eta="4.119540" data-ebn0="8.14">32APSK 5/6</option>
             </optgroup>
             <option value="custom">Custom (set Eb/N₀ below)</option>
           </select>
         </div>
-        <div class="row"><label>Required Eb/N₀<span class="hint">dB, for target BER incl. FEC</span></label><input type="number" id="reqEbN0" value="4.4" step="any"></div>
+        <div class="row"><label>Required Eb/N₀<span class="hint">dB, for target BER incl. FEC</span></label><input type="number" id="reqEbN0" value="4.44" step="any"></div>
         <div class="row"><label>Roll-off factor (α)<span class="hint">filter excess bandwidth, e.g. 0.20–0.35</span></label><input type="number" id="rolloff" value="0.2" step="any"></div>
         <div class="row"><label>Implementation loss<span class="hint">dB</span></label><input type="number" id="implLoss" value="1" step="any"></div>
       </div>
@@ -286,8 +292,8 @@
           <label>Orbit altitude<span class="hint">km — sets slant range vs elevation</span></label>
           <input type="number" id="altitude" value="550" step="any">
         </div>
-        <p class="en-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">Sweeps from horizon (0°) to zenith (90°). Slant range is derived from altitude.</p>
-        <p class="zh-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">扫描从地平线(0°)到天顶(90°),斜距由轨道高度推得。</p>
+        <p class="en-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">Sweeps from horizon (0°) to zenith (90°). Slant range is derived from altitude; atmospheric and rain losses are taken as entered at the entered slant range and scaled with path length (ITU-R P.618 step 2 geometry), together with the sky noise they cause.</p>
+        <p class="zh-only" style="color:var(--muted);font-size:.85rem;margin:4px 0 10px">扫描从地平线(0°)到天顶(90°),斜距由轨道高度推得;大气与雨衰损耗取输入斜距处的输入值,并按路径长度(ITU-R P.618 第 2 步几何)缩放,由此产生的天空噪声同步变化。</p>
         <canvas id="chart" width="1000" height="420" style="width:100%;height:auto;display:block"></canvas>
         <div id="elevSummary" style="margin-top:10px;font-size:.9rem;color:var(--txt)"></div>
       </div>
@@ -664,7 +670,7 @@
 
 <script src="share.js?v=25"></script>
 <script src="linkout.js?v=1"></script>
-<script src="modcod.js?v=2"></script>
+<script src="modcod.js?v=3"></script>
 <script>
 const $  = id => document.getElementById(id);
 const nv = id => { const el=$(id); return el ? el.value : ''; };
@@ -816,7 +822,7 @@ function interfCombine(cn0, Rb, bwHz, ci){
 
 /* ── Single-link model ──────────────────────────────
    The one place the single-link equations live. compute() renders it, and
-   marginModel()/marginForDistance() sample it for the elevation chart and
+   marginModel()/singleLinkAtElevation() sample it for the elevation chart and
    the reverse solver. These used to be two hand-synchronised copies of the
    same chain, so every fix had to be applied twice or the displayed result,
    the plotted curve and the solved answer would quietly disagree. (They had
@@ -842,7 +848,10 @@ function singleLinkModel(p){
   const cn0    = eirp-totL+gt-K_BOLTZMANN_DBW;
   const ebn0   = p.Rb>0 ? cn0-10*Math.log10(p.Rb) : NaN;
 
-  const specEff = (!p.isCustom&&p.bps&&p.cr) ? p.bps*p.cr : NaN;
+  /* Information bits per symbol. A DVB-S2 MODCOD carries its standard η
+     (EN 302 307-1 Table 13), which includes BCH/LDPC/PLHEADER overhead;
+     options without one (uncoded) fall back to bps×rate, exact there. */
+  const specEff = p.isCustom ? NaN : (p.eta>0 ? p.eta : (p.bps&&p.cr) ? p.bps*p.cr : NaN);
   const symRate = specEff>0 ? p.Rb/specEff : NaN;
   const bwHz    = symRate>0 ? symRate*(1+p.alpha) : NaN;
   const cnRx    = bwHz>0 ? cn0-10*Math.log10(bwHz) : NaN;
@@ -871,6 +880,7 @@ function singleLinkInputs(ov={}){
     rnOn:  $('rainNoise')?.value==='on', skyTm: num('skyTm'),
     isCustom: $('modcod').value==='custom',
     bps:   parseFloat(sel.dataset.bps), cr: parseFloat(sel.dataset.cr),
+    eta:   parseFloat(sel.dataset.eta),
     ci:    aggCI(['ciAdj','ciXpol','ciIm']),
     sel,
   };
@@ -881,7 +891,7 @@ function compute(){
   const inp = singleLinkInputs();
   const m   = singleLinkModel(inp);
   // Bound back to the names the rendering below already uses.
-  const {txP,txG,txL,f,d,atm,rain,pol,point,rxG,Tsys,rxL,Rb,reqEb,impl,alpha,isCustom,bps,cr,rnOn,sel} = inp;
+  const {txP,txG,txL,f,d,atm,rain,pol,point,rxG,Tsys,rxL,Rb,reqEb,impl,alpha,isCustom,bps,cr,eta,rnOn,sel} = inp;
   const {eirp,fspl,extra,totL,dT,Teff,gt,cn0,ebn0,specEff,bwHz,cnRx,cnReq,intf,margin} = m;
 
   /* Every logarithmic term needs a strictly positive argument. These used to
@@ -961,7 +971,7 @@ function compute(){
     [t('Boltzmann constant','玻尔兹曼常数'),        f2(K_BOLTZMANN_DBW)+' dBW/K/Hz'],
     [t('= C/N₀','= C/N₀'),                        fd(cn0)+' dB-Hz'],
     [t('Data rate','数据率'),                       Rb>0?(Rb/1e6).toFixed(3)+' Mbps ('+f2(10*Math.log10(Rb))+' dB)':'–'],
-    [t('Modulation / coding','调制/编码'),          isCustom?'custom':sel.textContent.trim()+' ('+bps+' bit/sym × '+cr+')'],
+    [t('Modulation / coding','调制/编码'),          isCustom?'custom':sel.textContent.trim()+' ('+bps+' bit/sym × '+cr+(eta>0?', η = '+eta+' per EN 302 307-1':'')+')'],
     [t('Spectral efficiency','频谱效率'),           fd(specEff)+' bit/s/Hz'],
     [t('Occupied bandwidth','占用带宽'),            isFinite(bwHz)?f2(bwHz/1e6)+' MHz':'–'],
     [t('C/N received','接收 C/N'),                 fd(cnRx)+' dB'],
@@ -996,7 +1006,52 @@ function slantRange(h, elevDeg){
 function marginModel(ov={}){
   return singleLinkModel(singleLinkInputs(ov)).margin;
 }
-function marginForDistance(d){ return marginModel({dist:d}); }
+
+/* ── Elevation sweep ────────────────────────────────────
+   The entered atmospheric and rain losses belong to the entered slant range.
+   The sweep used to move only the range, so every elevation carried those
+   same few dB — at 5° a 1 dB zenith gas loss is really ~11.5 dB, and the
+   chart overstated low-elevation margin by that difference (and by the sky
+   noise it causes). Now:
+     1. the entered range fixes a reference elevation E_ref at this altitude;
+     2. atm and rain losses are scaled by the ratio of path lengths through
+        their absorbing layers, L(E)/L(E_ref);
+     3. singleLinkModel() then derives the sky-noise rise from the scaled
+        losses exactly as it does for the main result.
+   Polarization and pointing losses do not depend on path length and are
+   left as entered. At E = E_ref this reproduces compute()'s margin exactly. */
+/* Path length (km) through an absorbing layer of thickness H, per ITU-R
+   P.618-13 §2.2.1.1 step 2: H/sin θ for θ ≥ 5°, and below 5° the
+   curved-Earth form 2H / (√(sin²θ + 2H/Re) + sin θ) with the effective
+   Earth radius Re = 8500 km. H only matters below ~10°: 5.2 km for gas is
+   P.676-11 Annex 2's sea-level oxygen equivalent height 6.1/(1+0.17); 3 km
+   for rain is a mid-latitude h_R − h_s (P.839 h_0 + 0.36 km). */
+function absPathKm(eDeg, layer){
+  const H = layer==='rain' ? 3 : 5.2, Re = 8500;
+  const s = Math.sin(eDeg*Math.PI/180);
+  return eDeg>=5 ? H/s : 2*H/(Math.sqrt(s*s+2*H/Re)+s);
+}
+/* Elevation at which altitude h gives slant range d. A range shorter than
+   the zenith range is read as zenith; one past the horizon as 0.1°. */
+function refElevation(h, d){
+  if(!(h>0&&d>0)) return NaN;
+  if(d<=slantRange(h,90))  return 90;
+  if(d>=slantRange(h,0.1)) return 0.1;
+  return solveBisect(e=>slantRange(h,e), 0.1, 90, d);
+}
+/* Full single-link model at elevation e for altitude h — what the chart
+   plots. Returns singleLinkModel()'s result plus eRef. */
+function singleLinkAtElevation(h, e){
+  const inp  = singleLinkInputs({dist: slantRange(h,e)});
+  const eRef = refElevation(h, num('dist'));
+  if(isFinite(eRef)){
+    inp.atm  *= absPathKm(e,'atm') /absPathKm(eRef,'atm');
+    inp.rain *= absPathKm(e,'rain')/absPathKm(eRef,'rain');
+  }
+  const m = singleLinkModel(inp);
+  m.eRef = eRef;
+  return m;
+}
 
 /* ── Reverse solver: hit a target margin ────────────────
    Every solved-for variable is monotonic in margin, so plain bisection
@@ -1090,7 +1145,8 @@ function drawChart(){
   ctx.clearRect(0,0,W,H);
   const h=num('altitude');
   const pts=[];
-  for(let e=1;e<=90;e++) pts.push([e,marginForDistance(slantRange(h,e))]);
+  for(let e=1;e<=90;e++) pts.push([e,singleLinkAtElevation(h,e).margin]);
+  const eRef=refElevation(h, num('dist'));
   // An unusable scenario makes every point NaN; the axis ticks would then be
   // labelled "NaN" over an empty plot. Say why the curve is missing instead.
   if(!pts.some(p=>isFinite(p[1]))){
@@ -1122,7 +1178,11 @@ function drawChart(){
   $('elevSummary').innerHTML=
     `<span style="color:#dc2626">${t('Link closes (margin ≥ 0):','链路闭合(余量 ≥ 0):')}</span> ${fmt(e0)} &nbsp;·&nbsp; `+
     `<span style="color:#d97706">${t('Comfortable (margin ≥ 3 dB):','舒适(余量 ≥ 3 dB):')}</span> ${fmt(e3)} &nbsp;·&nbsp; `+
-    `<span style="color:#697086">${t('altitude','高度')} ${h} km, ${t('range','斜距')} ${slantRange(h,90).toFixed(0)}–${slantRange(h,1).toFixed(0)} km</span>`;
+    `<span style="color:#697086">${t('altitude','高度')} ${h} km, ${t('range','斜距')} ${slantRange(h,90).toFixed(0)}–${slantRange(h,1).toFixed(0)} km</span>`+
+    (isFinite(eRef)
+      ? `<br><span style="color:#697086">${t(`Atmospheric and rain losses are the entered values at ${eRef.toFixed(1)}° (the entered ${num('dist')} km range) and scale with path length at other elevations.`,
+                                           `大气与雨衰损耗取输入值对应的 ${eRef.toFixed(1)}° 仰角(即输入斜距 ${num('dist')} km),其他仰角按路径长度缩放。`)}</span>`
+      : '');
 }
 
 /* ── Pass data budget ──────────────────────────────── */

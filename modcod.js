@@ -33,8 +33,14 @@
         ser+=Q(Math.sqrt(k*ga/2)*Math.sqrt(dx*dx+dy*dy));}
       return Math.min(ser/M/k,0.5);};
   }
-  const C16APSK=apskPts([{n:4,r:1,off:Math.PI/4},{n:12,r:2.85,off:0}]);              // 4+12, γ≈2.85
-  const C32APSK=apskPts([{n:4,r:1,off:Math.PI/4},{n:12,r:2.84,off:0},{n:16,r:5.27,off:0}]); // 4+12+16
+  // Ring phases per ETSI EN 302 307-1 §5.4.3 / §5.4.4 (figs. 11 and 12): the
+  // 12-point ring starts at π/12, so its points at π/4+kπ/2 line up radially
+  // with the inner ring; the 32APSK outer ring starts at 0. Both rings used
+  // to start at 0 here — the union-bound BER barely moves (< 0.01 dB at
+  // 1e-5, the tight outer-ring spacing dominates), but the geometry is now
+  // the standard's.
+  const C16APSK=apskPts([{n:4,r:1,off:Math.PI/4},{n:12,r:2.85,off:Math.PI/12}]);              // 4+12, γ≈2.85
+  const C32APSK=apskPts([{n:4,r:1,off:Math.PI/4},{n:12,r:2.84,off:Math.PI/12},{n:16,r:5.27,off:0}]); // 4+12+16
 
   const MODS=[
     {id:'bpsk', name:'BPSK / QPSK', k:1, color:'#2563eb', f:db=>Q(Math.sqrt(2*g(db)))},
