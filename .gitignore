@@ -1,6 +1,11 @@
 
+
+# Local diagnostic logs (e.g. Codex CLI writes error.log here). Transient,
+# machine-local, and may contain account identifiers — never part of the site.
+*.log
+
 # >>> cc-suite >>>
-# cc-suite-schema: 7
+# cc-suite-schema: 8
 # AI assistant local state
 .claude/settings.local.json
 .claude/CLAUDE.local.md
@@ -37,7 +42,3 @@ CLAUDE.local.md
 # per-run working state (findings + fix statuses), not authored content.
 .cc-suite/audits/
 # <<< cc-suite <<<
-
-# Local diagnostic logs (e.g. Codex CLI writes error.log here). Transient,
-# machine-local, and may contain account identifiers — never part of the site.
-*.log
